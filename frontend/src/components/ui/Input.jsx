@@ -37,8 +37,8 @@ const Input = ({
           required={required}
           placeholder={hasFloatingLabel ? ' ' : placeholder}
           className={`
-            peer w-full border border-border rounded-lg px-4 py-3
-            outline-none focus:border-primary focus:ring-1 focus:ring-primary type-primary-body-b2 md:type-primary-body-b1 placeholder:type-primary-body-b2 md:placeholder:type-primary-body-b1 text-foreground bg-card transition
+            peer w-full border border-border rounded-md md:rounded-lg px-4 py-3
+            outline-none focus:border-primary focus:ring-1 focus:ring-primary type-primary-body-b2 md:type-primary-body-b1 text-foreground bg-card transition
             ${hasFloatingLabel ? 'pt-4 pb-2' : ''}
             ${Icon ? 'pl-10' : ''}
             ${isPasswordField ? 'pr-10' : ''}

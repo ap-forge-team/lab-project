@@ -13,10 +13,10 @@ const variants = {
 }
 
 const sizes = {
-  sm: 'px-4 py-2 text-xs rounded-lg',
-  md: 'px-5 py-2.5 text-sm rounded-lg',
-  lg: 'px-6 py-3 text-sm rounded-lg',
-  icon: 'p-2.5 rounded-lg',
+  sm: 'px-4 py-2 type-primary-body-b3 rounded-md lg:rounded-lg',
+  md: 'px-5 py-2.5 type-primary-body-b2 md:type-primary-body-b1 rounded-md lg:rounded-lg',
+  lg: 'px-6 py-3 type-primary-body-b2 md:type-primary-body-b1 rounded-md lg:rounded-lg',
+  icon: 'p-2.5 rounded-md lg:rounded-lg',
   'icon-sm': 'p-2 rounded-md',
 }
 

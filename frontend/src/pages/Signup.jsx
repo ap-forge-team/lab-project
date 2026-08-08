@@ -401,6 +401,9 @@ const Signup = () => {
           </button>
 
           <div className="mb-6">
+            <div className="mb-4 md:hidden">
+              <Logo variant="default" />
+            </div>
             <h2 className="type-primary-heading-h0-mobile text-foreground">Create your account</h2>
             <p className="text-muted-foreground mt-2 type-primary-body-b2">
               Start booking lab tests in minutes
