@@ -9,20 +9,20 @@ export default {
     extend: {
       colors: {
         cu: {
-          navy: '#0A2240',
-          blue: '#1A6FD4',
-          sky: '#5BB8FF',
-          bg: '#E8F4FF',
-          surface: '#EEF6FF',
-          border: '#C5DBF0',
-          body: '#4A6A8A',
+          navy: '#1E3A8A',
+          blue: '#2563EB',
+          sky: '#60A5FA',
+          bg: '#EFF6FF',
+          surface: '#F1F5F9',
+          border: '#CBD5E1',
+          body: '#475569',
         },
         surface: {
-          DEFAULT: '#E8F4FF',
-          light: '#EEF6FF',
+          DEFAULT: '#F1F5F9',
+          light: '#F8FAFC',
         },
         navy: {
-          950: '#0A2240',
+          950: '#1E3A8A',
         },
       },
       fontFamily: {
@@ -44,7 +44,7 @@ export default {
       },
       boxShadow: {
         card: '0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04)',
-        'card-hover': '0 8px 24px rgb(26 111 212 / 0.12)',
+        'card-hover': '0 8px 24px rgb(37 99 235 / 0.12)',
         panel: '0 4px 6px -1px rgb(0 0 0 / 0.05)',
       },
       spacing: {

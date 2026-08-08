@@ -27,7 +27,7 @@ export default function NotFound() {
         </p>
         
         <Link to={ROUTES.HOME}>
-          <Button size="lg" className="shadow-[0_8px_30px_rgba(26,111,212,0.3)]">
+          <Button size="lg" className="shadow-[0_8px_30px_rgba(37,99,235,0.3)]">
             Go Back Home
           </Button>
         </Link>

@@ -25,9 +25,9 @@ const OrbitAnimation = () => {
     
     // Rings config: radius, count, bg, direction
     const rings = [
-      { radius: 50, count: 8, bg: '#0CADF3', dir: 1 },
+      { radius: 50, count: 8, bg: '#2563EB', dir: 1 },
       { radius: 90, count: 10, bg: 'rgba(255,255,255,0.6)', dir: -1 },
-      { radius: 125, count: 6, bg: 'rgba(12,173,243,0.4)', dir: 1 },
+      { radius: 125, count: 6, bg: 'rgba(37,99,235,0.4)', dir: 1 },
     ]
     
     const particles = []
@@ -50,15 +50,15 @@ const OrbitAnimation = () => {
     center.style.width = '44px'
     center.style.height = '44px'
     center.style.borderRadius = '50%'
-    center.style.background = 'rgba(12,173,243,0.15)'
-    center.style.border = '1px solid rgba(12,173,243,0.4)'
+    center.style.background = 'rgba(37,99,235,0.15)'
+    center.style.border = '1px solid rgba(37,99,235,0.4)'
     center.style.position = 'absolute'
     center.style.left = `${centerX - 22}px`
     center.style.top = `${centerY - 22}px`
     center.style.display = 'flex'
     center.style.alignItems = 'center'
     center.style.justifyContent = 'center'
-    center.style.color = '#0CADF3'
+    center.style.color = '#2563EB'
     center.style.fontSize = '20px'
     center.style.fontWeight = 'bold'
     center.innerHTML = '+'
@@ -110,6 +110,9 @@ const signupSchema = z.object({
   email: z.string().email('Please enter a valid email'),
   phone: z.string().min(10, 'Please enter a valid phone number'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
+  agreeToTerms: z.literal(true, {
+    errorMap: () => ({ message: 'You must agree to the Terms of Service and Privacy Policy' }),
+  }),
 })
 
 const Signup = () => {
@@ -205,8 +208,8 @@ const Signup = () => {
 
   return (
     <div className="flex h-screen w-full bg-background">
-      {/* Left Panel */}
-      <div className="hidden md:flex flex-col w-[44%] bg-tertiary px-[32px] py-[36px] relative overflow-hidden justify-between">
+      {/* Left Panel — desktop: side panel, mobile: full background */}
+      <div className="flex flex-col w-full md:w-[44%] bg-tertiary px-[32px] py-[36px] relative overflow-hidden justify-between">
         {/* Top: Logo */}
         <Logo variant="white" />
         
@@ -214,10 +217,10 @@ const Signup = () => {
         <div className="flex flex-col items-center justify-center z-10 w-full mt-4">
           <OrbitAnimation />
           <div className="text-center mt-6 mb-5">
-            <h2 className="font-heading font-bold text-white mb-2" style={{ fontSize: '20px' }}>
+            <h2 className="font-heading font-bold text-white mb-2 type-primary-heading-h2-regular">
               Join 50,000+ patients
             </h2>
-            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)' }}>
+            <p className="type-primary-body-b3 text-white/50">
               Book lab tests from NABL certified labs across 1200+ cities.
             </p>
           </div>
@@ -227,25 +230,25 @@ const Signup = () => {
               <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
                 <ShieldCheck size={12} className="text-white" />
               </div>
-              <span className="text-white text-sm font-medium">NABL Certified Labs</span>
+              <span className="text-white type-primary-body-b2 font-medium">NABL Certified Labs</span>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
                 <ShieldCheck size={12} className="text-white" />
               </div>
-              <span className="text-white text-sm font-medium">Reports in 24 Hours</span>
+              <span className="text-white type-primary-body-b2 font-medium">Reports in 24 Hours</span>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
                 <ShieldCheck size={12} className="text-white" />
               </div>
-              <span className="text-white text-sm font-medium">Home Sample Collection</span>
+              <span className="text-white type-primary-body-b2 font-medium">Home Sample Collection</span>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
                 <ShieldCheck size={12} className="text-white" />
               </div>
-              <span className="text-white text-sm font-medium">100% Accurate Results</span>
+              <span className="text-white type-primary-body-b2 font-medium">100% Accurate Results</span>
             </div>
           </div>
         </div>
@@ -269,8 +272,8 @@ const Signup = () => {
         </div>
       </div>
 
-      {/* Right Panel */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6 lg:px-[60px] relative overflow-hidden">
+      {/* Right Panel — desktop: form side */}
+      <div className="hidden md:flex flex-1 flex-col items-center justify-center p-6 lg:px-[60px] relative overflow-hidden">
         {/* Floating Bubble Background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
           {BUBBLES.map((bubble, i) => (
@@ -284,36 +287,23 @@ const Signup = () => {
                 width: `${bubble.size}px`,
                 height: `${bubble.size}px`,
                 borderRadius: '50%',
-                border: '1.5px solid rgba(12, 173, 243, 0.2)',
-                background: `rgba(12, 173, 243, ${bubble.opacity})`,
+                border: '1.5px solid rgba(37, 99, 235, 0.2)',
+                background: `rgba(37, 99, 235, ${bubble.opacity})`,
                 willChange: 'transform'
               }}
             />
           ))}
         </div>
 
-        <Button
-          onClick={() => navigate(ROUTES.HOME)}
-          variant="ghost"
-          size="sm"
-          className="absolute top-6 left-6 flex items-center gap-1.5 text-muted-foreground md:hidden z-10"
-        >
-          <ArrowLeft size={14} /> Home
-        </Button>
-        
         <div className="w-full max-w-[440px] bg-white p-[40px] border border-border rounded-[10px] shadow-sm relative z-10">
-          <div className="flex justify-center mb-6 md:hidden">
-            <Logo />
-          </div>
-          
-          <div className="text-center md:text-left mb-8">
-            <h2 className="font-heading font-bold text-[20px] text-tertiary">Create your account</h2>
-            <p className="text-[12px] text-muted-foreground mt-1">
+          <div className="text-center md:text-left mb-6">
+            <h2 className="type-primary-heading-h0-mobile lg:type-primary-heading-h0 text-foreground">Create your account</h2>
+            <p className="text-muted-foreground mt-2 type-primary-body-b2 md:type-primary-body-b1">
               Start booking lab tests in minutes
             </p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <Input
               label="Full Name"
               type="text"
@@ -368,21 +358,86 @@ const Signup = () => {
                 </div>
               )}
             </div>
+
+            <label className="flex items-start gap-2.5 cursor-pointer">
+              <input
+                type="checkbox"
+                {...register('agreeToTerms')}
+                className="mt-0.5 h-4 w-4 rounded border-border text-primary focus:ring-primary accent-primary cursor-pointer"
+              />
+              <span className="type-primary-body-b3 md:type-primary-body-b2 text-muted-foreground leading-relaxed">
+                I confirm that I have read and agree to Checked Up's{' '}
+                <span className="text-primary font-semibold cursor-pointer hover:underline">Terms of Service</span>{' '}
+                and{' '}
+                <span className="text-primary font-semibold cursor-pointer hover:underline">Privacy Policy</span>.
+              </span>
+            </label>
+            {errors.agreeToTerms && (
+              <p className="text-destructive type-primary-body-b3 mt-1">{errors.agreeToTerms.message}</p>
+            )}
             
             <Button type="submit" loading={isSubmitting} fullWidth size="lg" className="bg-primary hover:bg-primary/90 text-white mt-2">
               Create account
             </Button>
           </form>
 
-          <p className="mt-6 text-muted-foreground text-center text-sm">
+          <p className="mt-6 text-muted-foreground text-center type-primary-body-b2 md:type-primary-body-b1">
             Already have an account?{' '}
             <Link to={ROUTES.LOGIN} className="text-primary font-bold hover:underline">
               Sign in
             </Link>
           </p>
+        </div>
+      </div>
 
-          <p className="mt-6 text-center text-[10px] text-muted-foreground">
-            By registering you agree to our Terms of Service and Privacy Policy
+      {/* Mobile: Floating Card Overlay */}
+      <div className="md:hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/5 backdrop-blur-[2px]">
+        <div className="w-full max-w-[400px] bg-white p-[32px] rounded-[16px] shadow-2xl relative max-h-[90vh] overflow-y-auto">
+          <button
+            onClick={() => navigate(ROUTES.HOME)}
+            className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition z-10"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+
+          <div className="mb-6">
+            <h2 className="type-primary-heading-h0-mobile text-foreground">Create your account</h2>
+            <p className="text-muted-foreground mt-2 type-primary-body-b2">
+              Start booking lab tests in minutes
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            <Input label="Full Name" type="text" required placeholder="Enter your full name" error={errors.name?.message} {...register('name')} />
+            <Input label="Email Address" type="email" required placeholder="Enter your email" error={errors.email?.message} {...register('email')} />
+            <Input label="Phone Number" type="tel" required placeholder="Enter your phone number" error={errors.phone?.message} {...register('phone')} />
+            <div>
+              <Input label="Password" type="password" required placeholder="Create password" error={errors.password?.message} {...register('password')} />
+              {passwordValue && (
+                <div className="flex gap-1.5 mt-2">
+                  {[1, 2, 3].map((level) => (
+                    <div key={level} className={`h-1.5 w-1/3 rounded-full transition-colors ${strength >= level ? strength === 1 ? 'bg-destructive' : strength === 2 ? 'bg-warning' : 'bg-success' : 'bg-accent'}`} />
+                  ))}
+                </div>
+              )}
+            </div>
+            <label className="flex items-start gap-2.5 cursor-pointer">
+              <input type="checkbox" {...register('agreeToTerms')} className="mt-0.5 h-4 w-4 rounded border-border text-primary focus:ring-primary accent-primary cursor-pointer" />
+              <span className="type-primary-body-b3 text-muted-foreground leading-relaxed">
+                I confirm that I have read and agree to Checked Up's{' '}
+                <span className="text-primary font-semibold cursor-pointer hover:underline">Terms of Service</span>{' '}and{' '}
+                <span className="text-primary font-semibold cursor-pointer hover:underline">Privacy Policy</span>.
+              </span>
+            </label>
+            {errors.agreeToTerms && <p className="text-destructive type-primary-body-b3 mt-1">{errors.agreeToTerms.message}</p>}
+            <Button type="submit" loading={isSubmitting} fullWidth size="lg" className="bg-primary hover:bg-primary/90 text-white mt-2">
+              Create account
+            </Button>
+          </form>
+
+          <p className="mt-6 text-muted-foreground text-center type-primary-body-b2">
+            Already have an account?{' '}
+            <Link to={ROUTES.LOGIN} className="text-primary font-bold hover:underline">Sign in</Link>
           </p>
         </div>
       </div>

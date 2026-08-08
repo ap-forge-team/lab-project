@@ -101,7 +101,7 @@ export default function AboutUs() {
         {/* HERO */}
         <section
           style={{
-            background: '#172554',
+            background: '#1E3A8A',
             padding: '96px 24px 80px',
             textAlign: 'center',
           }}

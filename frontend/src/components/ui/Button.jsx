@@ -1,8 +1,8 @@
 import React from 'react'
 
 const variants = {
-  primary: 'bg-primary text-primary-foreground shadow-sm transition-all',
-  secondary: 'bg-accent hover:bg-accent/80 text-foreground shadow-sm hover:shadow-md transition-all',
+  primary: 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm transition-all',
+  secondary: 'bg-white hover:bg-accent/80 text-primary border border-primary shadow-sm hover:shadow-md transition-all',
   danger: 'bg-destructive hover:bg-destructive/90 text-white shadow-sm hover:shadow-md transition-all',
   success: 'bg-success hover:bg-success/90 text-white shadow-sm hover:shadow-md transition-all',
   warning: 'bg-warning hover:bg-warning/90 text-white shadow-sm hover:shadow-md transition-all',
@@ -41,6 +41,7 @@ const Button = ({
         font-semibold transition-all duration-300
         disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none
         inline-flex items-center justify-center
+        type-primary-body-b2-medium md:type-primary-body-b1-medium 
         ${variants[variant] || variants.primary}
         ${isExpandable ? 'p-2.5 text-xs rounded-lg group overflow-hidden' : (sizes[size] || sizes.md)}
         ${fullWidth ? 'w-full' : ''}

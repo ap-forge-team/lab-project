@@ -43,7 +43,7 @@ const DNAAnimation = () => {
       nodeA.style.width = '10px'
       nodeA.style.height = '10px'
       nodeA.style.borderRadius = '50%'
-      nodeA.style.background = '#0CADF3'
+      nodeA.style.background = '#2563EB'
       containerRef.current.appendChild(nodeA)
       nodesA.push(nodeA)
       
@@ -205,15 +205,15 @@ const Login = () => {
 
   return (
     <div className="flex h-screen w-full bg-background">
-      {/* Left Panel */}
-      <div className="hidden md:flex flex-col w-[44%] bg-tertiary px-[32px] py-[36px] relative overflow-hidden justify-between">
+      {/* Left Panel — desktop: side panel, mobile: full background */}
+      <div className="flex flex-col w-full md:w-[44%] bg-tertiary px-[32px] py-[36px] relative overflow-hidden justify-between">
         {/* Top: Logo */}
         <Logo variant="white" />
         
         {/* Middle: DNA Animation & Text */}
         <div className="flex flex-col items-center justify-center z-10 w-full mt-4">
           <DNAAnimation />
-          <h2 className="font-heading font-bold text-white mt-6 mb-5 text-center" style={{ fontSize: '20px' }}>
+          <h2 className="font-heading font-bold text-white mt-6 mb-5 text-center type-primary-heading-h2-regular md:type-primary-heading-h2-regular">
             Trusted diagnostics, at your door.
           </h2>
           
@@ -222,25 +222,25 @@ const Login = () => {
               <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
                 <ShieldCheck size={12} className="text-white" />
               </div>
-              <span className="text-white text-sm font-medium">NABL Certified Labs</span>
+              <span className="text-white type-primary-body-b2 font-medium">NABL Certified Labs</span>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
                 <ShieldCheck size={12} className="text-white" />
               </div>
-              <span className="text-white text-sm font-medium">Reports in 24 Hours</span>
+              <span className="text-white type-primary-body-b2 font-medium">Reports in 24 Hours</span>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
                 <ShieldCheck size={12} className="text-white" />
               </div>
-              <span className="text-white text-sm font-medium">Home Sample Collection</span>
+              <span className="text-white type-primary-body-b2 font-medium">Home Sample Collection</span>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
                 <ShieldCheck size={12} className="text-white" />
               </div>
-              <span className="text-white text-sm font-medium">100% Accurate Results</span>
+              <span className="text-white type-primary-body-b2 font-medium">100% Accurate Results</span>
             </div>
           </div>
         </div>
@@ -264,8 +264,8 @@ const Login = () => {
         </div>
       </div>
 
-      {/* Right Panel */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6 lg:px-[60px] relative overflow-hidden">
+      {/* Right Panel — desktop: form side, mobile: floating card overlay */}
+      <div className="hidden md:flex flex-1 flex-col items-center justify-center p-6 lg:px-[60px] relative overflow-hidden">
         {/* Floating Bubble Background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
           {BUBBLES.map((bubble, i) => (
@@ -279,31 +279,18 @@ const Login = () => {
                 width: `${bubble.size}px`,
                 height: `${bubble.size}px`,
                 borderRadius: '50%',
-                border: '1.5px solid rgba(12, 173, 243, 0.2)',
-                background: `rgba(12, 173, 243, ${bubble.opacity})`,
+                border: '1.5px solid rgba(37, 99, 235, 0.2)',
+                background: `rgba(37, 99, 235, ${bubble.opacity})`,
                 willChange: 'transform'
               }}
             />
           ))}
         </div>
 
-        <Button
-          onClick={() => navigate(ROUTES.HOME)}
-          variant="ghost"
-          size="sm"
-          className="absolute top-6 left-6 flex items-center gap-1.5 text-muted-foreground md:hidden z-10"
-        >
-          <ArrowLeft size={14} /> Home
-        </Button>
-        
         <div className="w-full max-w-[440px] bg-white p-[40px] border border-border rounded-[10px] shadow-sm relative z-10">
-          <div className="flex justify-center mb-6 md:hidden">
-            <Logo />
-          </div>
-          
           <div className="text-center md:text-left mb-6">
-            <h2 className="font-heading font-bold text-[28px] text-foreground">Sign In</h2>
-            <p className="text-muted-foreground mt-2 text-sm">
+            <h2 className="type-primary-heading-h0-mobile lg:type-primary-heading-h0 text-foreground">Sign In</h2>
+            <p className="text-muted-foreground mt-2 type-primary-body-b2 md:type-primary-body-b1">
               Login to continue your healthcare journey.
             </p>
           </div>
@@ -312,17 +299,17 @@ const Login = () => {
           <div className="flex items-center justify-between bg-background rounded-lg p-2.5 mb-6 border border-border">
             <div className="flex flex-col items-center flex-1">
               <ShieldCheck size={16} className="text-secondary mb-1" />
-              <span className="text-[11px] text-muted-foreground">NABL labs</span>
+              <span className="type-primary-body-b3 lg:type-primary-body-b2 text-muted-foreground">NABL labs</span>
             </div>
             <div className="w-[1px] h-8 bg-border"></div>
             <div className="flex flex-col items-center flex-1">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-secondary mb-1"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              <span className="text-[11px] text-muted-foreground">24hr reports</span>
+              <span className="type-primary-body-b3 lg:type-primary-body-b2 text-muted-foreground">24hr reports</span>
             </div>
             <div className="w-[1px] h-8 bg-border"></div>
             <div className="flex flex-col items-center flex-1">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-secondary mb-1"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-              <span className="text-[11px] text-muted-foreground">Home collection</span>
+              <span className="type-primary-body-b3 lg:type-primary-body-b2 text-muted-foreground">Home collection</span>
             </div>
           </div>
 
@@ -347,7 +334,7 @@ const Login = () => {
               <div className="flex justify-end mt-2">
                 <Link
                   to={ROUTES.FORGOT_PASSWORD}
-                  className="text-xs font-semibold text-primary hover:underline"
+                  className="type-primary-body-b2-medium text-primary hover:underline"
                 >
                   Forgot Password?
                 </Link>
@@ -361,10 +348,74 @@ const Login = () => {
           {/* SSL Note */}
           <div className="mt-8 pt-4 border-t border-border flex items-center justify-center gap-1.5">
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <span className="text-[11px] text-muted-foreground">Secured by 256-bit SSL encryption</span>
+            <span className="type-primary-body-b3 lg:type-primary-body-b2 text-muted-foreground">Secured by 256-bit SSL encryption</span>
           </div>
 
-          <p className="mt-6 text-muted-foreground text-center text-sm">
+          <p className="mt-6 text-muted-foreground text-center type-primary-body-b2 md:type-primary-body-b1">
+            Don't have an account?{' '}
+            <Link to={ROUTES.SIGNUP} className="text-primary font-bold hover:underline">
+              Create account
+            </Link>
+          </p>
+        </div>
+      </div>
+
+      {/* Mobile: Floating Card Overlay */}
+      <div className="md:hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-[1px]">
+        <div className="w-full max-w-[400px] bg-white p-[32px] rounded-[16px] shadow-2xl relative">
+          <button
+            onClick={() => navigate(ROUTES.HOME)}
+            className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+
+          <div className="mb-6">
+            <h2 className="type-primary-heading-h0-mobile text-foreground">Sign In</h2>
+            <p className="text-muted-foreground mt-2 type-primary-body-b2">
+              Login to continue your healthcare journey.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            <Input
+              label="Email Address"
+              type="email"
+              required
+              placeholder="Enter your email"
+              error={errors.email?.message}
+              {...register('email')}
+            />
+            <div>
+              <Input
+                label="Password"
+                type="password"
+                required
+                placeholder="Enter your password"
+                error={errors.password?.message}
+                {...register('password')}
+              />
+              <div className="flex justify-end mt-2">
+                <Link
+                  to={ROUTES.FORGOT_PASSWORD}
+                  className="type-primary-body-b2-medium text-primary hover:underline"
+                >
+                  Forgot Password?
+                </Link>
+              </div>
+            </div>
+            <Button type="submit" loading={isSubmitting} fullWidth size="lg" className="bg-primary hover:bg-primary/90 text-white">
+              Sign In
+            </Button>
+          </form>
+
+          {/* SSL Note */}
+          <div className="mt-6 pt-4 border-t border-border flex items-center justify-center gap-1.5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span className="type-primary-body-b3 text-muted-foreground">Secured by 256-bit SSL encryption</span>
+          </div>
+
+          <p className="mt-5 text-muted-foreground text-center type-primary-body-b2">
             Don't have an account?{' '}
             <Link to={ROUTES.SIGNUP} className="text-primary font-bold hover:underline">
               Create account

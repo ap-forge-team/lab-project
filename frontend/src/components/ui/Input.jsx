@@ -38,7 +38,7 @@ const Input = ({
           placeholder={hasFloatingLabel ? ' ' : placeholder}
           className={`
             peer w-full border border-border rounded-lg px-4 py-3
-            outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm text-foreground bg-card transition
+            outline-none focus:border-primary focus:ring-1 focus:ring-primary type-primary-body-b2 md:type-primary-body-b1 placeholder:type-primary-body-b2 md:placeholder:type-primary-body-b1 text-foreground bg-card transition
             ${hasFloatingLabel ? 'pt-4 pb-2' : ''}
             ${Icon ? 'pl-10' : ''}
             ${isPasswordField ? 'pr-10' : ''}
@@ -51,7 +51,7 @@ const Input = ({
           <label
             htmlFor={inputId}
             className={`
-              pointer-events-none absolute z-10 bg-card px-1 text-xs text-muted-foreground transition-all
+              pointer-events-none absolute z-10 bg-card px-1 type-primary-body-b3 text-muted-foreground transition-all
               ${Icon ? 'left-9' : 'left-3'}
               ${isDateField ? 'top-0 -translate-y-1/2 text-primary' : 'top-1/2 -translate-y-1/2 peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-primary peer-not-placeholder-shown:top-0 peer-not-placeholder-shown:-translate-y-1/2'}
               ${error ? 'text-destructive peer-focus:text-destructive' : ''}
@@ -72,7 +72,7 @@ const Input = ({
           </button>
         )}
       </div>
-      {error && <p className="text-destructive text-xs mt-1.5 font-medium">{error}</p>}
+      {error && <p className="text-destructive type-primary-body-b3 mt-1.5 font-medium">{error}</p>}
     </div>
   )
 }
