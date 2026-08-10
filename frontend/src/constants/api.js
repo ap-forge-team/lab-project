@@ -47,4 +47,10 @@ export const API_ENDPOINTS = {
     ADMIN: '/payment-statistic/admin',
   },
   BOOKINGS_PAYMENT_RECEIPT: (id) => `/bookings/payment/${id}`,
+  CATEGORIES: {
+    BASE: '/categories',
+    BY_ID: (id) => `/categories/${id}`,
+    SUBCATEGORIES: (categoryId) => `/categories/${categoryId}/subcategories`,
+    SUBCATEGORY_BY_ID: (categoryId, subId) => `/categories/${categoryId}/subcategories/${subId}`,
+  },
 }

@@ -14,6 +14,7 @@ const Booking = lazy(() => import('@/pages/Booking'))
 const PackagesPage = lazy(() => import('@/pages/PackagesPage'))
 const TestsPage = lazy(() => import('@/pages/TestsPage'))
 const AdminDashboard = lazy(() => import('@/pages/AdminDashboard'))
+const AdminSettings = lazy(() => import('@/pages/AdminSettings'))
 const LabAssistantDashboard = lazy(() => import('@/pages/LabAssistantDashboard'))
 const LabOwnerDashboard = lazy(() => import('@/pages/LabOwnerDashboard'))
 const ForgotPassword = lazy(() => import('@/pages/ForgotPassword'))
@@ -55,6 +56,14 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute roles={[ROLES.ADMIN]}>
               <PageTransition><AdminDashboard /></PageTransition>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path={`${ROUTES.ADMIN_SETTINGS}/:section`}
+          element={
+            <ProtectedRoute roles={[ROLES.ADMIN]}>
+              <PageTransition><AdminSettings /></PageTransition>
             </ProtectedRoute>
           }
         />

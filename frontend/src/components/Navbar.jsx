@@ -113,7 +113,7 @@ const Navbar = () => {
         <div className="hidden lg:flex items-center gap-7">
           <Link 
             to={ROUTES.HOME} 
-            className={`text-sm font-semibold transition ${isActive(ROUTES.HOME) ? 'text-primary' : 'text-foreground hover:text-primary'}`}
+            className={`type-primary-body-b1-medium transition ${isActive(ROUTES.HOME) ? 'text-primary !font-semibold' : 'text-foreground hover:text-primary'}`}
           >
             Home
           </Link>
@@ -126,7 +126,7 @@ const Navbar = () => {
           >
             <Link 
               to={ROUTES.TESTS}
-              className={`flex items-center gap-1 text-sm font-semibold transition ${isActive(ROUTES.TESTS) ? 'text-primary' : 'text-foreground hover:text-primary'}`}
+              className={`flex items-center gap-1 type-primary-body-b1-medium transition ${isActive(ROUTES.TESTS) ? 'text-primary !font-semibold' : 'text-foreground hover:text-primary'}`}
             >
               Tests
               <ChevronDown size={14} className={`transition-transform ${testsDropdownOpen ? 'rotate-180' : ''}`} />
@@ -146,13 +146,13 @@ const Navbar = () => {
           
           <Link 
             to={ROUTES.PACKAGES} 
-            className={`text-sm font-semibold transition ${isActive(ROUTES.PACKAGES) ? 'text-primary' : 'text-foreground hover:text-primary'}`}
+            className={`type-primary-body-b1-medium transition ${isActive(ROUTES.PACKAGES) ? 'text-primary !font-semibold' : 'text-foreground hover:text-primary'}`}
           >
             Packages
           </Link>
           <Link 
             to={ROUTES.ABOUT} 
-            className={`text-sm font-semibold transition ${isActive(ROUTES.ABOUT) ? 'text-primary' : 'text-foreground hover:text-primary'}`}
+            className={`type-primary-body-b1-medium transition ${isActive(ROUTES.ABOUT) ? 'text-primary !font-semibold' : 'text-foreground hover:text-primary'}`}
           >
             About Us
           </Link>
@@ -377,53 +377,53 @@ const Navbar = () => {
               )}
 
               {/* Navigation Links */}
-              <div className="flex flex-col py-4 px-6 text-base font-medium">
+              <div className="flex flex-col py-4 px-6">
                 <Link 
                   to={ROUTES.HOME} 
                   onClick={() => setMenuOpen(false)} 
-                  className={`py-3 transition ${isActive(ROUTES.HOME) ? 'text-primary font-bold' : 'text-foreground hover:text-primary'}`}
+                  className={`py-3 type-primary-body-b2-medium transition ${isActive(ROUTES.HOME) ? 'text-primary !font-bold' : 'text-foreground hover:text-primary'}`}
                 >
                   Home
                 </Link>
                 <Link 
                   to={ROUTES.TESTS} 
                   onClick={() => setMenuOpen(false)} 
-                  className={`py-3 transition ${isActive(ROUTES.TESTS) ? 'text-primary font-bold' : 'text-foreground hover:text-primary'}`}
+                  className={`py-3 type-primary-body-b2-medium transition ${isActive(ROUTES.TESTS) ? 'text-primary !font-bold' : 'text-foreground hover:text-primary'}`}
                 >
                   Tests
                 </Link>
                 <Link 
                   to={ROUTES.PACKAGES} 
                   onClick={() => setMenuOpen(false)} 
-                  className={`py-3 transition ${isActive(ROUTES.PACKAGES) ? 'text-primary font-bold' : 'text-foreground hover:text-primary'}`}
+                  className={`py-3 type-primary-body-b2-medium transition ${isActive(ROUTES.PACKAGES) ? 'text-primary !font-bold' : 'text-foreground hover:text-primary'}`}
                 >
                   Packages
                 </Link>
                 <Link 
                   to="/health-checkups" 
                   onClick={() => setMenuOpen(false)} 
-                  className={`py-3 transition ${isActive('/health-checkups') ? 'text-primary font-bold' : 'text-foreground hover:text-primary'}`}
+                  className={`py-3 type-primary-body-b2-medium transition ${isActive('/health-checkups') ? 'text-primary !font-bold' : 'text-foreground hover:text-primary'}`}
                 >
                   Health Checkups
                 </Link>
                 <Link 
                   to="/upload-prescription" 
                   onClick={() => setMenuOpen(false)} 
-                  className={`py-3 transition ${isActive('/upload-prescription') ? 'text-primary font-bold' : 'text-foreground hover:text-primary'}`}
+                  className={`py-3 type-primary-body-b2-medium transition ${isActive('/upload-prescription') ? 'text-primary !font-bold' : 'text-foreground hover:text-primary'}`}
                 >
                   Upload Prescription
                 </Link>
                 <Link 
                   to="/blog" 
                   onClick={() => setMenuOpen(false)} 
-                  className={`py-3 transition ${isActive('/blog') ? 'text-primary font-bold' : 'text-foreground hover:text-primary'}`}
+                  className={`py-3 type-primary-body-b2-medium transition ${isActive('/blog') ? 'text-primary !font-bold' : 'text-foreground hover:text-primary'}`}
                 >
                   Blog
                 </Link>
                 <Link 
                   to={ROUTES.ABOUT} 
                   onClick={() => setMenuOpen(false)} 
-                  className={`py-3 transition ${isActive(ROUTES.ABOUT) ? 'text-primary font-bold' : 'text-foreground hover:text-primary'}`}
+                  className={`py-3 type-primary-body-b2-medium transition ${isActive(ROUTES.ABOUT) ? 'text-primary !font-bold' : 'text-foreground hover:text-primary'}`}
                 >
                   About Us
                 </Link>
