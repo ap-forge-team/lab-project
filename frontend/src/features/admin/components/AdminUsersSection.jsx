@@ -12,6 +12,7 @@ import Modal from '@/components/ui/Modal'
 import LocationPicker from '@/components/LocationPicker'
 import { MapPin, Map } from 'lucide-react'
 import useFormErrors from '@/hooks/useFormErrors'
+import Can from '@/components/Can'
 
 const AdminUsersSection = ({
   labOwners,
@@ -113,13 +114,14 @@ const AdminUsersSection = ({
 
   return (
     <>
-      <Modal
-        open={open}
-        title="Create Lab Owner"
-        subtitle="Add new laboratory owner"
-        onClose={onClose}
-        size="lg"
-      >
+      <Can resource="lab_owners" action="create">
+        <Modal
+          open={open}
+          title="Create Lab Owner"
+          subtitle="Add new laboratory owner"
+          onClose={onClose}
+          size="lg"
+        >
         <form onSubmit={handleCreateLabOwner} className="space-y-4">
           <Input required type="text" name="name" placeholder="Full Name" value={labOwnerData.name} onChange={handleChange} error={errors.name} />
           <Input required type="email" name="email" placeholder="Email" value={labOwnerData.email} onChange={handleChange} error={errors.email} />
@@ -196,7 +198,8 @@ const AdminUsersSection = ({
             Create Lab Owner
           </Button>
         </form>
-      </Modal>
+        </Modal>
+      </Can>
 
       {/* Lab Owners Table */}
       <div ref={labOwnersRef} className="bg-white border border-border rounded-xl shadow-card mt-8 p-5 md:p-6">

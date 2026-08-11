@@ -317,7 +317,7 @@ const RoleManagement = () => {
                   {/* Expanded Permissions */}
                   {isExpanded && role.permissions && (
                     <div className="px-3 sm:px-4 pb-4">
-                      <div className="border border-border rounded-lg overflow-x-auto ml-12 sm:ml-14">
+                      <div className="border border-border rounded-lg overflow-x-auto">
                         <table className="w-full text-sm min-w-[380px]">
                           <thead>
                             <tr className="bg-violet-50 border-b border-border">

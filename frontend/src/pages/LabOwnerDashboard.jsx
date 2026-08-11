@@ -26,6 +26,7 @@ import ReportViewerModal from '@/components/Dashboard/ReportViewerModal'
 import { Search } from 'lucide-react'
 import { BOOKING_STATUS, PAYMENT_STATUS } from '@/constants/status'
 import useFormErrors from '@/hooks/useFormErrors'
+import Can from '@/components/Can'
 
 const LabOwnerDashboard = () => {
   const tableRef = useRef(null)
@@ -235,13 +236,14 @@ const LabOwnerDashboard = () => {
             setShowAssistantForm={setShowAssistantForm}
             scrollToTable={scrollToTable}
           />
-          <Modal
-            open={showAssistantForm}
-            onClose={() => setShowAssistantForm(false)}
-            title="Create Assistant"
-            subtitle="Add new laboratory assistant"
-            size="lg"
-          >
+          <Can resource="lab_assistants" action="create">
+            <Modal
+              open={showAssistantForm}
+              onClose={() => setShowAssistantForm(false)}
+              title="Create Assistant"
+              subtitle="Add new laboratory assistant"
+              size="lg"
+            >
             <form onSubmit={handleCreateAssistant} className="space-y-6">
               <Input
                 label="Full Name"
@@ -296,6 +298,7 @@ const LabOwnerDashboard = () => {
               </Button>
             </form>
           </Modal>
+          </Can>
           <LabOwnerPaymentSection open={showPaymentOverview} onClose={() => setShowPaymentOverview(false)} />
           <div ref={tableRef} className="bg-white rounded-[35px] shadow-sm mt-10 p-5 md:p-8">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
@@ -324,13 +327,15 @@ const LabOwnerDashboard = () => {
                   <div className="bg-primary/10 px-4 py-2.5 rounded-lg text-xs font-semibold text-primary whitespace-nowrap flex items-center h-11">
                     Total: {filteredBookings.length}
                   </div>
-                  <Button
-                    onClick={() => setShowAssistantForm(true)}
-                    className="flex items-center justify-center gap-2"
-                  >
-                    <UserPlus />
-                    Create Assistant
-                  </Button>
+                  <Can resource="lab_assistants" action="create">
+                    <Button
+                      onClick={() => setShowAssistantForm(true)}
+                      className="flex items-center justify-center gap-2"
+                    >
+                      <UserPlus />
+                      Create Assistant
+                    </Button>
+                  </Can>
                 </div>
               </div>
               {loading ? (

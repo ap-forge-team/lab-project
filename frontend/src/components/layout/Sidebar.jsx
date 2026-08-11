@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from 'react'
+import React, { useContext, useState, useEffect, useMemo } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ChevronDown, LogOut, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -13,7 +13,16 @@ const Sidebar = ({ isOpen, isCollapsed, onClose }) => {
   const navigate = useNavigate()
   const [expandedItems, setExpandedItems] = useState({})
 
-  const menuItems = sidebarMenuByRole[user?.role] || sidebarMenuByRole.patient
+  const allMenuItems = sidebarMenuByRole[user?.role] || sidebarMenuByRole.patient
+
+  const menuItems = useMemo(() => {
+    if (!user?.permissions) return allMenuItems
+    return allMenuItems.filter((item) => {
+      if (!item.permission) return true
+      const { resource, action } = item.permission
+      return user.permissions[resource]?.[action] === true
+    })
+  }, [allMenuItems, user?.permissions])
 
   useEffect(() => {
     const currentParent = menuItems.find(

@@ -2,7 +2,7 @@ export interface User {
   _id: string
   name: string
   email: string
-  role: 'patient' | 'super_admin' | 'lab_owner' | 'lab_assistant'
+  role: 'patient' | 'admin' | 'lab_owner' | 'lab_assistant'
   token?: string
 }
 

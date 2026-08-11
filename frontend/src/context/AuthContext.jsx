@@ -26,6 +26,14 @@ export const AuthProvider = ({ children }) => {
     setUser(data)
     sessionStorage.setItem('user', JSON.stringify(data))
   }
+  // Update permissions after fetching from role
+  const setPermissions = (permissions) => {
+    setUser((prev) => {
+      const updated = { ...prev, permissions }
+      sessionStorage.setItem('user', JSON.stringify(updated))
+      return updated
+    })
+  }
   // Logout
   const logout = () => {
     setUser(null)
@@ -39,6 +47,7 @@ export const AuthProvider = ({ children }) => {
         login,
         logout,
         loading,
+        setPermissions,
       }}
     >
       {children}
