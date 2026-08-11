@@ -115,12 +115,26 @@ const signupSchema = z.object({
   }),
 })
 
+const useMediaQuery = (query) => {
+  const [matches, setMatches] = useState(() => window.matchMedia(query).matches)
+
+  useEffect(() => {
+    const mq = window.matchMedia(query)
+    const handler = (e) => setMatches(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [query])
+
+  return matches
+}
+
 const Signup = () => {
   const location = useLocation()
   const navigate = useNavigate()
   const { login } = useAuth()
   const bubblesRef = useRef([])
   const posRef = useRef(BUBBLES.map(b => ({ x: b.startX, y: b.startY })))
+  const isDesktop = useMediaQuery('(min-width: 768px)')
 
   const {
     register,
@@ -272,8 +286,9 @@ const Signup = () => {
         </div>
       </div>
 
-      {/* Right Panel — desktop: form side */}
-      <div className="hidden md:flex flex-1 flex-col items-center justify-center p-6 lg:px-[60px] relative overflow-hidden">
+      {/* Right Panel — desktop only */}
+      {isDesktop && (
+      <div className="flex flex-1 flex-col items-center justify-center p-6 lg:px-[60px] relative overflow-hidden">
         {/* Floating Bubble Background */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
           {BUBBLES.map((bubble, i) => (
@@ -389,9 +404,11 @@ const Signup = () => {
           </p>
         </div>
       </div>
+      )}
 
-      {/* Mobile: Floating Card Overlay */}
-      <div className="md:hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/5 backdrop-blur-[2px]">
+      {/* Mobile: Floating Card Overlay — mobile only */}
+      {!isDesktop && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/5 backdrop-blur-[2px]">
         <div className="w-full max-w-[400px] bg-white p-[32px] rounded-[16px] shadow-2xl relative max-h-[90vh] overflow-y-auto">
           <button
             onClick={() => navigate(ROUTES.HOME)}
@@ -444,6 +461,7 @@ const Signup = () => {
           </p>
         </div>
       </div>
+      )}
     </div>
   )
 }
