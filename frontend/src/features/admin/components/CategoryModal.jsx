@@ -1,8 +1,9 @@
 import React from 'react'
 import { X, Info, Upload } from 'lucide-react'
 import { MedicalIcons, getIconById } from '@/components/icons/MedicalIcons'
+import Button from '@/components/ui/Button'
 
-const CategoryModal = ({ isOpen, onClose, onSave, editingCategory, form, setForm }) => {
+const CategoryModal = ({ isOpen, onClose, onSave, editingCategory, form, setForm, saving = false }) => {
   if (!isOpen) return null
 
   const handleChange = (field, value) => {
@@ -172,13 +173,13 @@ const CategoryModal = ({ isOpen, onClose, onSave, editingCategory, form, setForm
           >
             Cancel
           </button>
-          <button
+          <Button
             onClick={onSave}
             disabled={!form.name.trim()}
-            className="px-5 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary/90 rounded-lg transition disabled:opacity-50"
+            loading={saving}
           >
             {editingCategory ? 'Update Category' : 'Create Category'}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

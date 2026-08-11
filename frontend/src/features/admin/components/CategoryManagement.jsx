@@ -28,6 +28,7 @@ import {
   toggleSubcategoryStatus,
 } from '@/services/category.service'
 import CategoryModal from './CategoryModal'
+import Button from '@/components/ui/Button'
 import ConfirmModal from '@/components/ui/ConfirmModal'
 import Can from '@/components/Can'
 import { getIconById } from '@/components/icons/MedicalIcons'
@@ -52,6 +53,8 @@ const CategoryManagement = () => {
   const [menuOpen, setMenuOpen] = useState(null)
   const [deleteModal, setDeleteModal] = useState({ open: false, type: null, target: null })
   const [deleting, setDeleting] = useState(false)
+  const [savingCategory, setSavingCategory] = useState(false)
+  const [savingSubcategory, setSavingSubcategory] = useState(false)
 
   useEffect(() => {
     fetchCategories()
@@ -108,6 +111,7 @@ const CategoryManagement = () => {
 
   const handleSaveCategory = async () => {
     try {
+      setSavingCategory(true)
       if (editingCategory) {
         await updateCategory(editingCategory._id, categoryForm)
       } else {
@@ -119,6 +123,8 @@ const CategoryManagement = () => {
       fetchCategories()
     } catch (err) {
       console.error('Failed to save category', err)
+    } finally {
+      setSavingCategory(false)
     }
   }
 
@@ -155,6 +161,7 @@ const CategoryManagement = () => {
 
   const handleSaveSubcategory = async () => {
     try {
+      setSavingSubcategory(true)
       const payload = { ...subcategoryForm, category: selectedCategory._id }
       if (editingSubcategory) {
         await updateSubcategory(editingSubcategory._id, payload)
@@ -167,6 +174,8 @@ const CategoryManagement = () => {
       fetchSubcategories(selectedCategory._id)
     } catch (err) {
       console.error('Failed to save subcategory', err)
+    } finally {
+      setSavingSubcategory(false)
     }
   }
 
@@ -589,6 +598,7 @@ const CategoryManagement = () => {
         editingCategory={editingCategory}
         form={categoryForm}
         setForm={setCategoryForm}
+        saving={savingCategory}
       />
 
       {/* Subcategory Modal */}
@@ -641,13 +651,13 @@ const CategoryManagement = () => {
               <button onClick={() => { setShowSubcategoryModal(false); setEditingSubcategory(null) }} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-accent rounded-lg transition">
                 Cancel
               </button>
-              <button
+              <Button
                 onClick={handleSaveSubcategory}
                 disabled={!subcategoryForm.name.trim()}
-                className="px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary/90 rounded-lg transition disabled:opacity-50"
+                loading={savingSubcategory}
               >
                 {editingSubcategory ? 'Update' : 'Create'}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

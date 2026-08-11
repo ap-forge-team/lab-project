@@ -35,6 +35,8 @@ const Dashboard = () => {
   const tableRef = useRef(null)
   const navigate = useNavigate()
   const [customReason, setCustomReason] = useState('')
+  const [cancelling, setCancelling] = useState(false)
+  const [rescheduling, setRescheduling] = useState(false)
   const [view, setView] = useResponsiveView()
   const [rescheduleData, setRescheduleData] = useState({
     bookingDate: '',
@@ -96,6 +98,7 @@ const Dashboard = () => {
       return
     }
     try {
+      setCancelling(true)
       await manageBooking(selectedBooking._id, {
         action: 'cancel',
         reason: reason === 'Other' ? customReason : reason,
@@ -105,6 +108,8 @@ const Dashboard = () => {
       setShowManageModal(false)
     } catch (error) {
       toast.error(error?.response?.data?.message || 'Failed To Cancel Booking')
+    } finally {
+      setCancelling(false)
     }
   }
 
@@ -118,6 +123,7 @@ const Dashboard = () => {
       return
     }
     try {
+      setRescheduling(true)
       await manageBooking(selectedBooking._id, {
         action: 'reschedule',
         bookingDate: rescheduleData.bookingDate,
@@ -129,6 +135,8 @@ const Dashboard = () => {
       setShowManageModal(false)
     } catch (error) {
       toast.error(error?.response?.data?.message || 'Failed To Reschedule Booking')
+    } finally {
+      setRescheduling(false)
     }
   }
 
@@ -273,6 +281,8 @@ const Dashboard = () => {
           handleRescheduleChange={handleRescheduleChange}
           handleCancel={handleCancel}
           handleReschedule={handleReschedule}
+          cancelling={cancelling}
+          rescheduling={rescheduling}
         />
         <ReportViewerModal
           isOpen={!!previewReport}

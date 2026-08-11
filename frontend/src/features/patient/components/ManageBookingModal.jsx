@@ -18,6 +18,8 @@ const ManageBookingModal = ({
   handleRescheduleChange,
   handleCancel,
   handleReschedule,
+  cancelling = false,
+  rescheduling = false,
 }) => {
   return (
     <Modal
@@ -56,7 +58,7 @@ const ManageBookingModal = ({
               onChange={(e) => setReason(e.target.value)}
               placeholder="Reason (Optional)"
             />
-            <Button onClick={handleReschedule} variant="success" fullWidth>
+            <Button onClick={handleReschedule} variant="success" fullWidth loading={rescheduling}>
               Save Changes
             </Button>
           </div>
@@ -92,6 +94,7 @@ const ManageBookingModal = ({
               disabled={!reason || (reason === 'Other' && !customReason.trim())}
               variant="danger"
               fullWidth
+              loading={cancelling}
             >
               Confirm Cancellation
             </Button>

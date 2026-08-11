@@ -351,17 +351,15 @@ const LabAssistantDashboard = () => {
             >
               Cancel
             </button>
-            <button
+            <Button
               onClick={handlePaymentDone}
-              disabled={!paymentReceipt || uploadingPayment}
-              className={`flex-1 py-3 rounded-xl text-white font-semibold transition ${
-                !paymentReceipt || uploadingPayment
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-green-600 hover:bg-green-700'
-              }`}
+              disabled={!paymentReceipt}
+              loading={uploadingPayment}
+              fullWidth
+              variant="success"
             >
-              {uploadingPayment ? 'Uploading...' : 'Payment Done'}
-            </button>
+              Payment Done
+            </Button>
           </div>
         </Modal>
       </div>

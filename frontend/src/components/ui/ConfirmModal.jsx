@@ -1,5 +1,6 @@
 import React from 'react'
 import { AlertTriangle, X } from 'lucide-react'
+import Button from './Button'
 
 const ConfirmModal = ({
   isOpen,
@@ -52,13 +53,14 @@ const ConfirmModal = ({
           >
             {cancelText}
           </button>
-          <button
+          <Button
             onClick={onConfirm}
             disabled={loading}
-            className={`px-4 py-2 text-sm font-semibold text-white rounded-lg transition disabled:opacity-50 ${styles.confirmBtn}`}
+            loading={loading}
+            variant="danger"
           >
-            {loading ? 'Deleting...' : confirmText}
-          </button>
+            {confirmText}
+          </Button>
         </div>
       </div>
     </div>

@@ -102,13 +102,18 @@ const AdminUsersSection = ({
     }
   }
 
+  const [saving, setSaving] = useState(false)
+
   const handleUpdateLab = async () => {
     try {
+      setSaving(true)
       await updateBookingLab(selectedBooking._id, selectedLab)
       toast.success('Lab Updated Successfully')
       setShowEditModal(false)
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to Update Lab')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -229,7 +234,7 @@ const AdminUsersSection = ({
                 </option>
               ))}
             </Select>
-            <Button onClick={handleUpdateLab} disabled={!selectedLab} fullWidth>
+            <Button onClick={handleUpdateLab} disabled={!selectedLab} loading={saving} fullWidth>
               Save Changes
             </Button>
           </div>

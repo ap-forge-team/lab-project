@@ -38,6 +38,7 @@ import {
 } from '@/services/role.service'
 import Input from '@/components/ui/Input'
 import Textarea from '@/components/ui/Textarea'
+import Button from '@/components/ui/Button'
 import ConfirmModal from '@/components/ui/ConfirmModal'
 
 const RESOURCES_CONFIG = {
@@ -539,13 +540,13 @@ const RoleManagement = () => {
               >
                 Cancel
               </button>
-              <button
+              <Button
                 onClick={handleSave}
-                disabled={!form.name.trim() || !form.displayName.trim() || saving}
-                className="px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary/90 rounded-lg transition disabled:opacity-50"
+                disabled={!form.name.trim() || !form.displayName.trim()}
+                loading={saving}
               >
-                {saving ? 'Saving...' : editingRole ? 'Update' : 'Create'}
-              </button>
+                {editingRole ? 'Update' : 'Create'}
+              </Button>
             </div>
           </div>
         </div>

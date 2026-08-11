@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import { toast } from 'react-toastify'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import Modal from '@/components/ui/Modal'
+import Button from '@/components/ui/Button'
 import { getAllTests } from '@/services/test.service'
 import { getAllPackages } from '@/services/package.service'
 import { getAllLabOwners, getBookingLabOwners, getPaymentSetting, createPaymentSetting, updatePaymentSetting } from '@/services/user.service'
@@ -37,6 +38,7 @@ const AdminDashboard = () => {
   const [payment, setPayment] = useState(null)
   const [qrImage, setQrImage] = useState(null)
   const [showPaymentOverview, setShowPaymentOverview] = useState(false)
+  const [savingPayment, setSavingPayment] = useState(false)
 
   const fetchPayment = async () => {
     try {
@@ -51,6 +53,7 @@ const AdminDashboard = () => {
 
   const handleSubmit = async () => {
     try {
+      setSavingPayment(true)
       const formData = new FormData()
       if (qrImage) {
         formData.append('qrImage', qrImage)
@@ -64,6 +67,8 @@ const AdminDashboard = () => {
       fetchPayment()
     } catch (error) {
       toast.error(error.response?.data?.message || 'Something went wrong')
+    } finally {
+      setSavingPayment(false)
     }
   }
 
@@ -234,12 +239,13 @@ const AdminDashboard = () => {
                   <img src={payment.qrImage} alt="" className="w-64 rounded-xl border" />
                 </div>
               )}
-              <button
+              <Button
                 type="submit"
-                className="w-full bg-primary hover:bg-primary/90 text-white py-3 rounded-xl font-semibold transition"
+                fullWidth
+                loading={savingPayment}
               >
                 {payment ? 'Update Payment Settings' : 'Save Payment Settings'}
-              </button>
+              </Button>
             </form>
           </Modal>
           <AdminPaymentSection open={showPaymentOverview} onClose={() => setShowPaymentOverview(false)} />
