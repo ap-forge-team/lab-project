@@ -1,25 +1,49 @@
 import React, { createContext, useEffect, useState } from 'react'
+import { getRoleById } from '@/services/role.service'
 export const AuthContext = createContext()
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
-  // Restore User
+  // Restore User and fetch fresh permissions
   useEffect(() => {
-    try {
-      const savedUser = sessionStorage.getItem('user')
-      if (savedUser) {
-        const parsedUser = JSON.parse(savedUser)
-        if (parsedUser?.token) {
-          setUser(parsedUser)
-        } else {
-          sessionStorage.removeItem('user')
+    const restoreUser = async () => {
+      try {
+        const savedUser = sessionStorage.getItem('user')
+        if (savedUser) {
+          const parsedUser = JSON.parse(savedUser)
+          if (parsedUser?.token) {
+            setUser(parsedUser)
+            if (parsedUser.roleId) {
+              try {
+                const { data } = await getRoleById(parsedUser.roleId)
+                const permissions = data?.role?.permissions || data?.permissions || {}
+                const updated = { ...parsedUser, permissions }
+                setUser(updated)
+                sessionStorage.setItem('user', JSON.stringify(updated))
+              } catch {
+                // If roleId is a string name, try fetching by name
+                try {
+                  const { data } = await getRoleById(parsedUser.role)
+                  const permissions = data?.role?.permissions || data?.permissions || {}
+                  const updated = { ...parsedUser, permissions }
+                  setUser(updated)
+                  sessionStorage.setItem('user', JSON.stringify(updated))
+                } catch {
+                  // Silently fail - use cached permissions
+                }
+              }
+            }
+          } else {
+            sessionStorage.removeItem('user')
+          }
         }
+      } catch (error) {
+        console.log(error)
+        sessionStorage.removeItem('user')
       }
-    } catch (error) {
-      console.log(error)
-      sessionStorage.removeItem('user')
+      setLoading(false)
     }
-    setLoading(false)
+    restoreUser()
   }, [])
   // Login
   const login = (data) => {
