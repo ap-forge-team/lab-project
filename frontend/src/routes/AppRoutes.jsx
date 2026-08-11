@@ -60,6 +60,14 @@ const AppRoutes = () => {
           }
         />
         <Route
+          path={ROUTES.ADMIN_SETTINGS}
+          element={
+            <ProtectedRoute roles={[ROLES.ADMIN]}>
+              <PageTransition><AdminSettings /></PageTransition>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path={`${ROUTES.ADMIN_SETTINGS}/:section`}
           element={
             <ProtectedRoute roles={[ROLES.ADMIN]}>

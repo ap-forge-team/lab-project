@@ -25,20 +25,7 @@ export const sidebarMenuByRole = {
     { label: 'Reports', icon: FileText, route: '/admin/reports' },
     { label: 'Offers', icon: Tag, route: '/admin/offers' },
     { label: 'Users', icon: Users, route: '/admin/users' },
-    {
-      label: 'Settings',
-      icon: Settings,
-      route: '/admin/settings',
-      children: [
-        { label: 'General Settings', route: '/admin/settings/general' },
-        { label: 'Categories', route: '/admin/settings/categories' },
-        { label: 'Subcategories', route: '/admin/settings/subcategories' },
-        { label: 'Test Parameters', route: '/admin/settings/parameters' },
-        { label: 'Sample Types', route: '/admin/settings/sample-types' },
-        { label: 'Report Time (TAT)', route: '/admin/settings/tat' },
-        { label: 'Email Templates', route: '/admin/settings/email-templates' },
-      ],
-    },
+    { label: 'Settings', icon: Settings, route: '/admin/settings' },
   ],
   lab_owner: [
     { label: 'Dashboard', icon: LayoutDashboard, route: '/lab-owner' },
