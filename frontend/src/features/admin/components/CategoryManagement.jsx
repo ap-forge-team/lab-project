@@ -22,6 +22,7 @@ import {
   updateSubcategory,
   deleteSubcategory,
 } from '@/services/category.service'
+import CategoryModal from './CategoryModal'
 
 const ITEMS_PER_PAGE = 6
 
@@ -448,63 +449,14 @@ const CategoryManagement = () => {
       </div>
 
       {/* Category Modal */}
-      {showCategoryModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
-            <div className="flex items-center justify-between p-4 border-b border-border">
-              <h3 className="font-semibold text-foreground">{editingCategory ? 'Edit Category' : 'Add Category'}</h3>
-              <button onClick={() => { setShowCategoryModal(false); setEditingCategory(null) }} className="p-1 text-muted-foreground hover:text-foreground">
-                <X size={20} />
-              </button>
-            </div>
-            <div className="p-4 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Name</label>
-                <input
-                  type="text"
-                  value={categoryForm.name}
-                  onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                  placeholder="Category name"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Description</label>
-                <textarea
-                  value={categoryForm.description}
-                  onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none"
-                  rows={3}
-                  placeholder="Description (optional)"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Status</label>
-                <select
-                  value={categoryForm.status}
-                  onChange={(e) => setCategoryForm({ ...categoryForm, status: e.target.value })}
-                  className="w-full px-3 py-2 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-              </div>
-            </div>
-            <div className="flex items-center justify-end gap-3 p-4 border-t border-border">
-              <button onClick={() => { setShowCategoryModal(false); setEditingCategory(null) }} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-accent rounded-lg transition">
-                Cancel
-              </button>
-              <button
-                onClick={handleSaveCategory}
-                disabled={!categoryForm.name.trim()}
-                className="px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary/90 rounded-lg transition disabled:opacity-50"
-              >
-                {editingCategory ? 'Update' : 'Create'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CategoryModal
+        isOpen={showCategoryModal}
+        onClose={() => { setShowCategoryModal(false); setEditingCategory(null) }}
+        onSave={handleSaveCategory}
+        editingCategory={editingCategory}
+        form={categoryForm}
+        setForm={setCategoryForm}
+      />
 
       {/* Subcategory Modal */}
       {showSubcategoryModal && (
