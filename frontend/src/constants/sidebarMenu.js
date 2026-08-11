@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 
 export const sidebarMenuByRole = {
-  admin: [
+  super_admin: [
     { label: 'Dashboard', icon: LayoutDashboard, route: '/admin' },
     { label: 'Tests', icon: TestTube, route: '/admin/tests' },
     { label: 'Packages', icon: Package, route: '/admin/packages' },

@@ -40,7 +40,7 @@ const PopularTests = () => {
   const categories = useMemo(() => {
     const categoryMap = {}
     tests.forEach((test) => {
-      const category = test.category || 'Other'
+      const category = typeof test.category === 'object' ? test.category?.name || 'Other' : test.category || 'Other'
       if (!categoryMap[category]) {
         categoryMap[category] = {
           title: category,

@@ -1,16 +1,17 @@
 import React from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Settings, Tag, Layers, Beaker, Clock, Mail, ArrowLeft } from 'lucide-react'
+import { Shield, Tag, FlaskConical, ArrowLeft } from 'lucide-react'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import CategoryManagement from '@/features/admin/components/CategoryManagement'
+import RoleManagement from '@/features/admin/components/RoleManagement'
 
 const settingsItems = [
   {
-    key: 'general',
-    title: 'General Settings',
-    description: 'Configure your general settings here.',
-    icon: Settings,
-    color: 'bg-blue-500',
+    key: 'roles',
+    title: 'Roles',
+    description: 'View, add, and edit user roles and permissions.',
+    icon: Shield,
+    color: 'bg-violet-500',
   },
   {
     key: 'categories',
@@ -20,39 +21,11 @@ const settingsItems = [
     color: 'bg-green-500',
   },
   {
-    key: 'subcategories',
-    title: 'Subcategories',
-    description: 'Manage subcategories within each category.',
-    icon: Layers,
-    color: 'bg-purple-500',
-  },
-  {
-    key: 'parameters',
-    title: 'Test Parameters',
-    description: 'Configure test parameters and reference ranges.',
-    icon: Beaker,
-    color: 'bg-orange-500',
-  },
-  {
-    key: 'sample-types',
-    title: 'Sample Types',
-    description: 'Manage sample types used in tests.',
-    icon: Beaker,
-    color: 'bg-teal-500',
-  },
-  {
-    key: 'tat',
-    title: 'Report Time (TAT)',
-    description: 'Configure turnaround times for reports.',
-    icon: Clock,
-    color: 'bg-rose-500',
-  },
-  {
-    key: 'email-templates',
-    title: 'Email Templates',
-    description: 'Manage email notification templates.',
-    icon: Mail,
-    color: 'bg-indigo-500',
+    key: 'tests',
+    title: 'Tests',
+    description: 'Manage tests and test parameters.',
+    icon: FlaskConical,
+    color: 'bg-amber-500',
   },
 ]
 
@@ -61,7 +34,7 @@ const SettingsOverview = ({ onSelect }) => (
     <div className="mb-6">
       <h1 className="text-2xl font-bold text-foreground">Settings</h1>
       <p className="text-muted-foreground text-sm mt-1">
-        Configure your application settings. Select a category below to get started.
+        Configure your application settings. Select a section below to get started.
       </p>
     </div>
 
@@ -97,18 +70,17 @@ const AdminSettings = () => {
   const { section } = useParams()
   const navigate = useNavigate()
 
+  if (section === 'roles') {
+    return (
+      <DashboardLayout>
+        <RoleManagement />
+      </DashboardLayout>
+    )
+  }
+
   if (section === 'categories') {
     return (
       <DashboardLayout>
-        <div className="mb-4">
-          <button
-            onClick={() => navigate('/admin/settings')}
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition"
-          >
-            <ArrowLeft size={16} />
-            Back to Settings
-          </button>
-        </div>
         <CategoryManagement />
       </DashboardLayout>
     )

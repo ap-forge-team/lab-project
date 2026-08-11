@@ -53,4 +53,9 @@ export const API_ENDPOINTS = {
     SUBCATEGORIES: (categoryId) => `/categories/${categoryId}/subcategories`,
     SUBCATEGORY_BY_ID: (categoryId, subId) => `/categories/${categoryId}/subcategories/${subId}`,
   },
+  ROLES: {
+    BASE: '/roles',
+    BY_ID: (id) => `/roles/${id}`,
+    RESOURCES: '/roles/resources',
+  },
 }
