@@ -15,6 +15,7 @@ const PackagesPage = lazy(() => import('@/pages/PackagesPage'))
 const TestsPage = lazy(() => import('@/pages/TestsPage'))
 const AdminDashboard = lazy(() => import('@/pages/AdminDashboard'))
 const AdminSettings = lazy(() => import('@/pages/AdminSettings'))
+const SidebarPage = lazy(() => import('@/pages/SidebarPage'))
 const LabAssistantDashboard = lazy(() => import('@/pages/LabAssistantDashboard'))
 const LabOwnerDashboard = lazy(() => import('@/pages/LabOwnerDashboard'))
 const ForgotPassword = lazy(() => import('@/pages/ForgotPassword'))
@@ -68,6 +69,10 @@ const AppRoutes = () => {
           }
         />
         <Route
+          path="/admin/:page"
+          element={<ProtectedRoute roles={[ROLES.ADMIN]}><PageTransition><SidebarPage /></PageTransition></ProtectedRoute>}
+        />
+        <Route
           path={`${ROUTES.ADMIN_SETTINGS}/:section`}
           element={
             <ProtectedRoute roles={[ROLES.ADMIN]}>
@@ -82,6 +87,22 @@ const AppRoutes = () => {
               <PageTransition><Booking /></PageTransition>
             </ProtectedRoute>
           }
+        />
+        <Route
+          path="/lab-owner/:page"
+          element={<ProtectedRoute roles={[ROLES.LAB_OWNER]}><PageTransition><SidebarPage /></PageTransition></ProtectedRoute>}
+        />
+        <Route
+          path="/lab-assistant/:page"
+          element={<ProtectedRoute roles={[ROLES.LAB_ASSISTANT]}><PageTransition><SidebarPage /></PageTransition></ProtectedRoute>}
+        />
+        <Route
+          path="/booking/:page"
+          element={<ProtectedRoute roles={[ROLES.PATIENT]}><PageTransition><SidebarPage /></PageTransition></ProtectedRoute>}
+        />
+        <Route
+          path="/upload-prescription"
+          element={<ProtectedRoute roles={[ROLES.PATIENT]}><PageTransition><SidebarPage page="upload-prescription" /></PageTransition></ProtectedRoute>}
         />
         <Route
           path={ROUTES.DASHBOARD}

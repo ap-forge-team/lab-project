@@ -1,4 +1,4 @@
-import PublicLayout from '@/components/layout/PublicLayout'
+import DashboardLayout from '@/components/layout/DashboardLayout'
 import BookingDateTime from '@/components/BookingDateTime'
 import Button from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Loader'
@@ -31,7 +31,7 @@ const Booking = () => {
   } = useBookingForm()
 
   return (
-    <PublicLayout>
+    <DashboardLayout>
       <BookingFormHeader />
       <div className="enterprise-container py-6 md:py-12 grid lg:grid-cols-3 gap-6 md:gap-10">
         {loading ? (
@@ -85,7 +85,7 @@ const Booking = () => {
         </>
         )}
       </div>
-    </PublicLayout>
+    </DashboardLayout>
   )
 }
 export default Booking

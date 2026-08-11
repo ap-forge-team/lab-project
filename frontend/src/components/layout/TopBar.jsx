@@ -27,22 +27,22 @@ const TopBar = ({ onToggleSidebar }) => {
       {/* Left Side */}
       <div className="flex items-center gap-3">
         {/* Hamburger Menu */}
-        <button
+        {/* <button
           onClick={onToggleSidebar}
           className="text-muted-foreground hover:text-foreground transition p-1.5 rounded-lg hover:bg-accent"
         >
           <Menu size={20} />
-        </button>
+        </button> */}
 
         {/* Search Bar */}
-        <div className="hidden sm:flex items-center gap-2 bg-gray-50 border border-border rounded-lg px-3 py-2 w-[300px] lg:w-[400px]">
+        {/* <div className="hidden sm:flex items-center gap-2 bg-gray-50 border border-border rounded-lg px-3 py-2 w-[300px] lg:w-[400px]">
           <Search size={16} className="text-muted-foreground flex-shrink-0" />
           <input
             type="text"
             placeholder="Search tests, packages, bookings..."
             className="bg-transparent text-sm text-foreground placeholder-muted-foreground outline-none w-full"
           />
-        </div>
+        </div> */}
       </div>
 
       {/* Right Side */}
