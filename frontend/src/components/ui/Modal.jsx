@@ -89,7 +89,7 @@ const Modal = ({ open, onClose, title, subtitle, children, size = 'md', classNam
         className={`bg-white border border-border rounded-xl w-full ${sizeClasses[size] || sizeClasses.md} max-h-[calc(100vh-1.5rem)] sm:max-h-[calc(100vh-2rem)] flex flex-col overflow-hidden ${className}`}
       >
         {(title || onClose) && (
-          <div className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 border-b border-border bg-primary/10 rounded-t-xl shrink-0">
+          <div className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 border-b border-border rounded-t-xl shrink-0">
             <div className="min-w-0">
               {title && (
                 <h2 id={titleId} className="font-serif text-base sm:text-lg text-foreground truncate">

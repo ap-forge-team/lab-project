@@ -62,4 +62,8 @@ export const API_ENDPOINTS = {
     BY_ID: (id) => `/roles/${id}`,
     RESOURCES: '/roles/resources',
   },
+  COMMISSIONS: {
+    BASE: '/commission',
+    HISTORY: '/commission/history',
+  },
 }

@@ -1,9 +1,10 @@
 import React from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Shield, Tag, ArrowLeft } from 'lucide-react'
+import { Shield, Tag, BadgePercent, ArrowLeft } from 'lucide-react'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import CategoryManagement from '@/features/admin/components/CategoryManagement'
 import RoleManagement from '@/features/admin/components/RoleManagement'
+import CommissionManagement from '@/features/admin/components/CommissionManagement'
 import usePermission from '@/hooks/usePermission'
 
 const settingsItems = [
@@ -22,6 +23,14 @@ const settingsItems = [
     icon: Tag,
     color: 'bg-green-500',
     permission: { resource: 'categories', action: 'read' },
+  },
+  {
+    key: 'commissions',
+    title: 'Commission',
+    description: 'Set the active commission and review change history.',
+    icon: BadgePercent,
+    color: 'bg-blue-500',
+    permission: { resource: 'commissions', action: 'read' },
   },
 ]
 
@@ -87,6 +96,14 @@ const AdminSettings = () => {
     return (
       <DashboardLayout>
         <CategoryManagement />
+      </DashboardLayout>
+    )
+  }
+
+  if (section === 'commissions') {
+    return (
+      <DashboardLayout>
+        <CommissionManagement />
       </DashboardLayout>
     )
   }
