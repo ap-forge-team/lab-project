@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Search,
   Plus,
@@ -27,6 +28,7 @@ import CategoryModal from './CategoryModal'
 const ITEMS_PER_PAGE = 6
 
 const CategoryManagement = () => {
+  const navigate = useNavigate()
   const [categories, setCategories] = useState([])
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [subcategories, setSubcategories] = useState([])
@@ -151,7 +153,12 @@ const CategoryManagement = () => {
   return (
     <div>
       <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-        <span>Settings</span>
+        <button
+          onClick={() => navigate('/admin/settings')}
+          className="hover:text-foreground transition"
+        >
+          Settings
+        </button>
         <span>/</span>
         <span className="text-foreground font-medium">Categories</span>
       </div>

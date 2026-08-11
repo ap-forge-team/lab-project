@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Search,
   Plus,
@@ -67,6 +68,7 @@ const ITEMS_PER_PAGE = 5
 const emptyForm = { name: '', displayName: '', description: '', permissions: {} }
 
 const RoleManagement = () => {
+  const navigate = useNavigate()
   const [roles, setRoles] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -205,7 +207,12 @@ const RoleManagement = () => {
     <div>
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-        <span>Settings</span>
+        <button
+          onClick={() => navigate('/admin/settings')}
+          className="hover:text-foreground transition"
+        >
+          Settings
+        </button>
         <span>/</span>
         <span className="text-foreground font-medium">Role Management</span>
       </div>
@@ -461,8 +468,8 @@ const RoleManagement = () => {
 
               <div>
                 <p className="text-sm font-semibold text-foreground mb-3">Permissions</p>
-                <div className="border border-border rounded-lg overflow-hidden">
-                  <table className="w-full text-sm">
+                <div className="border border-border rounded-lg overflow-x-auto">
+                  <table className="w-full text-sm min-w-[400px]">
                     <thead>
                       <tr className="bg-violet-50 border-b border-border">
                         <th className="text-left px-4 py-2 font-semibold text-violet-600">Resource</th>
