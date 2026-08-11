@@ -50,8 +50,12 @@ export const API_ENDPOINTS = {
   CATEGORIES: {
     BASE: '/categories',
     BY_ID: (id) => `/categories/${id}`,
-    SUBCATEGORIES: (categoryId) => `/categories/${categoryId}/subcategories`,
-    SUBCATEGORY_BY_ID: (categoryId, subId) => `/categories/${categoryId}/subcategories/${subId}`,
+    TOGGLE_STATUS: (id) => `/categories/${id}/toggle-status`,
+  },
+  SUBCATEGORIES: {
+    BASE: '/subcategories',
+    BY_ID: (id) => `/subcategories/${id}`,
+    TOGGLE_STATUS: (id) => `/subcategories/${id}/toggle-status`,
   },
   ROLES: {
     BASE: '/roles',

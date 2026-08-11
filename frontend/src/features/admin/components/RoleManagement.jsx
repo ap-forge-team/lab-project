@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import {
   Search,
   Plus,
@@ -37,6 +38,7 @@ import {
 } from '@/services/role.service'
 import Input from '@/components/ui/Input'
 import Textarea from '@/components/ui/Textarea'
+import ConfirmModal from '@/components/ui/ConfirmModal'
 
 const RESOURCES_CONFIG = {
   users: { label: 'Users', icon: Users, color: 'text-blue-600', bg: 'bg-blue-100' },
@@ -80,6 +82,8 @@ const RoleManagement = () => {
   const [resources, setResources] = useState([])
   const [saving, setSaving] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
+  const [deleteModal, setDeleteModal] = useState({ open: false, target: null })
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     fetchRoles()
@@ -182,12 +186,20 @@ const RoleManagement = () => {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this role?')) return
+    setDeleteModal({ open: true, target: id })
+  }
+
+  const handleConfirmDelete = async () => {
     try {
-      await deleteRole(id)
+      setDeleting(true)
+      await deleteRole(deleteModal.target)
+      toast.success('Role deleted successfully')
       fetchRoles()
     } catch (err) {
-      console.error('Failed to delete role', err)
+      toast.error(err.response?.data?.message || 'Failed to delete role')
+    } finally {
+      setDeleting(false)
+      setDeleteModal({ open: false, target: null })
     }
   }
 
@@ -303,7 +315,7 @@ const RoleManagement = () => {
                         <MoreVertical size={16} />
                       </button>
                       {menuOpen === role._id && (
-                        <div className="absolute right-0 top-full mt-1 bg-white border border-border rounded-lg shadow-lg py-1 z-10 min-w-[120px]">
+                        <div className="absolute right-0 top-full mt-1 bg-white border border-border rounded-lg shadow-lg py-1 z-50 min-w-[120px]">
                           <button
                             onClick={(e) => { e.stopPropagation(); handleOpenModal(role) }}
                             className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left"
@@ -538,6 +550,17 @@ const RoleManagement = () => {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={deleteModal.open}
+        onClose={() => setDeleteModal({ open: false, target: null })}
+        onConfirm={handleConfirmDelete}
+        title="Delete Role"
+        message="Are you sure you want to delete this role? This action cannot be undone."
+        confirmText="Delete"
+        loading={deleting}
+        variant="danger"
+      />
     </div>
   )
 }

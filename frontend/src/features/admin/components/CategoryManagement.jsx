@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import {
   Search,
   Plus,
@@ -11,19 +12,25 @@ import {
   Info,
   ExternalLink,
   X,
+  ToggleLeft,
+  ToggleRight,
 } from 'lucide-react'
-import { AnimatePresence } from 'framer-motion'
 import {
   getCategories,
   createCategory,
   updateCategory,
   deleteCategory,
+  toggleCategoryStatus,
   getSubcategories,
   createSubcategory,
   updateSubcategory,
   deleteSubcategory,
+  toggleSubcategoryStatus,
 } from '@/services/category.service'
 import CategoryModal from './CategoryModal'
+import ConfirmModal from '@/components/ui/ConfirmModal'
+import Can from '@/components/Can'
+import { getIconById } from '@/components/icons/MedicalIcons'
 
 const ITEMS_PER_PAGE = 6
 
@@ -40,9 +47,11 @@ const CategoryManagement = () => {
   const [showSubcategoryModal, setShowSubcategoryModal] = useState(false)
   const [editingCategory, setEditingCategory] = useState(null)
   const [editingSubcategory, setEditingSubcategory] = useState(null)
-  const [categoryForm, setCategoryForm] = useState({ name: '', description: '', status: 'active' })
-  const [subcategoryForm, setSubcategoryForm] = useState({ name: '', description: '', status: 'active' })
+  const [categoryForm, setCategoryForm] = useState({ name: '', description: '', icon: 'flask', isActive: true })
+  const [subcategoryForm, setSubcategoryForm] = useState({ name: '', description: '', isActive: true })
   const [menuOpen, setMenuOpen] = useState(null)
+  const [deleteModal, setDeleteModal] = useState({ open: false, type: null, target: null })
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     fetchCategories()
@@ -58,10 +67,13 @@ const CategoryManagement = () => {
     try {
       setLoading(true)
       const { data } = await getCategories()
-      const list = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : []
+      const list = data?.categories || []
       setCategories(list)
       if (list.length > 0 && !selectedCategory) {
         setSelectedCategory(list[0])
+      } else if (selectedCategory) {
+        const updated = list.find((c) => c._id === selectedCategory._id)
+        if (updated) setSelectedCategory(updated)
       }
     } catch (err) {
       console.error('Failed to fetch categories', err)
@@ -72,8 +84,8 @@ const CategoryManagement = () => {
 
   const fetchSubcategories = async (categoryId) => {
     try {
-      const { data } = await getSubcategories(categoryId)
-      setSubcategories(Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [])
+      const { data } = await getSubcategories({ category: categoryId })
+      setSubcategories(data?.subcategories || [])
     } catch (err) {
       console.error('Failed to fetch subcategories', err)
       setSubcategories([])
@@ -103,7 +115,7 @@ const CategoryManagement = () => {
       }
       setShowCategoryModal(false)
       setEditingCategory(null)
-      setCategoryForm({ name: '', description: '', status: 'active' })
+      setCategoryForm({ name: '', description: '', icon: '🧪', isActive: true })
       fetchCategories()
     } catch (err) {
       console.error('Failed to save category', err)
@@ -111,29 +123,47 @@ const CategoryManagement = () => {
   }
 
   const handleDeleteCategory = async (id) => {
-    if (!confirm('Delete this category?')) return
+    setDeleteModal({ open: true, type: 'category', target: id })
+  }
+
+  const handleConfirmDeleteCategory = async () => {
     try {
-      await deleteCategory(id)
-      if (selectedCategory?._id === id) {
+      setDeleting(true)
+      await deleteCategory(deleteModal.target)
+      toast.success('Category deleted successfully')
+      if (selectedCategory?._id === deleteModal.target) {
         setSelectedCategory(null)
         setSubcategories([])
       }
       fetchCategories()
     } catch (err) {
-      console.error('Failed to delete category', err)
+      toast.error(err.response?.data?.message || 'Failed to delete category')
+    } finally {
+      setDeleting(false)
+      setDeleteModal({ open: false, type: null, target: null })
+    }
+  }
+
+  const handleToggleCategoryStatus = async (id) => {
+    try {
+      await toggleCategoryStatus(id)
+      fetchCategories()
+    } catch (err) {
+      console.error('Failed to toggle category status', err)
     }
   }
 
   const handleSaveSubcategory = async () => {
     try {
+      const payload = { ...subcategoryForm, category: selectedCategory._id }
       if (editingSubcategory) {
-        await updateSubcategory(selectedCategory._id, editingSubcategory._id, subcategoryForm)
+        await updateSubcategory(editingSubcategory._id, payload)
       } else {
-        await createSubcategory(selectedCategory._id, subcategoryForm)
+        await createSubcategory(payload)
       }
       setShowSubcategoryModal(false)
       setEditingSubcategory(null)
-      setSubcategoryForm({ name: '', description: '', status: 'active' })
+      setSubcategoryForm({ name: '', description: '', isActive: true })
       fetchSubcategories(selectedCategory._id)
     } catch (err) {
       console.error('Failed to save subcategory', err)
@@ -141,12 +171,37 @@ const CategoryManagement = () => {
   }
 
   const handleDeleteSubcategory = async (subId) => {
-    if (!confirm('Delete this subcategory?')) return
+    setDeleteModal({ open: true, type: 'subcategory', target: subId })
+  }
+
+  const handleConfirmDeleteSubcategory = async () => {
     try {
-      await deleteSubcategory(selectedCategory._id, subId)
+      setDeleting(true)
+      await deleteSubcategory(deleteModal.target)
+      toast.success('Subcategory deleted successfully')
       fetchSubcategories(selectedCategory._id)
     } catch (err) {
-      console.error('Failed to delete subcategory', err)
+      toast.error(err.response?.data?.message || 'Failed to delete subcategory')
+    } finally {
+      setDeleting(false)
+      setDeleteModal({ open: false, type: null, target: null })
+    }
+  }
+
+  const handleConfirmDelete = async () => {
+    if (deleteModal.type === 'category') {
+      await handleConfirmDeleteCategory()
+    } else if (deleteModal.type === 'subcategory') {
+      await handleConfirmDeleteSubcategory()
+    }
+  }
+
+  const handleToggleSubcategoryStatus = async (id) => {
+    try {
+      await toggleSubcategoryStatus(id)
+      fetchSubcategories(selectedCategory._id)
+    } catch (err) {
+      console.error('Failed to toggle subcategory status', err)
     }
   }
 
@@ -171,13 +226,15 @@ const CategoryManagement = () => {
               Create and manage test categories and their subcategories.
             </p>
           </div>
-          <button
-            onClick={() => { setEditingCategory(null); setCategoryForm({ name: '', description: '', status: 'active' }); setShowCategoryModal(true) }}
-            className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-4 py-2.5 rounded-lg font-semibold text-sm transition"
-          >
-            <Plus size={16} />
-            Add Category
-          </button>
+          <Can resource="categories" action="create">
+            <button
+              onClick={() =>               { setEditingCategory(null); setCategoryForm({ name: '', description: '', icon: 'flask', isActive: true }); setShowCategoryModal(true) }}
+              className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-4 py-2.5 rounded-lg font-semibold text-sm transition"
+            >
+              <Plus size={16} />
+              Add Category
+            </button>
+          </Can>
         </div>
       </div>
 
@@ -221,12 +278,22 @@ const CategoryManagement = () => {
                       }`}
                   >
                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <span className="text-primary text-sm font-bold">{category.name?.charAt(0)}</span>
+                      {(() => {
+                        const IconComponent = getIconById(category.icon || 'flask')
+                        return <IconComponent size={20} />
+                      })()}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground truncate">{category.name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold text-foreground truncate">{category.name}</p>
+                        {!category.isActive && (
+                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                            Inactive
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-muted-foreground">
-                        {category.subcategoryCount || 0} Subcategories &middot; {category.testCount || 0} Tests
+                        {category.testCount || 0} Tests
                       </p>
                     </div>
                     <div className="relative">
@@ -237,19 +304,43 @@ const CategoryManagement = () => {
                         <MoreVertical size={16} />
                       </button>
                       {menuOpen === category._id && (
-                        <div className="absolute right-0 top-full mt-1 bg-white border border-border rounded-lg shadow-lg py-1 z-10 min-w-[120px]">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setEditingCategory(category); setCategoryForm({ name: category.name, description: category.description || '', status: category.status || 'active' }); setShowCategoryModal(true); setMenuOpen(null) }}
-                            className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left"
-                          >
-                            <Edit2 size={14} /> Edit
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleDeleteCategory(category._id); setMenuOpen(null) }}
-                            className="flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 w-full text-left"
-                          >
-                            <Trash2 size={14} /> Delete
-                          </button>
+                        <div className="absolute right-0 top-full mt-1 bg-white border border-border rounded-lg shadow-lg py-1 z-50 min-w-[140px]">
+                          <Can resource="categories" action="update">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setEditingCategory(category)
+                                setCategoryForm({
+                                  name: category.name,
+                                  description: category.description || '',
+                                  icon: category.icon || 'flask',
+                                  isActive: category.isActive !== false,
+                                })
+                                setShowCategoryModal(true)
+                                setMenuOpen(null)
+                              }}
+                              className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left"
+                            >
+                              <Edit2 size={14} /> Edit
+                            </button>
+                          </Can>
+                          <Can resource="categories" action="update">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleToggleCategoryStatus(category._id); setMenuOpen(null) }}
+                              className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left"
+                            >
+                              {category.isActive !== false ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
+                              {category.isActive !== false ? 'Deactivate' : 'Activate'}
+                            </button>
+                          </Can>
+                          <Can resource="categories" action="delete">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleDeleteCategory(category._id); setMenuOpen(null) }}
+                              className="flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 w-full text-left"
+                            >
+                              <Trash2 size={14} /> Delete
+                            </button>
+                          </Can>
                         </div>
                       )}
                     </div>
@@ -259,12 +350,14 @@ const CategoryManagement = () => {
             </div>
 
             <div className="p-3 border-t border-border">
-              <button
-                onClick={() => { setEditingCategory(null); setCategoryForm({ name: '', description: '', status: 'active' }); setShowCategoryModal(true) }}
-                className="flex items-center gap-2 text-sm text-primary font-semibold hover:underline"
-              >
-                <Plus size={14} /> Add New Category
-              </button>
+              <Can resource="categories" action="create">
+                <button
+                  onClick={() => { setEditingCategory(null); setCategoryForm({ name: '', description: '', icon: 'flask', isActive: true }); setShowCategoryModal(true) }}
+                  className="flex items-center gap-2 text-sm text-primary font-semibold hover:underline"
+                >
+                  <Plus size={14} /> Add New Category
+                </button>
+              </Can>
             </div>
           </div>
         </div>
@@ -278,17 +371,22 @@ const CategoryManagement = () => {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-4">
                     <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <span className="text-primary text-xl font-bold">{selectedCategory.name?.charAt(0)}</span>
+                      {(() => {
+                        const IconComponent = getIconById(selectedCategory.icon || 'flask')
+                        return <IconComponent size={28} />
+                      })()}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
                         <h2 className="text-lg font-bold text-foreground">{selectedCategory.name}</h2>
-                        <span className="bg-green-100 text-green-700 text-xs font-semibold px-2 py-0.5 rounded-full">
-                          {selectedCategory.status || 'Active'}
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                          selectedCategory.isActive !== false ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {selectedCategory.isActive !== false ? 'Active' : 'Inactive'}
                         </span>
                       </div>
                       <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-                        <span>{selectedCategory.subcategoryCount || subcategories.length} Subcategories</span>
+                        <span>{subcategories.length} Subcategories</span>
                         <span>&middot;</span>
                         <span>{selectedCategory.testCount || 0} Tests</span>
                       </div>
@@ -297,12 +395,23 @@ const CategoryManagement = () => {
                       )}
                     </div>
                   </div>
-                  <button
-                    onClick={() => { setEditingCategory(selectedCategory); setCategoryForm({ name: selectedCategory.name, description: selectedCategory.description || '', status: selectedCategory.status || 'active' }); setShowCategoryModal(true) }}
-                    className="inline-flex items-center gap-2 border border-border text-foreground hover:bg-accent px-3 py-2 rounded-lg text-sm font-medium transition"
-                  >
-                    <Edit2 size={14} /> Edit Category
-                  </button>
+                  <Can resource="categories" action="update">
+                    <button
+                      onClick={() => {
+                        setEditingCategory(selectedCategory)
+                        setCategoryForm({
+                          name: selectedCategory.name,
+                          description: selectedCategory.description || '',
+                          icon: selectedCategory.icon || 'flask',
+                          isActive: selectedCategory.isActive !== false,
+                        })
+                        setShowCategoryModal(true)
+                      }}
+                      className="inline-flex items-center gap-2 border border-border text-foreground hover:bg-accent px-3 py-2 rounded-lg text-sm font-medium transition"
+                    >
+                      <Edit2 size={14} /> Edit Category
+                    </button>
+                  </Can>
                 </div>
               </div>
 
@@ -326,12 +435,14 @@ const CategoryManagement = () => {
                         className="pl-8 pr-3 py-1.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary w-[200px]"
                       />
                     </div>
-                    <button
-                      onClick={() => { setEditingSubcategory(null); setSubcategoryForm({ name: '', description: '', status: 'active' }); setShowSubcategoryModal(true) }}
-                      className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition"
-                    >
-                      <Plus size={14} /> Add Subcategory
-                    </button>
+                    <Can resource="subcategories" action="create">
+                      <button
+                        onClick={() => { setEditingSubcategory(null); setSubcategoryForm({ name: '', description: '', isActive: true }); setShowSubcategoryModal(true) }}
+                        className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition"
+                      >
+                        <Plus size={14} /> Add Subcategory
+                      </button>
+                    </Can>
                   </div>
                 </div>
 
@@ -362,26 +473,41 @@ const CategoryManagement = () => {
                           </td>
                           <td className="px-4 py-3 text-sm text-muted-foreground">{sub.testCount || 0} Tests</td>
                           <td className="px-4 py-3">
-                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                              sub.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
-                            }`}>
-                              {sub.status || 'Active'}
-                            </span>
+                            <button
+                              onClick={() => handleToggleSubcategoryStatus(sub._id)}
+                              className={`text-xs font-semibold px-2 py-0.5 rounded-full cursor-pointer ${
+                                sub.isActive !== false ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                              }`}
+                            >
+                              {sub.isActive !== false ? 'Active' : 'Inactive'}
+                            </button>
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center justify-end gap-1">
-                              <button
-                                onClick={() => { setEditingSubcategory(sub); setSubcategoryForm({ name: sub.name, description: sub.description || '', status: sub.status || 'active' }); setShowSubcategoryModal(true) }}
-                                className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded transition"
-                              >
-                                <Edit2 size={14} />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteSubcategory(sub._id)}
-                                className="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded transition"
-                              >
-                                <Trash2 size={14} />
-                              </button>
+                              <Can resource="subcategories" action="update">
+                                <button
+                                  onClick={() => {
+                                    setEditingSubcategory(sub)
+                                    setSubcategoryForm({
+                                      name: sub.name,
+                                      description: sub.description || '',
+                                      isActive: sub.isActive !== false,
+                                    })
+                                    setShowSubcategoryModal(true)
+                                  }}
+                                  className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded transition"
+                                >
+                                  <Edit2 size={14} />
+                                </button>
+                              </Can>
+                              <Can resource="subcategories" action="delete">
+                                <button
+                                  onClick={() => handleDeleteSubcategory(sub._id)}
+                                  className="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded transition"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </Can>
                             </div>
                           </td>
                         </tr>
@@ -496,16 +622,19 @@ const CategoryManagement = () => {
                   placeholder="Description (optional)"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Status</label>
-                <select
-                  value={subcategoryForm.status}
-                  onChange={(e) => setSubcategoryForm({ ...subcategoryForm, status: e.target.value })}
-                  className="w-full px-3 py-2 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-foreground">Active</label>
+                <button
+                  type="button"
+                  onClick={() => setSubcategoryForm({ ...subcategoryForm, isActive: !subcategoryForm.isActive })}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
+                    subcategoryForm.isActive ? 'bg-primary' : 'bg-gray-300'
+                  }`}
                 >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                    subcategoryForm.isActive ? 'translate-x-6' : 'translate-x-1'
+                  }`} />
+                </button>
               </div>
             </div>
             <div className="flex items-center justify-end gap-3 p-4 border-t border-border">
@@ -523,6 +652,17 @@ const CategoryManagement = () => {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={deleteModal.open}
+        onClose={() => setDeleteModal({ open: false, type: null, target: null })}
+        onConfirm={handleConfirmDelete}
+        title={`Delete ${deleteModal.type === 'category' ? 'Category' : 'Subcategory'}`}
+        message={`Are you sure you want to delete this ${deleteModal.type}? This action cannot be undone.`}
+        confirmText="Delete"
+        loading={deleting}
+        variant="danger"
+      />
     </div>
   )
 }

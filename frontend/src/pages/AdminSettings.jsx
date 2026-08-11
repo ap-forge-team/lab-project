@@ -1,6 +1,6 @@
 import React from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Shield, Tag, FlaskConical, ArrowLeft } from 'lucide-react'
+import { Shield, Tag, ArrowLeft } from 'lucide-react'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import CategoryManagement from '@/features/admin/components/CategoryManagement'
 import RoleManagement from '@/features/admin/components/RoleManagement'
@@ -22,14 +22,6 @@ const settingsItems = [
     icon: Tag,
     color: 'bg-green-500',
     permission: { resource: 'categories', action: 'read' },
-  },
-  {
-    key: 'tests',
-    title: 'Tests',
-    description: 'Manage tests and test parameters.',
-    icon: FlaskConical,
-    color: 'bg-amber-500',
-    permission: { resource: 'tests', action: 'read' },
   },
 ]
 

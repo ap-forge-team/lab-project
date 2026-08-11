@@ -1,41 +1,8 @@
-import React, { useState } from 'react'
-import {
-  X,
-  Droplet,
-  FlaskConical,
-  ShieldPlus,
-  HeartPulse,
-  Waves,
-  Droplets,
-  Brain,
-  User,
-  Dna,
-  Pill,
-  Ribbon,
-  Activity,
-  Upload,
-  Plus,
-  Info,
-} from 'lucide-react'
-
-const ICONS = [
-  { id: 'droplet', icon: Droplet },
-  { id: 'flask', icon: FlaskConical },
-  { id: 'shield', icon: ShieldPlus },
-  { id: 'heart', icon: HeartPulse },
-  { id: 'kidney', icon: Waves },
-  { id: 'liver', icon: Droplets },
-  { id: 'thyroid', icon: Activity },
-  { id: 'stomach', icon: Dna },
-  { id: 'brain', icon: Brain },
-  { id: 'user', icon: User },
-  { id: 'vitamin', icon: Pill },
-  { id: 'ribbon', icon: Ribbon },
-]
+import React from 'react'
+import { X, Info, Upload } from 'lucide-react'
+import { MedicalIcons, getIconById } from '@/components/icons/MedicalIcons'
 
 const CategoryModal = ({ isOpen, onClose, onSave, editingCategory, form, setForm }) => {
-  const [selectedIcon, setSelectedIcon] = useState(form.icon || 'droplet')
-
   if (!isOpen) return null
 
   const handleChange = (field, value) => {
@@ -43,11 +10,10 @@ const CategoryModal = ({ isOpen, onClose, onSave, editingCategory, form, setForm
   }
 
   const handleIconSelect = (iconId) => {
-    setSelectedIcon(iconId)
     handleChange('icon', iconId)
   }
 
-  const SelectedIconComp = ICONS.find((i) => i.id === selectedIcon)?.icon || Droplet
+  const SelectedIcon = getIconById(form.icon || 'flask')
   const descLength = form.description?.length || 0
 
   return (
@@ -84,34 +50,26 @@ const CategoryModal = ({ isOpen, onClose, onSave, editingCategory, form, setForm
               Choose Icon <span className="text-red-500">*</span>
             </p>
             <div className="grid grid-cols-5 gap-2.5">
-              {ICONS.map(({ id, icon: IconComp }) => (
+              {MedicalIcons.map(({ id, label, Icon }) => (
                 <button
                   key={id}
                   type="button"
                   onClick={() => handleIconSelect(id)}
+                  title={label}
                   className={`relative w-12 h-12 rounded-xl flex items-center justify-center transition
-                    ${selectedIcon === id
+                    ${(form.icon || 'flask') === id
                       ? 'bg-primary/10 border-2 border-primary'
                       : 'bg-gray-50 border border-border hover:bg-accent'
                     }`}
                 >
-                  <IconComp
-                    size={20}
-                    className={selectedIcon === id ? 'text-primary' : 'text-foreground/70'}
-                  />
-                  {selectedIcon === id && (
+                  <Icon size={24} />
+                  {(form.icon || 'flask') === id && (
                     <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-primary text-white flex items-center justify-center text-[9px]">
                       ✓
                     </span>
                   )}
                 </button>
               ))}
-              <button
-                type="button"
-                className="w-12 h-12 rounded-xl border border-dashed border-border flex items-center justify-center text-muted-foreground hover:bg-accent transition"
-              >
-                <Plus size={18} />
-              </button>
             </div>
 
             <div className="flex items-start gap-1.5 mt-3 text-xs text-muted-foreground">
@@ -157,36 +115,29 @@ const CategoryModal = ({ isOpen, onClose, onSave, editingCategory, form, setForm
               <p className="text-right text-[11px] text-muted-foreground mt-1">{descLength}/150</p>
             </div>
 
-            <div>
-              <p className="text-sm font-medium text-foreground mb-1">Status</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-foreground">Active</p>
+                <p className="text-xs text-muted-foreground">Inactive categories will not be visible for selection.</p>
+              </div>
               <button
                 type="button"
-                onClick={() => handleChange('status', form.status === 'active' ? 'inactive' : 'active')}
-                className="flex items-center gap-2"
+                onClick={() => handleChange('isActive', !form.isActive)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
+                  form.isActive ? 'bg-green-500' : 'bg-gray-300'
+                }`}
               >
-                <span
-                  className={`w-9 h-5 rounded-full transition relative ${
-                    form.status === 'active' ? 'bg-green-500' : 'bg-gray-300'
-                  }`}
-                >
-                  <span
-                    className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition ${
-                      form.status === 'active' ? 'left-4' : 'left-0.5'
-                    }`}
-                  />
-                </span>
-                <span className="text-sm text-foreground capitalize">{form.status || 'Active'}</span>
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                  form.isActive ? 'translate-x-6' : 'translate-x-1'
+                }`} />
               </button>
-              <p className="text-xs text-muted-foreground mt-1">
-                Inactive categories will not be visible for selection.
-              </p>
             </div>
 
             <div>
               <p className="text-sm font-medium text-foreground mb-2">Preview</p>
               <div className="border border-border rounded-xl p-3 flex items-center gap-3">
                 <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <SelectedIconComp size={18} className="text-primary" />
+                  <SelectedIcon size={22} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
@@ -195,12 +146,12 @@ const CategoryModal = ({ isOpen, onClose, onSave, editingCategory, form, setForm
                     </p>
                     <span
                       className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                        form.status === 'active'
+                        form.isActive
                           ? 'bg-green-100 text-green-700'
                           : 'bg-gray-100 text-gray-600'
                       }`}
                     >
-                      {form.status === 'active' ? 'Active' : 'Inactive'}
+                      {form.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground truncate">
