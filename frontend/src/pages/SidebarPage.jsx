@@ -12,6 +12,7 @@ import { getAllBookings, getAssignedBookings, getLabOwnerBookings, getMyBookings
 import { getAllLabOwners } from '@/services/user.service'
 import { getAdminPaymentStats, getLabOwnerPaymentStats } from '@/services/payment.service'
 import { Spinner } from '@/components/ui/Loader'
+import AdminTestsPage from '@/features/admin/components/AdminTestsPage'
 
 const sources = {
   tests: getAllTests,
@@ -76,6 +77,14 @@ const SidebarPage = ({ page: pageProp }) => {
           <h1 className="text-xl font-bold text-foreground">Access denied</h1>
           <p className="text-sm text-muted-foreground mt-2">You do not have permission to view {config.title}.</p>
         </div>
+      </DashboardLayout>
+    )
+  }
+
+  if (slug === 'tests') {
+    return (
+      <DashboardLayout>
+        <AdminTestsPage tests={items} isLoading={query.isLoading} isError={query.isError} onRefresh={query.refetch} />
       </DashboardLayout>
     )
   }

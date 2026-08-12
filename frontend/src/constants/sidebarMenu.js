@@ -39,12 +39,14 @@ export const sidebarMenuByRole = {
   ],
   lab_assistant: [
     { label: 'Dashboard', icon: LayoutDashboard, route: '/lab-assistant' },
+    { label: 'Tests', icon: TestTube, route: '/lab-assistant/tests', permission: { resource: 'tests', action: 'read' } },
     { label: 'Sample Pickups', icon: ClipboardList, route: '/lab-assistant/sample-pickups', permission: { resource: 'bookings', action: 'read' } },
     { label: 'Upload Reports', icon: Upload, route: '/lab-assistant/upload-reports', permission: { resource: 'bookings', action: 'update' } },
     { label: 'Bookings', icon: Calendar, route: '/lab-assistant/bookings', permission: { resource: 'bookings', action: 'read' } },
   ],
   patient: [
     { label: 'Dashboard', icon: LayoutDashboard, route: '/booking' },
+    { label: 'Tests', icon: TestTube, route: '/patient/tests', permission: { resource: 'tests', action: 'read' } },
     { label: 'My Bookings', icon: Calendar, route: '/booking/history', permission: { resource: 'bookings', action: 'read' } },
     { label: 'Upload Prescription', icon: Upload, route: '/upload-prescription', permission: { resource: 'bookings', action: 'create' } },
     { label: 'Reports', icon: FileText, route: '/patient/reports', permission: { resource: 'reports', action: 'read' } },

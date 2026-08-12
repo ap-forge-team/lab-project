@@ -167,9 +167,9 @@ const Navbar = () => {
                   Login
                 </Button>
               </Link>
-              <Link to={ROUTES.TESTS}>
+              <Link to={ROUTES.SIGNUP}>
                 <Button variant="primary" size="sm" className="font-semibold h-10">
-                  Book a Test
+                  Signup
                 </Button>
               </Link>
             </>
@@ -459,8 +459,8 @@ const Navbar = () => {
                     <Link to={ROUTES.LOGIN} onClick={() => setMenuOpen(false)}>
                       <Button variant="outline" fullWidth>Login</Button>
                     </Link>
-                    <Link to={ROUTES.TESTS} onClick={() => setMenuOpen(false)}>
-                      <Button fullWidth>Book a Test</Button>
+                    <Link to={ROUTES.SIGNUP} onClick={() => setMenuOpen(false)}>
+                      <Button fullWidth>Signup</Button>
                     </Link>
                   </div>
                 ) : (

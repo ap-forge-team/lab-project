@@ -42,11 +42,13 @@ export const sidebarPagesByRole = {
     reports: page('Reports', 'Review reports completed by your laboratory.', FileText, { resource: 'reports', action: 'read' }, 'labOwnerBookings', 'No completed reports found.'),
   },
   lab_assistant: {
+    tests: page('Tests', 'Browse the laboratory tests available.', TestTube, { resource: 'tests', action: 'read' }, 'tests'),
     'sample-pickups': page('Sample Pickups', 'Process assigned sample pickups.', ClipboardList, { resource: 'bookings', action: 'read' }, 'assignedBookings'),
     'upload-reports': page('Upload Reports', 'Upload reports for assigned bookings.', Upload, { resource: 'bookings', action: 'update' }, 'assignedBookings'),
     bookings: page('Bookings', 'View bookings assigned to you.', Calendar, { resource: 'bookings', action: 'read' }, 'assignedBookings'),
   },
   patient: {
+    tests: page('Tests', 'Browse the laboratory tests available.', TestTube, { resource: 'tests', action: 'read' }, 'tests'),
     history: page('My Bookings', 'Review your upcoming and previous bookings.', Calendar, { resource: 'bookings', action: 'read' }, 'myBookings'),
     'upload-prescription': page('Upload Prescription', 'Attach a prescription to a booking.', Upload, { resource: 'bookings', action: 'create' }, 'myBookings'),
     reports: page('Reports', 'View reports for your completed bookings.', FileText, { resource: 'reports', action: 'read' }, 'myBookings', 'No reports are ready yet.'),
