@@ -126,7 +126,7 @@ const TestDetailsPanel = ({ test, style, catColor, onClose }) => {
   )
 }
 
-const AdminTestsPage = ({ tests, isLoading, isError, onRefresh }) => {
+const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('all')
   const [status, setStatus] = useState('all')
@@ -166,8 +166,8 @@ const AdminTestsPage = ({ tests, isLoading, isError, onRefresh }) => {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div><h1 className="text-3xl font-bold tracking-tight text-foreground">Tests</h1><p className="mt-1 text-sm text-muted-foreground">Manage and view all laboratory tests</p></div>
         <div className="flex flex-wrap items-center gap-2">
-          <button type="button" className="inline-flex items-center gap-2 rounded-lg border border-border bg-white px-4 py-2.5 text-sm font-semibold text-foreground shadow-sm transition hover:bg-accent"><Upload size={17} />Import Tests</button>
-          <button type="button" className="inline-flex items-center gap-2 rounded-lg border border-border bg-white px-4 py-2.5 text-sm font-semibold text-foreground shadow-sm transition hover:bg-accent"><Download size={17} />Export</button>
+          {/* <button type="button" className="inline-flex items-center gap-2 rounded-lg border border-border bg-white px-4 py-2.5 text-sm font-semibold text-foreground shadow-sm transition hover:bg-accent"><Upload size={17} />Import Tests</button>
+          <button type="button" className="inline-flex items-center gap-2 rounded-lg border border-border bg-white px-4 py-2.5 text-sm font-semibold text-foreground shadow-sm transition hover:bg-accent"><Download size={17} />Export</button> */}
           <Can resource="tests" action="create"><Button onClick={() => setShowCreate(true)}><Plus size={18} className="mr-2" />Add Test</Button></Can>
         </div>
       </div>
@@ -250,4 +250,4 @@ const AdminTestsPage = ({ tests, isLoading, isError, onRefresh }) => {
   )
 }
 
-export default AdminTestsPage
+export default TestsManagePage

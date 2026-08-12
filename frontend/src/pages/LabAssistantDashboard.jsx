@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
-import DashboardLayout from '@/components/layout/DashboardLayout'
+import DashboardShell from '@/features/dashboard/components/DashboardShell'
 import {
   getAssignedBookings,
   searchAssignedBookings,
@@ -190,24 +190,13 @@ const LabAssistantDashboard = () => {
         : bookings
 
   return (
-    <DashboardLayout>
-      <div className="bg-background min-h-screen">
-        <div className="bg-tertiary">
-          <div className="enterprise-container py-8 text-white">
-            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/10 px-3 py-1 rounded-full text-[10px] mb-4">
-              <div className="w-1.5 h-1.5 rounded-full bg-green-400"></div>
-              Lab Assistant Portal
-            </div>
-            <h1 className="font-serif text-2xl md:text-3xl text-white">Lab Assistant Dashboard</h1>
-          </div>
-        </div>
-        <div className="enterprise-container py-6">
-          <LabAssistantStatsGrid
-            bookings={bookings}
-            activeSection={activeSection}
-            setActiveSection={setActiveSection}
-          />
-          <div className="bg-white rounded-[35px] shadow-sm mt-10 p-5 md:p-8">
+    <DashboardShell badge="Lab Assistant Portal" title="Lab Assistant Dashboard">
+      <LabAssistantStatsGrid
+        bookings={bookings}
+        activeSection={activeSection}
+        setActiveSection={setActiveSection}
+      />
+      <div className="bg-white rounded-[35px] shadow-sm mt-10 p-5 md:p-8">
             <div className="mb-6 flex flex-col md:flex-row gap-4">
               <div className="flex items-center gap-4 flex-1">
                 <div className="relative flex-1">
@@ -264,7 +253,6 @@ const LabAssistantDashboard = () => {
               </>
             )}
           </div>
-        </div>
         <LabAssistantSampleModal
           showSampleModal={showSampleModal}
           setShowSampleModal={setShowSampleModal}
@@ -362,8 +350,7 @@ const LabAssistantDashboard = () => {
             </Button>
           </div>
         </Modal>
-      </div>
-    </DashboardLayout>
+    </DashboardShell>
   )
 }
 

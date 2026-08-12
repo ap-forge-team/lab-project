@@ -12,7 +12,7 @@ import { getAllBookings, getAssignedBookings, getLabOwnerBookings, getMyBookings
 import { getAllLabOwners } from '@/services/user.service'
 import { getAdminPaymentStats, getLabOwnerPaymentStats } from '@/services/payment.service'
 import { Spinner } from '@/components/ui/Loader'
-import AdminTestsPage from '@/features/admin/components/AdminTestsPage'
+import TestsManagePage from '@/features/tests/components/TestsManagePage'
 
 const sources = {
   tests: getAllTests,
@@ -84,7 +84,7 @@ const SidebarPage = ({ page: pageProp }) => {
   if (slug === 'tests') {
     return (
       <DashboardLayout>
-        <AdminTestsPage tests={items} isLoading={query.isLoading} isError={query.isError} onRefresh={query.refetch} />
+        <TestsManagePage tests={items} isLoading={query.isLoading} isError={query.isError} onRefresh={query.refetch} />
       </DashboardLayout>
     )
   }

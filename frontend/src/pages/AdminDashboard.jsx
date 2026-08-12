@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { toast } from 'react-toastify'
-import DashboardLayout from '@/components/layout/DashboardLayout'
+import DashboardShell from '@/features/dashboard/components/DashboardShell'
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
 import { getAllTests } from '@/services/test.service'
@@ -9,7 +9,7 @@ import { getAllLabOwners, getBookingLabOwners, getPaymentSetting, createPaymentS
 import { getAllBookings } from '@/services/booking.service'
 import { BOOKING_STATUS } from '@/constants/status'
 import AdminStatsGrid from '@/features/admin/components/AdminStatsGrid'
-import AdminTestsSection from '@/features/admin/components/AdminTestsSection'
+import AdminTestsSection from '@/features/tests/components/AdminTestsSection'
 import AdminPackagesSection from '@/features/admin/components/AdminPackagesSection'
 import AdminUsersSection from '@/features/admin/components/AdminUsersSection'
 import AdminBookingsSection from '@/features/admin/components/AdminBookingsSection'
@@ -152,33 +152,23 @@ const AdminDashboard = () => {
         : bookings
 
   return (
-    <DashboardLayout>
-      <div className="bg-background min-h-screen">
-        <div className="bg-tertiary">
-          <div className="enterprise-container py-8 text-white">
-            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/10 px-3 py-1 rounded-full text-[10px] mb-4">
-              <div className="w-1.5 h-1.5 rounded-full bg-green-400"></div>
-              Admin Management Portal
-            </div>
-            <h1 className="font-serif text-2xl md:text-3xl text-white">Admin Dashboard</h1>
-            <p className="text-white/40 text-xs mt-1 max-w-lg">
-              Manage tests, packages, bookings, lab owners and laboratory operations.
-            </p>
-          </div>
-        </div>
-        <div className="enterprise-container py-6">
-          <AdminStatsGrid
-            bookings={bookings}
-            tests={tests}
-            packages={packages}
-            labOwners={labOwners}
-            activeSection={activeSection}
-            setActiveSection={setActiveSection}
-            scrollToTable={scrollToTable}
-            scrollToLabOwners={scrollToLabOwners}
-            setActivePanel={setActivePanel}
-            openPaymentOverview={() => setShowPaymentOverview(true)}
-          />
+    <DashboardShell
+      badge="Admin Management Portal"
+      title="Admin Dashboard"
+      subtitle="Manage tests, packages, bookings, lab owners and laboratory operations."
+    >
+      <AdminStatsGrid
+        bookings={bookings}
+        tests={tests}
+        packages={packages}
+        labOwners={labOwners}
+        activeSection={activeSection}
+        setActiveSection={setActiveSection}
+        scrollToTable={scrollToTable}
+        scrollToLabOwners={scrollToLabOwners}
+        setActivePanel={setActivePanel}
+        openPaymentOverview={() => setShowPaymentOverview(true)}
+      />
           <AdminTestsSection
             open={activePanel === 'test'}
             onClose={() => setActivePanel('')}
@@ -261,9 +251,7 @@ const AdminDashboard = () => {
             filteredBookings={filteredBookings}
             tableRef={tableRef}
           />
-        </div>
-      </div>
-    </DashboardLayout>
+    </DashboardShell>
   )
 }
 

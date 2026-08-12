@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import DashboardLayout from '@/components/layout/DashboardLayout'
+import DashboardShell from '@/features/dashboard/components/DashboardShell'
 import { toast } from 'react-toastify'
 import {
   getLabOwnerBookings,
@@ -202,40 +202,30 @@ const LabOwnerDashboard = () => {
         ? bookings.filter((item) => item.status === BOOKING_STATUS.COMPLETED)
         : bookings
   return (
-    <DashboardLayout>
-      <div className="bg-background min-h-screen">
-        <div className="bg-tertiary">
-          <div className="enterprise-container py-8 text-white">
-            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/10 px-3 py-1 rounded-full text-[10px] mb-4">
-              <div className="w-1.5 h-1.5 rounded-full bg-green-400"></div>
-              Laboratory Management Portal
-            </div>
-            <h1 className="font-serif text-2xl md:text-3xl text-white">Lab Owner Dashboard</h1>
-            <p className="text-white/40 text-xs mt-1 max-w-lg">
-              Manage bookings, assign assistants, and monitor laboratory operations.
-            </p>
-          </div>
-        </div>
-        <div className="enterprise-container py-6">
-          <LabOwnerStatsGrid
-            bookings={bookings}
-            assistants={assistants}
-            activeSection={activeSection}
-            setActiveSection={setActiveSection}
-            setSelectedAssistant={setSelectedAssistant}
-            scrollToTable={scrollToTable}
-            openPaymentOverview={() => setShowPaymentOverview(true)}
-          />
-          <LabOwnerAssistantsSection
-            assistants={assistants}
-            bookings={bookings}
-            activeSection={activeSection}
-            selectedAssistant={selectedAssistant}
-            setSelectedAssistant={setSelectedAssistant}
-            showAssistantForm={showAssistantForm}
-            setShowAssistantForm={setShowAssistantForm}
-            scrollToTable={scrollToTable}
-          />
+    <DashboardShell
+      badge="Laboratory Management Portal"
+      title="Lab Owner Dashboard"
+      subtitle="Manage bookings, assign assistants, and monitor laboratory operations."
+    >
+      <LabOwnerStatsGrid
+        bookings={bookings}
+        assistants={assistants}
+        activeSection={activeSection}
+        setActiveSection={setActiveSection}
+        setSelectedAssistant={setSelectedAssistant}
+        scrollToTable={scrollToTable}
+        openPaymentOverview={() => setShowPaymentOverview(true)}
+      />
+      <LabOwnerAssistantsSection
+        assistants={assistants}
+        bookings={bookings}
+        activeSection={activeSection}
+        selectedAssistant={selectedAssistant}
+        setSelectedAssistant={setSelectedAssistant}
+        showAssistantForm={showAssistantForm}
+        setShowAssistantForm={setShowAssistantForm}
+        scrollToTable={scrollToTable}
+      />
           <Can resource="lab_assistants" action="create">
             <Modal
               open={showAssistantForm}
@@ -376,14 +366,12 @@ const LabOwnerDashboard = () => {
                 </>
               )}
             </div>
-        </div>
-      </div>
       <ReportViewerModal
         isOpen={!!previewReport}
         onClose={() => setPreviewReport(null)}
         reportUrl={previewReport}
       />
-    </DashboardLayout>
+    </DashboardShell>
   )
 }
 export default LabOwnerDashboard
