@@ -1,39 +1,33 @@
-import { v4 as uuidv4 } from 'uuid'
+import Booking from "../models/Booking.js";
+import MESSAGES from "../Utils/messages.js";
+import logger from "../Utils/logger.js";
 
 export const uploadReport = async (req, res) => {
-
   try {
-
-    const booking = await Booking.findById(
-      req.params.id
-    )
+    const booking = await Booking.findById(req.params.id);
 
     if (!booking) {
-
       return res.status(404).json({
-        message: 'Booking Not Found'
-      })
+        success: false,
+        message: MESSAGES.BOOKING.NOT_FOUND,
+      });
     }
 
-    booking.report = req.file.path
+    booking.report = req.file.path;
+    booking.status = "Completed";
+    booking.assignedLabAssistant = req.user._id;
 
-    booking.status = 'Completed'
-
-    // Save assistant info
-
-    booking.assignedLabAssistant =
-      req.user._id
-
-    await booking.save()
+    await booking.save();
 
     res.status(200).json({
-      message: 'Report Uploaded Successfully'
-    })
-
+      success: true,
+      message: MESSAGES.BOOKING.REPORT_UPLOADED,
+    });
   } catch (error) {
-
+    logger.error(error);
     res.status(500).json({
-      message: error.message
-    })
+      success: false,
+      message: MESSAGES.SERVER_ERROR,
+    });
   }
-}
+};

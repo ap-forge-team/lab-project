@@ -1,43 +1,33 @@
-import express from 'express'
-
-import protect from '../middleware/authMiddleware.js'
-
-import authorizeRoles from '../middleware/roleMiddleware.js'
-
+import express from "express";
+import protect from "../middleware/authMiddleware.js";
+import { authorizePermissions } from "../middleware/roleMiddleware.js";
 import {
   createLabAssistant,
   createLabOwner,
-  getLabOwners
-} from '../controllers/adminController.js'
+  getLabOwners,
+} from "../controllers/adminController.js";
 
-const router = express.Router()
+const router = express.Router();
 
 router.post(
-  '/create-lab-assistant',
+  "/create-lab-assistant",
   protect,
-  authorizeRoles('lab_owner'),
+  authorizePermissions("users", "create"),
   createLabAssistant
-)
+);
 
 router.post(
-
-  '/create-lab-owner',
-
+  "/create-lab-owner",
   protect,
-
-  authorizeRoles('admin'),
-
+  authorizePermissions("users", "create"),
   createLabOwner
-)
+);
+
 router.get(
-
-  '/lab-owners',
-
+  "/lab-owners",
   protect,
-
-  authorizeRoles('admin'),
-
+  authorizePermissions("users", "read"),
   getLabOwners
-)
+);
 
-export default router
+export default router;

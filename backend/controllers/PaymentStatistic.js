@@ -2,12 +2,13 @@ import Booking from "../models/Booking.js";
 
 export const getLabOwnerPaymentStats = async (req, res) => {
   try {
+
     const bookings = await Booking.find({
       labOwner: req.user._id,
       paymentStatus: "Paid"
     })
-      .populate("test", "price")
-      .populate("package", "price");
+    .populate("test", "price")
+    .populate("package", "price");
 
     let totalRevenue = 0;
     let todayRevenue = 0;
@@ -18,6 +19,7 @@ export const getLabOwnerPaymentStats = async (req, res) => {
     const today = new Date();
 
     bookings.forEach((booking) => {
+
       const amount =
         booking.test?.price ||
         booking.package?.price ||
@@ -32,6 +34,7 @@ export const getLabOwnerPaymentStats = async (req, res) => {
         packageRevenue += amount;
 
       if (booking.paidAt) {
+
         const paidDate =
           new Date(booking.paidAt);
 
@@ -58,30 +61,43 @@ export const getLabOwnerPaymentStats = async (req, res) => {
       });
 
     res.json({
+
       totalRevenue,
+
       todayRevenue,
+
       monthRevenue,
+
       totalPaidBookings: bookings.length,
+
       pendingPayments,
+
       testRevenue,
+
       packageRevenue
+
     });
+
   } catch (error) {
+
     res.status(500).json({
       message: error.message
     });
+
   }
 };
 
 
 export const getAdminPaymentStats = async (req, res) => {
+
   try {
+
     const bookings =
       await Booking.find({
         paymentStatus: "Paid"
       })
-        .populate("test","price")
-        .populate("package","price");
+      .populate("test","price")
+      .populate("package","price");
 
     let totalRevenue = 0;
     let todayRevenue = 0;
@@ -90,6 +106,7 @@ export const getAdminPaymentStats = async (req, res) => {
     const today = new Date();
 
     bookings.forEach((booking)=>{
+
       const amount =
         booking.test?.price ||
         booking.package?.price ||
@@ -98,6 +115,7 @@ export const getAdminPaymentStats = async (req, res) => {
       totalRevenue += amount;
 
       if (booking.paidAt) {
+
         const paidDate =
           new Date(booking.paidAt);
 
@@ -115,6 +133,7 @@ export const getAdminPaymentStats = async (req, res) => {
           monthRevenue += amount;
         }
       }
+
     });
 
     const pendingPayments =
@@ -123,16 +142,26 @@ export const getAdminPaymentStats = async (req, res) => {
       });
 
     res.json({
+
       totalRevenue,
+
       todayRevenue,
+
       monthRevenue,
+
       totalPaidBookings:
         bookings.length,
+
       pendingPayments
+
     });
+
   } catch(error){
+
     res.status(500).json({
       message:error.message
     });
+
   }
-};
+
+}

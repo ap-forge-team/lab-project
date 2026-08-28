@@ -1,45 +1,115 @@
-import mongoose from 'mongoose'
+import mongoose from "mongoose";
 
-const testSchema = mongoose.Schema(
+const testSchema = new mongoose.Schema(
   {
     title: {
-  type: String,
-  required: true,
-  trim: true,
-  minlength: 2
-},
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 2,
+      unique: true,
+    },
+
+    shortName: {
+      type: String,
+      trim: true,
+      default: "",
+    },
 
     category: {
-      type: String,
-      required: true
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      required: true,
+    },
+
+    subcategory: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Subcategory",
+     
     },
 
     price: {
-  type: Number,
-  required: true,
-  min: 1
-},
+      type: Number,
+      required: true,
+      min: 1,
+    },
+
+    discount: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+    },
+
+    offerPrice: {
+      type: Number,
+      default: 0,
+    },
+
+    tax: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
 
     reportTime: {
       type: String,
-      required: true
+      required: true,
     },
 
-    description: {
+    shortDescription: {
       type: String,
-      required: true
+      trim: true,
+      default: "",
+    },
+
+    preparationInstructions: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    reportIncludes: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    fastingRequired: {
+      type: Boolean,
+      default: false,
+    },
+
+    collectionMethod: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    sampleType: {
+      type: String,
+      trim: true,
+      default: "",
     },
 
     image: {
       type: String,
-      required: true
-    }
+      default: "",
+    },
+
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
-    timestamps: true
+    timestamps: true,
   }
-)
+);
 
-const Test = mongoose.model('Test', testSchema)
+const Test = mongoose.model(
+  "Test",
+  testSchema
+);
 
-export default Test
+export default Test;

@@ -1,183 +1,439 @@
 import Category from "../models/Category.js";
-import Subcategory from "../models/Subcategory.js";
+import Test from "../models/Test.js";
+import MESSAGES from "../Utils/messages.js";
+import logger from "../Utils/logger.js";
+
+/*
+========================================
+CREATE CATEGORY
+========================================
+*/
 
 export const createCategory = async (req, res) => {
   try {
-    const { name, description, icon, image } = req.body;
+    const {
+      name,
+      description,
+      icon,
+      illustration,
+      displayOrder,
+      isActive,
+    } = req.body;
 
-    if (!name) {
+    if (!name?.trim()) {
       return res.status(400).json({
         success: false,
-        message: "Category name is required",
+        message: MESSAGES.CATEGORY.NAME_REQUIRED,
       });
     }
 
-    const existing = await Category.findOne({ name: name.trim() });
-    if (existing) {
+    const existingCategory =
+      await Category.findOne({
+        name: name.trim(),
+      });
+
+    if (existingCategory) {
       return res.status(409).json({
         success: false,
-        message: "Category already exists",
+        message: MESSAGES.CATEGORY.ALREADY_EXISTS,
       });
     }
+
+    const iconFile = req.files?.icon?.[0];
+    const illustrationFile = req.files?.illustration?.[0];
 
     const category = await Category.create({
       name: name.trim(),
       description: description || "",
-      icon: icon || "flask",
-      image: image || "",
+      icon: iconFile?.path || icon || "",
+      illustration: illustrationFile?.path || illustration || "",
+      displayOrder:
+        displayOrder !== undefined
+          ? Number(displayOrder)
+          : 0,
+      isActive:
+        isActive !== undefined
+          ? isActive
+          : true,
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
-      message: "Category created successfully",
+      message: MESSAGES.CATEGORY.CREATED,
       category,
     });
   } catch (error) {
-    res.status(500).json({
+    logger.error("Create Category Error:", { message: error.message, stack: error.stack });
+
+    return res.status(500).json({
       success: false,
-      message: "Server Error",
+      message: error.message,
     });
   }
 };
 
-export const getAllCategories = async (req, res) => {
-  try {
-    const categories = await Category.find().sort({ createdAt: -1 });
 
-    const categoriesWithCount = await Promise.all(
-      categories.map(async (cat) => {
-        const subcategoryCount = await Subcategory.countDocuments({ category: cat._id });
-        return {
-          ...cat.toObject(),
-          subcategoryCount,
-        };
-      })
+/*
+========================================
+GET ALL CATEGORIES
+========================================
+*/
+
+export const getAllCategories = async (
+  req,
+  res
+) => {
+  try {
+    const {
+      search = "",
+      status,
+    } = req.query;
+
+    const filter = {};
+
+    if (search.trim()) {
+      filter.name = {
+        $regex: search.trim(),
+        $options: "i",
+      };
+    }
+
+    if (status === "active") {
+      filter.isActive = true;
+    }
+
+    if (status === "inactive") {
+      filter.isActive = false;
+    }
+
+    const categories =
+      await Category.find(filter)
+        .sort({
+          displayOrder: 1,
+          createdAt: -1,
+        })
+        .lean();
+
+    /*
+      Get test counts
+    */
+
+    const categoryIds =
+      categories.map(
+        (category) => category._id
+      );
+
+    const testCounts =
+      await Test.aggregate([
+        {
+          $match: {
+            category: {
+              $in: categoryIds,
+            },
+          },
+        },
+
+        {
+          $group: {
+            _id: "$category",
+            count: {
+              $sum: 1,
+            },
+          },
+        },
+      ]);
+
+    const countMap = {};
+
+    testCounts.forEach((item) => {
+      countMap[item._id.toString()] =
+        item.count;
+    });
+
+    const result =
+      categories.map((category) => ({
+        ...category,
+
+        testCount:
+          countMap[
+            category._id.toString()
+          ] || 0,
+      }));
+
+    return res.status(200).json({
+      success: true,
+      categories: result,
+    });
+  } catch (error) {
+    logger.error(
+      "Get Categories Error:",
+      { message: error.message, stack: error.stack }
     );
 
-    res.status(200).json({
-      success: true,
-      count: categoriesWithCount.length,
-      categories: categoriesWithCount,
-    });
-  } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "Server Error",
+      message: error.message,
     });
   }
 };
 
-export const getCategoryById = async (req, res) => {
+
+/*
+========================================
+GET SINGLE CATEGORY
+========================================
+*/
+
+export const getCategoryById = async (
+  req,
+  res
+) => {
   try {
-    const category = await Category.findById(req.params.id);
+    const category =
+      await Category.findById(
+        req.params.id
+      );
 
     if (!category) {
       return res.status(404).json({
         success: false,
-        message: "Category not found",
+        message: MESSAGES.CATEGORY.NOT_FOUND,
       });
     }
 
-    res.status(200).json({
+    const testCount =
+      await Test.countDocuments({
+        category: category._id,
+      });
+
+    return res.status(200).json({
       success: true,
-      category,
+
+      category: {
+        ...category.toObject(),
+        testCount,
+      },
     });
   } catch (error) {
-    res.status(500).json({
+    logger.error(
+      "Get Category Error:",
+      { message: error.message, stack: error.stack }
+    );
+
+    return res.status(500).json({
       success: false,
-      message: "Server Error",
+      message: error.message,
     });
   }
 };
 
-export const updateCategory = async (req, res) => {
-  try {
-    const { name, description, icon, image } = req.body;
 
-    const category = await Category.findById(req.params.id);
+/*
+========================================
+UPDATE CATEGORY
+========================================
+*/
+
+export const updateCategory = async (
+  req,
+  res
+) => {
+  try {
+    const {
+      name,
+      description,
+      icon,
+      displayOrder,
+      isActive,
+    } = req.body;
+
+    const category =
+      await Category.findById(
+        req.params.id
+      );
+
     if (!category) {
       return res.status(404).json({
         success: false,
-        message: "Category not found",
+        message: MESSAGES.CATEGORY.NOT_FOUND,
       });
     }
 
-    if (name) category.name = name.trim();
-    if (description !== undefined) category.description = description;
-    if (icon) category.icon = icon;
-    if (image !== undefined) category.image = image;
+    if (name?.trim()) {
+      const duplicate =
+        await Category.findOne({
+          name: name.trim(),
+          _id: {
+            $ne: req.params.id,
+          },
+        });
+
+      if (duplicate) {
+        return res.status(409).json({
+          success: false,
+          message:
+            MESSAGES.CATEGORY.DUPLICATE_NAME,
+        });
+      }
+
+      category.name = name.trim();
+    }
+
+    if (description !== undefined) {
+      category.description =
+        description;
+    }
+
+    if (icon !== undefined || req.files?.icon?.length) {
+      category.icon =
+        req.files?.icon?.[0]?.path || icon;
+    }
+
+    if (req.files?.illustration?.length) {
+      category.illustration =
+        req.files.illustration[0].path;
+    }
+
+    if (displayOrder !== undefined) {
+      category.displayOrder =
+        Number(displayOrder);
+    }
+
+    if (isActive !== undefined) {
+      category.isActive =
+        isActive;
+    }
 
     await category.save();
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      message: "Category updated successfully",
+      message:
+        MESSAGES.CATEGORY.UPDATED,
       category,
     });
   } catch (error) {
-    res.status(500).json({
+    logger.error(
+      "Update Category Error:",
+      { message: error.message, stack: error.stack }
+    );
+
+    return res.status(500).json({
       success: false,
-      message: "Server Error",
+      message: error.message,
     });
   }
 };
 
-export const deleteCategory = async (req, res) => {
+
+/*
+========================================
+DELETE CATEGORY
+========================================
+*/
+
+export const deleteCategory = async (
+  req,
+  res
+) => {
   try {
-    const category = await Category.findById(req.params.id);
+    const category =
+      await Category.findById(
+        req.params.id
+      );
 
     if (!category) {
       return res.status(404).json({
         success: false,
-        message: "Category not found",
+        message: MESSAGES.CATEGORY.NOT_FOUND,
       });
     }
 
-    const subcategoryCount = await Subcategory.countDocuments({ category: category._id });
-    if (subcategoryCount > 0) {
+    /*
+      Don't delete category if
+      tests are using it.
+    */
+
+    const testCount =
+      await Test.countDocuments({
+        category: category._id,
+      });
+
+    if (testCount > 0) {
       return res.status(400).json({
         success: false,
-        message: `Cannot delete category. ${subcategoryCount} subcategory(ies) exist.`,
+        message:
+          MESSAGES.CATEGORY.CANNOT_DELETE_ASSIGNED(testCount),
       });
     }
 
-    await category.deleteOne();
+    await Category.findByIdAndDelete(
+      req.params.id
+    );
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      message: "Category deleted successfully",
+      message:
+        MESSAGES.CATEGORY.DELETED,
     });
   } catch (error) {
-    res.status(500).json({
+    logger.error(
+      "Delete Category Error:",
+      { message: error.message, stack: error.stack }
+    );
+
+    return res.status(500).json({
       success: false,
-      message: "Server Error",
+      message: error.message,
     });
   }
 };
 
-export const toggleCategoryStatus = async (req, res) => {
-  try {
-    const category = await Category.findById(req.params.id);
 
-    if (!category) {
-      return res.status(404).json({
+/*
+========================================
+TOGGLE STATUS
+========================================
+*/
+
+export const toggleCategoryStatus =
+  async (req, res) => {
+    try {
+      const category =
+        await Category.findById(
+          req.params.id
+        );
+
+      if (!category) {
+        return res.status(404).json({
+          success: false,
+          message:
+            MESSAGES.CATEGORY.NOT_FOUND,
+        });
+      }
+
+      category.isActive =
+        !category.isActive;
+
+      await category.save();
+
+      return res.status(200).json({
+        success: true,
+        message: category.isActive
+          ? MESSAGES.CATEGORY.ACTIVATED
+          : MESSAGES.CATEGORY.DEACTIVATED,
+
+        category,
+      });
+    } catch (error) {
+      logger.error(
+        "Toggle Category Error:",
+        { message: error.message, stack: error.stack }
+      );
+
+      return res.status(500).json({
         success: false,
-        message: "Category not found",
+        message: error.message,
       });
     }
-
-    category.isActive = !category.isActive;
-    await category.save();
-
-    res.status(200).json({
-      success: true,
-      message: `Category ${category.isActive ? "activated" : "deactivated"} successfully`,
-      category,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-    });
-  }
-};
+  };

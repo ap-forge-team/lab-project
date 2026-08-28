@@ -1,6 +1,4 @@
 import express from "express";
-import protect from "../middleware/authMiddleware.js";
-import { authorizePermissions } from "../middleware/roleMiddleware.js";
 import {
   createSubcategory,
   getAllSubcategories,
@@ -9,14 +7,21 @@ import {
   deleteSubcategory,
   toggleSubcategoryStatus,
 } from "../controllers/subcategoryController.js";
+import protect from "../middleware/authMiddleware.js";
+import { authorizePermissions } from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
-router.get("/", protect, getAllSubcategories);
-router.get("/:id", protect, getSubcategoryById);
 router.post("/", protect, authorizePermissions("subcategories", "create"), createSubcategory);
+
+router.get("/", protect, authorizePermissions("subcategories", "read"), getAllSubcategories);
+
+router.get("/:id", protect, authorizePermissions("subcategories", "read"), getSubcategoryById);
+
 router.put("/:id", protect, authorizePermissions("subcategories", "update"), updateSubcategory);
+
 router.delete("/:id", protect, authorizePermissions("subcategories", "delete"), deleteSubcategory);
-router.put("/:id/toggle-status", protect, authorizePermissions("subcategories", "update"), toggleSubcategoryStatus);
+
+router.patch("/:id/toggle-status", protect, authorizePermissions("subcategories", "update"), toggleSubcategoryStatus);
 
 export default router;

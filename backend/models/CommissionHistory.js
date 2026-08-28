@@ -1,41 +1,41 @@
 import mongoose from "mongoose";
 
 const commissionHistorySchema = new mongoose.Schema(
-  {
-    booking: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Booking",
-      required: true,
+{
+    oldCommissionType:{
+        type:String,
+        enum:["Percentage","Fixed"]
     },
-    labOwner: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
+
+    oldCommissionValue:{
+        type:Number
     },
-    totalAmount: {
-      type: Number,
-      required: true,
+
+    newCommissionType:{
+        type:String,
+        enum:["Percentage","Fixed"]
     },
-    commissionPercent: {
-      type: Number,
-      required: true,
+
+    newCommissionValue:{
+        type:Number
     },
-    commissionAmount: {
-      type: Number,
-      required: true,
+
+    changedBy:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"User",
+        required:true
     },
-    settlementStatus: {
-      type: String,
-      enum: ["pending", "settled"],
-      default: "pending",
-    },
-    settledAt: {
-      type: Date,
-    },
-  },
-  { timestamps: true }
+
+    reason:{
+        type:String,
+        default:""
+    }
+
+},{
+    timestamps:true
+});
+
+export default mongoose.model(
+    "CommissionHistory",
+    commissionHistorySchema
 );
-
-const CommissionHistory = mongoose.model("CommissionHistory", commissionHistorySchema);
-
-export default CommissionHistory;

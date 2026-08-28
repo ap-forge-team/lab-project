@@ -1,6 +1,4 @@
 import express from "express";
-import protect from "../middleware/authMiddleware.js";
-import { authorizePermissions } from "../middleware/roleMiddleware.js";
 import {
   createCategory,
   getAllCategories,
@@ -9,14 +7,40 @@ import {
   deleteCategory,
   toggleCategoryStatus,
 } from "../controllers/categoryController.js";
+import protect from "../middleware/authMiddleware.js";
+import { authorizePermissions } from "../middleware/roleMiddleware.js";
+import imageUpload from "../middleware/imageUpload.js";
 
 const router = express.Router();
 
-router.get("/", protect, getAllCategories);
-router.get("/:id", protect, getCategoryById);
-router.post("/", protect, authorizePermissions("categories", "create"), createCategory);
-router.put("/:id", protect, authorizePermissions("categories", "update"), updateCategory);
+router.post("/", protect, authorizePermissions("categories", "create"),  imageUpload.fields([
+    {
+      name: "icon",
+      maxCount: 1,
+    },
+    {
+      name: "illustration",
+      maxCount: 1,
+    },
+  ]),createCategory);
+
+router.get("/", protect, authorizePermissions("categories", "read"), getAllCategories);
+
+router.get("/:id", protect, authorizePermissions("categories", "read"), getCategoryById);
+
+router.put("/:id", protect, authorizePermissions("categories", "update"),  imageUpload.fields([
+    {
+      name: "icon",
+      maxCount: 1,
+    },
+    {
+      name: "illustration",
+      maxCount: 1,
+    },
+  ]),updateCategory);
+
 router.delete("/:id", protect, authorizePermissions("categories", "delete"), deleteCategory);
-router.put("/:id/toggle-status", protect, authorizePermissions("categories", "update"), toggleCategoryStatus);
+
+router.patch("/:id/toggle-status", protect, authorizePermissions("categories", "update"), toggleCategoryStatus);
 
 export default router;

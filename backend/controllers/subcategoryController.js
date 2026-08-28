@@ -1,179 +1,488 @@
 import Subcategory from "../models/Subcategory.js";
 import Category from "../models/Category.js";
+import Test from "../models/Test.js";
+import MESSAGES from "../Utils/messages.js";
+import logger from "../Utils/logger.js";
 
-export const createSubcategory = async (req, res) => {
+/*
+========================================
+CREATE SUBCATEGORY
+========================================
+*/
+
+export const createSubcategory = async (
+  req,
+  res
+) => {
   try {
-    const { name, category, description } = req.body;
+    const {
+      category,
+      name,
+      description,
+      displayOrder,
+      isActive,
+    } = req.body;
 
-    if (!name || !category) {
+    if (!category) {
       return res.status(400).json({
         success: false,
-        message: "Name and category are required",
+        message: MESSAGES.SUBCATEGORY.CATEGORY_REQUIRED,
       });
     }
 
-    const categoryExists = await Category.findById(category);
+    if (!name?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message:
+          MESSAGES.SUBCATEGORY.NAME_REQUIRED,
+      });
+    }
+
+    // Check category exists
+
+    const categoryExists =
+      await Category.findById(category);
+
     if (!categoryExists) {
       return res.status(404).json({
         success: false,
-        message: "Category not found",
+        message: MESSAGES.CATEGORY.NOT_FOUND,
       });
     }
 
-    const existing = await Subcategory.findOne({ name: name.trim(), category });
+    // Check duplicate
+
+    const existing =
+      await Subcategory.findOne({
+        category,
+        name: name.trim(),
+      });
+
     if (existing) {
       return res.status(409).json({
         success: false,
-        message: "Subcategory already exists in this category",
+        message:
+          MESSAGES.SUBCATEGORY.ALREADY_EXISTS,
       });
     }
 
-    const subcategory = await Subcategory.create({
-      name: name.trim(),
-      category,
-      description: description || "",
-    });
-
-    const populated = await subcategory.populate("category", "name");
-
-    res.status(201).json({
-      success: true,
-      message: "Subcategory created successfully",
-      subcategory: populated,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-    });
-  }
-};
-
-export const getAllSubcategories = async (req, res) => {
-  try {
-    const { category } = req.query;
-    const filter = category ? { category } : {};
-
-    const subcategories = await Subcategory.find(filter)
-      .populate("category", "name icon")
-      .sort({ createdAt: -1 });
-
-    res.status(200).json({
-      success: true,
-      count: subcategories.length,
-      subcategories,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-    });
-  }
-};
-
-export const getSubcategoryById = async (req, res) => {
-  try {
-    const subcategory = await Subcategory.findById(req.params.id).populate("category", "name");
-
-    if (!subcategory) {
-      return res.status(404).json({
-        success: false,
-        message: "Subcategory not found",
+    const subcategory =
+      await Subcategory.create({
+        category,
+        name: name.trim(),
+        description:
+          description || "",
+        displayOrder:
+          displayOrder !== undefined
+            ? Number(displayOrder)
+            : 0,
+        isActive:
+          isActive !== undefined
+            ? isActive
+            : true,
       });
-    }
 
-    res.status(200).json({
+    return res.status(201).json({
       success: true,
+      message:
+        MESSAGES.SUBCATEGORY.CREATED,
       subcategory,
     });
   } catch (error) {
-    res.status(500).json({
+    logger.error(
+      "Create Subcategory:",
+      { message: error.message, stack: error.stack }
+    );
+
+    return res.status(500).json({
       success: false,
-      message: "Server Error",
+      message: error.message,
     });
   }
 };
 
-export const updateSubcategory = async (req, res) => {
-  try {
-    const { name, description } = req.body;
 
-    const subcategory = await Subcategory.findById(req.params.id);
-    if (!subcategory) {
-      return res.status(404).json({
+/*
+========================================
+GET ALL SUBCATEGORIES
+========================================
+*/
+
+export const getAllSubcategories =
+  async (req, res) => {
+    try {
+      const {
+        category,
+        search = "",
+        status,
+      } = req.query;
+
+      const filter = {};
+
+      if (category) {
+        filter.category = category;
+      }
+
+      if (search.trim()) {
+        filter.name = {
+          $regex: search.trim(),
+          $options: "i",
+        };
+      }
+
+      if (status === "active") {
+        filter.isActive = true;
+      }
+
+      if (status === "inactive") {
+        filter.isActive = false;
+      }
+
+      const subcategories =
+        await Subcategory.find(filter)
+          .populate(
+            "category",
+            "name icon"
+          )
+          .sort({
+            displayOrder: 1,
+            createdAt: -1,
+          })
+          .lean();
+
+      // Get test counts
+
+      const ids =
+        subcategories.map(
+          (item) => item._id
+        );
+
+      const testCounts =
+        await Test.aggregate([
+          {
+            $match: {
+              subcategory: {
+                $in: ids,
+              },
+            },
+          },
+
+          {
+            $group: {
+              _id: "$subcategory",
+              count: {
+                $sum: 1,
+              },
+            },
+          },
+        ]);
+
+      const countMap = {};
+
+      testCounts.forEach((item) => {
+        countMap[
+          item._id.toString()
+        ] = item.count;
+      });
+
+      const result =
+        subcategories.map(
+          (item) => ({
+            ...item,
+
+            testCount:
+              countMap[
+                item._id.toString()
+              ] || 0,
+          })
+        );
+
+      return res.status(200).json({
+        success: true,
+        subcategories: result,
+      });
+    } catch (error) {
+      logger.error(
+        "Get Subcategories:",
+        { message: error.message, stack: error.stack }
+      );
+
+      return res.status(500).json({
         success: false,
-        message: "Subcategory not found",
+        message: error.message,
       });
     }
+  };
 
-    if (name) subcategory.name = name.trim();
-    if (description !== undefined) subcategory.description = description;
 
-    await subcategory.save();
+/*
+========================================
+GET SUBCATEGORY BY ID
+========================================
+*/
 
-    const populated = await subcategory.populate("category", "name");
+export const getSubcategoryById =
+  async (req, res) => {
+    try {
+      const subcategory =
+        await Subcategory.findById(
+          req.params.id
+        ).populate(
+          "category",
+          "name icon"
+        );
 
-    res.status(200).json({
-      success: true,
-      message: "Subcategory updated successfully",
-      subcategory: populated,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-    });
-  }
-};
+      if (!subcategory) {
+        return res.status(404).json({
+          success: false,
+          message:
+            MESSAGES.SUBCATEGORY.NOT_FOUND,
+        });
+      }
 
-export const deleteSubcategory = async (req, res) => {
-  try {
-    const subcategory = await Subcategory.findById(req.params.id);
+      const testCount =
+        await Test.countDocuments({
+          subcategory:
+            subcategory._id,
+        });
 
-    if (!subcategory) {
-      return res.status(404).json({
+      return res.status(200).json({
+        success: true,
+        subcategory: {
+          ...subcategory.toObject(),
+          testCount,
+        },
+      });
+    } catch (error) {
+      return res.status(500).json({
         success: false,
-        message: "Subcategory not found",
+        message: error.message,
       });
     }
+  };
 
-    await subcategory.deleteOne();
 
-    res.status(200).json({
-      success: true,
-      message: "Subcategory deleted successfully",
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-    });
-  }
-};
+/*
+========================================
+UPDATE SUBCATEGORY
+========================================
+*/
 
-export const toggleSubcategoryStatus = async (req, res) => {
-  try {
-    const subcategory = await Subcategory.findById(req.params.id);
+export const updateSubcategory =
+  async (req, res) => {
+    try {
+      const {
+        category,
+        name,
+        description,
+        displayOrder,
+        isActive,
+      } = req.body;
 
-    if (!subcategory) {
-      return res.status(404).json({
+      const subcategory =
+        await Subcategory.findById(
+          req.params.id
+        );
+
+      if (!subcategory) {
+        return res.status(404).json({
+          success: false,
+          message:
+            MESSAGES.SUBCATEGORY.NOT_FOUND,
+        });
+      }
+
+      // If category is changed,
+      // verify new category.
+
+      if (category) {
+        const categoryExists =
+          await Category.findById(
+            category
+          );
+
+        if (!categoryExists) {
+          return res.status(404).json({
+            success: false,
+            message:
+              MESSAGES.CATEGORY.NOT_FOUND,
+          });
+        }
+
+        subcategory.category =
+          category;
+      }
+
+      if (name?.trim()) {
+        const duplicate =
+          await Subcategory.findOne({
+            category:
+              category ||
+              subcategory.category,
+
+            name: name.trim(),
+
+            _id: {
+              $ne: req.params.id,
+            },
+          });
+
+        if (duplicate) {
+          return res.status(409).json({
+            success: false,
+            message:
+              MESSAGES.SUBCATEGORY.ALREADY_EXISTS,
+          });
+        }
+
+        subcategory.name =
+          name.trim();
+      }
+
+      if (
+        description !== undefined
+      ) {
+        subcategory.description =
+          description;
+      }
+
+      if (
+        displayOrder !== undefined
+      ) {
+        subcategory.displayOrder =
+          Number(displayOrder);
+      }
+
+      if (
+        isActive !== undefined
+      ) {
+        subcategory.isActive =
+          isActive;
+      }
+
+      await subcategory.save();
+
+      return res.status(200).json({
+        success: true,
+        message:
+          MESSAGES.SUBCATEGORY.UPDATED,
+        subcategory,
+      });
+    } catch (error) {
+      logger.error(
+        "Update Subcategory:",
+        { message: error.message, stack: error.stack }
+      );
+
+      return res.status(500).json({
         success: false,
-        message: "Subcategory not found",
+        message: error.message,
       });
     }
+  };
 
-    subcategory.isActive = !subcategory.isActive;
-    await subcategory.save();
 
-    res.status(200).json({
-      success: true,
-      message: `Subcategory ${subcategory.isActive ? "activated" : "deactivated"} successfully`,
-      subcategory,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-    });
-  }
-};
+/*
+========================================
+DELETE SUBCATEGORY
+========================================
+*/
+
+export const deleteSubcategory =
+  async (req, res) => {
+    try {
+      const subcategory =
+        await Subcategory.findById(
+          req.params.id
+        );
+
+      if (!subcategory) {
+        return res.status(404).json({
+          success: false,
+          message:
+            MESSAGES.SUBCATEGORY.NOT_FOUND,
+        });
+      }
+
+      // Don't delete if tests exist
+
+      const testCount =
+        await Test.countDocuments({
+          subcategory:
+            subcategory._id,
+        });
+
+      if (testCount > 0) {
+        return res.status(400).json({
+          success: false,
+          message:
+            MESSAGES.SUBCATEGORY.CANNOT_DELETE_ASSIGNED(testCount),
+        });
+      }
+
+      await Subcategory.findByIdAndDelete(
+        req.params.id
+      );
+
+      return res.status(200).json({
+        success: true,
+        message:
+          MESSAGES.SUBCATEGORY.DELETED,
+      });
+    } catch (error) {
+      logger.error(
+        "Delete Subcategory:",
+        { message: error.message, stack: error.stack }
+      );
+
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  };
+
+
+/*
+========================================
+TOGGLE STATUS
+========================================
+*/
+
+export const toggleSubcategoryStatus =
+  async (req, res) => {
+    try {
+      const subcategory =
+        await Subcategory.findById(
+          req.params.id
+        );
+
+      if (!subcategory) {
+        return res.status(404).json({
+          success: false,
+          message:
+            MESSAGES.SUBCATEGORY.NOT_FOUND,
+        });
+      }
+
+      subcategory.isActive =
+        !subcategory.isActive;
+
+      await subcategory.save();
+
+      return res.status(200).json({
+        success: true,
+        message:
+          subcategory.isActive
+            ? MESSAGES.SUBCATEGORY.ACTIVATED
+            : MESSAGES.SUBCATEGORY.DEACTIVATED,
+
+        subcategory,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  };

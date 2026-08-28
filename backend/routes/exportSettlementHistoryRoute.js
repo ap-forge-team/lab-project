@@ -1,10 +1,27 @@
 import express from "express";
+
+import {
+  exportSettlementHistory,
+  exportLabSettlementHistory,
+} from "../controllers/exportSettlementHistory.js";
+
 import protect from "../middleware/authMiddleware.js";
 import { authorizePermissions } from "../middleware/roleMiddleware.js";
-import { exportSettlementHistory } from "../controllers/exportSettlementHistory.js";
 
 const router = express.Router();
 
-router.get("/settlement-history", protect, authorizePermissions("settlements", "read"), exportSettlementHistory);
+router.get(
+  "/history",
+  protect,
+  authorizePermissions("settlements", "read"),
+  exportSettlementHistory
+);
+
+router.get(
+  "/lab/history",
+  protect,
+  authorizePermissions("settlements", "read"),
+  exportLabSettlementHistory
+);
 
 export default router;
