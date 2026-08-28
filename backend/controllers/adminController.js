@@ -1,21 +1,9 @@
 import User from "../models/User.js";
-
 import bcrypt from "bcryptjs";
 
 export const createLabAssistant = async (req, res) => {
   try {
-    if (req.user.role !== "lab_owner") {
-      return res.status(403).json({
-        message: "Only Lab Owners Can Create Assistants",
-      });
-    }
-    const {
-      name,
-      email,
-      password,
-      phone,
-      documents,
-    } = req.body;
+    const { name, email, password, phone, documents } = req.body;
 
     if (!name || !email || !password || !phone) {
       return res.status(400).json({
@@ -37,19 +25,23 @@ export const createLabAssistant = async (req, res) => {
     }
 
     const userExists = await User.findOne({ email });
-
     if (userExists) {
       return res.status(409).json({
         success: false,
-        message: "User already exists"
+        message: "User already exists",
+      });
+    }
+
+    const phoneExists = await User.findOne({ phone });
+    if (phoneExists) {
+      return res.status(409).json({
+        success: false,
+        message: "Phone number already exists",
       });
     }
 
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(
-      password,
-      salt,
-    );
+    const hashedPassword = await bcrypt.hash(password, salt);
 
     const user = await User.create({
       name,
@@ -60,10 +52,13 @@ export const createLabAssistant = async (req, res) => {
       role: "lab_assistant",
       labOwner: req.user._id,
     });
+
+    const { password: _, ...userWithoutPassword } = user.toObject();
+
     res.status(201).json({
       success: true,
       message: "Lab Assistant Created Successfully",
-      user
+      user: userWithoutPassword,
     });
   } catch (error) {
     console.log(error);
@@ -75,25 +70,9 @@ export const createLabAssistant = async (req, res) => {
 
 export const createLabOwner = async (req, res) => {
   try {
-    if (req.user.role !== "admin") {
-      return res.status(403).json({
-        message: "Only Admin Can Create Lab Owners",
-      });
-    }
-    const {
-      name,
-      email,
-      phone,
-      password,
-      servicePincodes,
-      labAddress,
-      latitude,
-      longitude
-    } = req.body
+    const { name, email, phone, password, servicePincodes, labAddress, latitude, longitude } = req.body;
 
-    if (!name || !email || !password || !phone || !labAddress ||
-      !latitude ||
-      !longitude) {
+    if (!name || !email || !password || !phone || !labAddress || !latitude || !longitude) {
       return res.status(400).json({
         message: "All Fields Are Required",
       });
@@ -112,18 +91,14 @@ export const createLabOwner = async (req, res) => {
       });
     }
 
-    const userExists = await User.findOne({
-      email,
-    });
+    const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({
         message: "User Already Exists",
       });
     }
 
-    const phoneExists = await User.findOne({
-      phone,
-    });
+    const phoneExists = await User.findOne({ phone });
     if (phoneExists) {
       return res.status(400).json({
         message: "Phone Number Already Exists",
@@ -131,25 +106,25 @@ export const createLabOwner = async (req, res) => {
     }
 
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(
-      password,
-      salt,
-    );
+    const hashedPassword = await bcrypt.hash(password, salt);
 
     const user = await User.create({
       name,
       email,
       phone,
       password: hashedPassword,
-      role: 'lab_owner',
+      role: "lab_owner",
       labAddress,
       latitude,
       longitude,
-    })
+    });
+
+    const { password: _, ...userWithoutPassword } = user.toObject();
 
     res.status(201).json({
+      success: true,
       message: "Lab Owner Created Successfully",
-      user,
+      user: userWithoutPassword,
     });
   } catch (error) {
     console.log(error);
@@ -159,26 +134,17 @@ export const createLabOwner = async (req, res) => {
   }
 };
 
-export const getLabOwners =
-  async (req, res) => {
+export const getLabOwners = async (req, res) => {
+  try {
+    const labOwners = await User.find({ role: "lab_owner" }).select("-password");
 
-    try {
-
-      const labOwners =
-        await User.find({
-
-          role: 'lab_owner'
-        })
-
-      res.status(200).json(
-        labOwners
-      )
-
-    } catch (error) {
-
-      res.status(500).json({
-        message:
-          error.message
-      })
-    }
+    res.status(200).json({
+      success: true,
+      labOwners,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
   }
+};

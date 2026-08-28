@@ -1,81 +1,48 @@
-import jwt from 'jsonwebtoken'
+import jwt from "jsonwebtoken";
+import User from "../models/User.js";
+import Role from "../models/Role.js";
 
-import User from '../models/User.js'
-
-const protect = async (
-  req,
-  res,
-  next
-) => {
-
-  let token
+const protect = async (req, res, next) => {
+  let token;
 
   if (
-
     req.headers.authorization &&
-
-    req.headers.authorization.startsWith(
-      'Bearer'
-    )
-
+    req.headers.authorization.startsWith("Bearer")
   ) {
-
     try {
+      token = req.headers.authorization.split(" ")[1];
 
-      token =
-        req.headers.authorization.split(
-          ' '
-        )[1]
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      const decoded = jwt.verify(
-
-        token,
-
-        process.env.JWT_SECRET
-
-      )
-
-      const user =
-        await User.findById(
-          decoded.id
-        ).select('-password')
-
-       
-      // IMPORTANT
+      const user = await User.findById(decoded.id).select("-password");
 
       if (!user) {
-
         return res.status(401).json({
-
-          message:
-            'User Not Found'
-
-        })
+          success: false,
+          message: "User Not Found",
+        });
       }
 
-      req.user = user
+      const role = await Role.findOne({ name: user.role });
 
-      next()
+      req.user = user;
+      req.user.rolePermissions = role?.permissions
+        ? JSON.parse(JSON.stringify(role.permissions))
+        : {};
 
+      next();
     } catch (error) {
-
       return res.status(401).json({
-
-        message:
-          'Not Authorized'
-
-      })
+        success: false,
+        message: "Not Authorized",
+      });
     }
-
   } else {
-
     return res.status(401).json({
-
-      message:
-        'No Token'
-
-    })
+      success: false,
+      message: "No Token",
+    });
   }
-}
+};
 
-export default protect
+export default protect;

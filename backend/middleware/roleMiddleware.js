@@ -1,36 +1,55 @@
-const authorizeRoles =
-  (...roles) => {
+import Role from "../models/Role.js";
 
-    return (req, res, next) => {
-
-      // Safety check
-
-      if (!req.user) {
-
-        return res.status(401).json({
-
-          message:
-            'Unauthorized'
-
-        })
-      }
-
-      if (
-        !roles.includes(
-          req.user.role
-        )
-      ) {
-
-        return res.status(403).json({
-
-          message:
-            'Access Denied'
-
-        })
-      }
-
-      next()
+const authorizeRoles = (...allowedRoles) => {
+  return async (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
     }
-  }
 
-export default authorizeRoles
+    if (allowedRoles.includes(req.user.role)) {
+      return next();
+    }
+
+    const roleExists = await Role.findOne({ name: req.user.role });
+    if (roleExists) {
+      return next();
+    }
+
+    return res.status(403).json({
+      success: false,
+      message: "Access Denied",
+    });
+  };
+};
+
+const authorizePermissions = (resource, action) => {
+  return async (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    if (req.user.role === "admin") {
+      return next();
+    }
+
+    const rolePermissions = req.user.rolePermissions || {};
+
+    if (rolePermissions[resource] && rolePermissions[resource][action]) {
+      return next();
+    }
+
+    return res.status(403).json({
+      success: false,
+      message: "Access Denied",
+    });
+  };
+};
+
+export { authorizePermissions };
+export default authorizeRoles;

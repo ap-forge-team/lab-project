@@ -13,24 +13,16 @@ export const AuthProvider = ({ children }) => {
           const parsedUser = JSON.parse(savedUser)
           if (parsedUser?.token) {
             setUser(parsedUser)
-            if (parsedUser.roleId) {
+            const roleIdentifier = parsedUser.roleId || parsedUser.role
+            if (roleIdentifier) {
               try {
-                const { data } = await getRoleById(parsedUser.roleId)
+                const { data } = await getRoleById(roleIdentifier)
                 const permissions = data?.role?.permissions || data?.permissions || {}
                 const updated = { ...parsedUser, permissions }
                 setUser(updated)
                 sessionStorage.setItem('user', JSON.stringify(updated))
               } catch {
-                // If roleId is a string name, try fetching by name
-                try {
-                  const { data } = await getRoleById(parsedUser.role)
-                  const permissions = data?.role?.permissions || data?.permissions || {}
-                  const updated = { ...parsedUser, permissions }
-                  setUser(updated)
-                  sessionStorage.setItem('user', JSON.stringify(updated))
-                } catch {
-                  // Silently fail - use cached permissions
-                }
+                // Silently fail - use cached permissions
               }
             }
           } else {
