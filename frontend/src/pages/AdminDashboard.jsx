@@ -9,7 +9,7 @@ import { getAllLabOwners, getBookingLabOwners, getPaymentSetting, createPaymentS
 import { getAllBookings } from '@/services/booking.service'
 import { BOOKING_STATUS } from '@/constants/status'
 import AdminStatsGrid from '@/features/admin/components/AdminStatsGrid'
-import AdminTestsSection from '@/features/tests/components/AdminTestsSection'
+import AddTestModal from '@/features/tests/components/AddTestModal'
 import AdminPackagesSection from '@/features/admin/components/AdminPackagesSection'
 import AdminUsersSection from '@/features/admin/components/AdminUsersSection'
 import AdminBookingsSection from '@/features/admin/components/AdminBookingsSection'
@@ -169,7 +169,7 @@ const AdminDashboard = () => {
         setActivePanel={setActivePanel}
         openPaymentOverview={() => setShowPaymentOverview(true)}
       />
-          <AdminTestsSection
+          <AddTestModal
             open={activePanel === 'test'}
             onClose={() => setActivePanel('')}
             onCreated={fetchDashboardData}

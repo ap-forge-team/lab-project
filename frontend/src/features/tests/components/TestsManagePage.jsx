@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useCallback } from 'react'
 import {
   Activity,
   CheckCircle2,
@@ -25,9 +25,13 @@ import {
   X,
   XCircle,
 } from 'lucide-react'
+import { toast } from 'react-toastify'
 import Can from '@/components/Can'
 import Button from '@/components/ui/Button'
-import AdminTestsSection from './AdminTestsSection'
+import Modal from '@/components/ui/Modal'
+import ConfirmModal from '@/components/ui/ConfirmModal'
+import AddTestModal from './AddTestModal'
+import { deleteTest } from '@/services/test.service'
 
 const PAGE_SIZE = 12
 const PAGE_SIZES = [12, 24, 48]
@@ -90,12 +94,8 @@ const TestDetailsPanel = ({ test, style, catColor, onClose }) => {
   if (!test) return null
   const Icon = style.icon
   return (
-    <div className="w-full shrink-0 rounded-xl border border-border bg-white p-5 shadow-sm lg:w-[320px]">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-foreground">Test Details</h3>
-        <button type="button" onClick={onClose} className="rounded-md p-1 text-muted-foreground hover:bg-accent" aria-label="Close details"><X size={16} /></button>
-      </div>
-      <div className="mt-4 flex items-start gap-3">
+    <Modal open={!!test} title="Test Details" onClose={onClose} size="md">
+      <div className="flex items-start gap-3">
         <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${style.bg} ${style.text}`}><Icon size={22} /></span>
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -122,7 +122,7 @@ const TestDetailsPanel = ({ test, style, catColor, onClose }) => {
         <DetailRow label="Created On" value={getValue(test, ['createdAt', 'createdOn'])} />
         <DetailRow label="Last Updated" value={getValue(test, ['updatedAt', 'lastUpdated'])} />
       </div>
-    </div>
+    </Modal>
   )
 }
 
@@ -135,6 +135,8 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
   const [pageSize, setPageSize] = useState(PAGE_SIZE)
   const [showCreate, setShowCreate] = useState(false)
   const [selectedTestId, setSelectedTestId] = useState(null)
+  const [editModal, setEditModal] = useState({ open: false, test: null, mode: 'create' })
+  const [deleteModal, setDeleteModal] = useState({ open: false, test: null, loading: false })
 
   const categories = useMemo(() => [...new Set(tests.map(getCategory))].sort(), [tests])
   const activeTests = useMemo(() => tests.filter(isActive), [tests])
@@ -155,8 +157,37 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
 
   const resetFilters = () => { setSearch(''); setCategory('all'); setStatus('all'); setPage(1) }
   const changeFilter = (callback) => (event) => { callback(event.target.value); setPage(1) }
+
+  const handleEdit = useCallback((test) => {
+    setEditModal({ open: true, test, mode: 'edit' })
+  }, [])
+
+  const handleDuplicate = useCallback((test) => {
+    const { _id, id: _id2, createdAt: _c, updatedAt: _u, __v, ...rest } = test
+    setEditModal({ open: true, test: rest, mode: 'duplicate' })
+  }, [])
+
+  const handleDelete = useCallback((test) => {
+    setDeleteModal({ open: true, test, loading: false })
+  }, [])
+
+  const confirmDelete = useCallback(async () => {
+    const test = deleteModal.test
+    if (!test) return
+    const testId = test._id || test.id
+    setDeleteModal((prev) => ({ ...prev, loading: true }))
+    try {
+      await deleteTest(testId)
+      toast.success('Test deleted successfully')
+      setDeleteModal({ open: false, test: null, loading: false })
+      onRefresh()
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to delete test')
+      setDeleteModal((prev) => ({ ...prev, loading: false }))
+    }
+  }, [deleteModal.test, onRefresh])
   const getTestId = (test, index) => test._id || test.id || `${getTitle(test)}-${index}`
-  const selectedTest = view === 'list' ? visibleTests.find((test, index) => getTestId(test, index) === selectedTestId) : null
+  const selectedTest = visibleTests.find((test, index) => getTestId(test, index) === selectedTestId) || null
   const selectedTestIndex = selectedTest ? visibleTests.indexOf(selectedTest) : -1
   const selectedTestStyle = selectedTestIndex >= 0 ? CARD_STYLES[selectedTestIndex % CARD_STYLES.length] : CARD_STYLES[0]
   const selectedTestCatColor = selectedTest ? getCategoryColor(getCategory(selectedTest)) : CATEGORY_COLORS[0]
@@ -192,7 +223,7 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
           const style = CARD_STYLES[index % CARD_STYLES.length]
           const Icon = style.icon
           const catColor = getCategoryColor(getCategory(test))
-          return <article key={test._id || test.id || `${getTitle(test)}-${index}`} className="flex min-h-[250px] flex-col rounded-xl border border-border bg-white p-4 shadow-sm transition hover:shadow-md"><div className="flex gap-3"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${style.bg} ${style.text}`}><Icon size={22} /></span><div className="min-w-0"><h2 className="truncate font-semibold text-foreground" title={getTitle(test)}>{getTitle(test)}</h2><p className="mt-0.5 text-xs text-muted-foreground">{test.code || test.testCode || '—'}</p><span className={`mt-1.5 inline-block rounded-md px-2 py-0.5 text-xs font-medium ${catColor.bg} ${catColor.text}`}>{getCategory(test)}</span></div></div><dl className="mt-3.5 space-y-2 text-xs"><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Sample Type</dt><dd className="text-right text-foreground">{getValue(test, ['sampleType', 'sample'])}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Method</dt><dd className="text-right text-foreground">{getValue(test, ['method'])}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Price</dt><dd className="text-right font-medium text-foreground">{formatPrice(getValue(test, ['price'], null))}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">TAT</dt><dd className="text-right text-foreground">{getValue(test, ['reportTime', 'tat', 'turnaroundTime'])}</dd></div></dl><div className="mt-auto flex items-center justify-between border-t border-border pt-3"><span className={`rounded-md px-2 py-1 text-xs font-medium ${isActive(test) ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>{isActive(test) ? 'Active' : 'Inactive'}</span><div className="flex gap-1.5"><button type="button" aria-label="View test" className="rounded-md border border-border p-1.5 text-muted-foreground hover:bg-accent"><Eye size={15} /></button><Can resource="tests" action="update"><button type="button" aria-label="Edit test" className="rounded-md border border-border p-1.5 text-muted-foreground hover:bg-accent"><Pencil size={15} /></button></Can><Can resource="tests" action="create"><button type="button" aria-label="Duplicate test" className="rounded-md border border-border p-1.5 text-muted-foreground hover:bg-accent"><Copy size={15} /></button></Can><Can resource="tests" action="delete"><button type="button" aria-label="Delete test" className="rounded-md border border-border p-1.5 text-red-500 hover:bg-red-50"><Trash2 size={15} /></button></Can></div></div></article>
+          return <article key={test._id || test.id || `${getTitle(test)}-${index}`} className="flex min-h-[250px] flex-col rounded-xl border border-border bg-white p-4 shadow-sm transition hover:shadow-md"><div className="flex gap-3"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${style.bg} ${style.text}`}><Icon size={22} /></span><div className="min-w-0"><h2 className="truncate font-semibold text-foreground" title={getTitle(test)}>{getTitle(test)}</h2><p className="mt-0.5 text-xs text-muted-foreground">{test.code || test.testCode || '—'}</p><span className={`mt-1.5 inline-block rounded-md px-2 py-0.5 text-xs font-medium ${catColor.bg} ${catColor.text}`}>{getCategory(test)}</span></div></div><dl className="mt-3.5 space-y-2 text-xs"><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Sample Type</dt><dd className="text-right text-foreground">{getValue(test, ['sampleType', 'sample'])}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Method</dt><dd className="text-right text-foreground">{getValue(test, ['method'])}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Price</dt><dd className="text-right font-medium text-foreground">{formatPrice(getValue(test, ['price'], null))}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">TAT</dt><dd className="text-right text-foreground">{getValue(test, ['reportTime', 'tat', 'turnaroundTime'])}</dd></div></dl><div className="mt-auto flex items-center justify-between border-t border-border pt-3"><span className={`rounded-md px-2 py-1 text-xs font-medium ${isActive(test) ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>{isActive(test) ? 'Active' : 'Inactive'}</span><div className="flex gap-1.5"><button type="button" aria-label="View test" onClick={() => setSelectedTestId(getTestId(test, index))} className="rounded-md border border-border p-1.5 text-muted-foreground hover:bg-accent"><Eye size={15} /></button><Can resource="tests" action="update"><button type="button" aria-label="Edit test" onClick={() => handleEdit(test)} className="rounded-md border border-border p-1.5 text-muted-foreground hover:bg-accent"><Pencil size={15} /></button></Can><Can resource="tests" action="create"><button type="button" aria-label="Duplicate test" onClick={() => handleDuplicate(test)} className="rounded-md border border-border p-1.5 text-muted-foreground hover:bg-accent"><Copy size={15} /></button></Can><Can resource="tests" action="delete"><button type="button" aria-label="Delete test" onClick={() => handleDelete(test)} className="rounded-md border border-border p-1.5 text-red-500 hover:bg-red-50"><Trash2 size={15} /></button></Can></div></div></article>
         })}</div>
       ) : (
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
@@ -226,9 +257,9 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
                       <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
                         <div className="flex gap-1.5">
                           <button type="button" aria-label="View test" onClick={() => setSelectedTestId(id)} className="rounded-md border border-border p-1.5 text-muted-foreground hover:bg-accent"><Eye size={15} /></button>
-                          <Can resource="tests" action="update"><button type="button" aria-label="Edit test" className="rounded-md border border-border p-1.5 text-muted-foreground hover:bg-accent"><Pencil size={15} /></button></Can>
-                          <Can resource="tests" action="create"><button type="button" aria-label="Duplicate test" className="rounded-md border border-border p-1.5 text-muted-foreground hover:bg-accent"><Copy size={15} /></button></Can>
-                          <Can resource="tests" action="delete"><button type="button" aria-label="Delete test" className="rounded-md border border-border p-1.5 text-red-500 hover:bg-red-50"><Trash2 size={15} /></button></Can>
+                          <Can resource="tests" action="update"><button type="button" aria-label="Edit test" onClick={() => handleEdit(test)} className="rounded-md border border-border p-1.5 text-muted-foreground hover:bg-accent"><Pencil size={15} /></button></Can>
+                          <Can resource="tests" action="create"><button type="button" aria-label="Duplicate test" onClick={() => handleDuplicate(test)} className="rounded-md border border-border p-1.5 text-muted-foreground hover:bg-accent"><Copy size={15} /></button></Can>
+                          <Can resource="tests" action="delete"><button type="button" aria-label="Delete test" onClick={() => handleDelete(test)} className="rounded-md border border-border p-1.5 text-red-500 hover:bg-red-50"><Trash2 size={15} /></button></Can>
                         </div>
                       </td>
                     </tr>
@@ -245,7 +276,24 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
 
       {filtered.length > 0 && <div className="flex flex-col gap-3 pb-2 text-sm text-muted-foreground lg:flex-row lg:items-center lg:justify-between"><p>Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, filtered.length)} of {filtered.length} tests</p><div className="flex flex-wrap items-center gap-2"><button type="button" aria-label="Previous page" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page === 1} className="rounded-lg border border-border p-2 transition hover:bg-accent disabled:opacity-40"><ChevronLeft size={17} /></button>{pageNumbers.map((item, index) => item === 'ellipsis' ? <span key={`ellipsis-${index}`} className="px-1">…</span> : <button key={item} type="button" onClick={() => setPage(item)} className={`flex h-9 min-w-9 items-center justify-center rounded-lg px-3 font-medium transition ${page === item ? 'bg-primary text-white' : 'hover:bg-accent text-foreground'}`}>{item}</button>)}<button type="button" aria-label="Next page" onClick={() => setPage((current) => Math.min(totalPages, current + 1))} disabled={page === totalPages} className="rounded-lg border border-border p-2 transition hover:bg-accent disabled:opacity-40"><ChevronRight size={17} /></button><select aria-label="Tests per page" value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value)); setPage(1) }} className="ml-1 rounded-lg border border-border bg-white px-3 py-2 text-sm text-foreground outline-none focus:border-primary">{PAGE_SIZES.map((size) => <option key={size} value={size}>{size} per page</option>)}</select></div></div>}
 
-      <AdminTestsSection open={showCreate} onClose={() => setShowCreate(false)} onCreated={onRefresh} />
+      <AddTestModal open={showCreate} onClose={() => setShowCreate(false)} onCreated={onRefresh} />
+      <AddTestModal
+        open={editModal.open}
+        onClose={() => setEditModal({ open: false, test: null, mode: 'create' })}
+        onCreated={onRefresh}
+        initialData={editModal.test}
+        testId={editModal.test?._id || editModal.test?.id}
+        mode={editModal.mode}
+      />
+      <ConfirmModal
+        isOpen={deleteModal.open}
+        onClose={() => setDeleteModal({ open: false, test: null, loading: false })}
+        onConfirm={confirmDelete}
+        title="Delete Test"
+        message={`Are you sure you want to delete "${getTitle(deleteModal.test || {})}"? This action cannot be undone.`}
+        confirmText="Delete"
+        loading={deleteModal.loading}
+      />
     </section>
   )
 }
