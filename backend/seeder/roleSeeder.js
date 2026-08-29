@@ -20,6 +20,7 @@ const defaultRoles = [
       commissions: { create: true, read: true, update: true, delete: true },
       settlements: { create: true, read: true, update: true, delete: true },
       paymentSettings: { create: true, read: true, update: true, delete: true },
+      lab_owners: { create: true, read: true, update: true, delete: true },
     },
   },
   {

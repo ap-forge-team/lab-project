@@ -27,6 +27,7 @@ import {
   Settings,
   CircleDollarSign,
   Lock,
+  Building2,
 } from 'lucide-react'
 import {
   getRoles,
@@ -53,6 +54,7 @@ const RESOURCES_CONFIG = {
   commissions: { label: 'Commissions', icon: CircleDollarSign, color: 'text-green-600', bg: 'bg-green-100' },
   settlements: { label: 'Settlements', icon: Banknote, color: 'text-orange-600', bg: 'bg-orange-100' },
   paymentSettings: { label: 'Payment Settings', icon: Settings, color: 'text-gray-600', bg: 'bg-gray-100' },
+  lab_owners: { label: 'Lab Owners', icon: Building2, color: 'text-indigo-600', bg: 'bg-indigo-100' },
 }
 
 const ROLE_COLORS = [
