@@ -76,13 +76,13 @@ const Sidebar = ({ isOpen, isCollapsed, onClose }) => {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-full bg-white border-r border-border z-50 transition-all duration-300 flex flex-col
+        className={`fixed top-0 left-0 h-full border-border z-50 transition-all duration-300 flex flex-col
           ${isCollapsed ? 'w-[72px]' : 'w-[260px]'}
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
       >
         {/* Logo Header */}
-        <div className={`h-16 flex items-center border-b border-border flex-shrink-0 ${isCollapsed ? 'justify-center px-2' : 'px-5 justify-between'}`}>
+        <div className={`h-16 flex bg-white items-center border-border flex-shrink-0 ${isCollapsed ? 'justify-center px-2' : 'px-5 justify-between'}`}>
           {!isCollapsed && <Logo />}
           {isCollapsed && (
             <Link to={ROUTES.HOME} className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center">
@@ -99,7 +99,7 @@ const Sidebar = ({ isOpen, isCollapsed, onClose }) => {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-4 px-3">
+        <nav className="flex-1 overflow-y-auto py-4 px-3 bg-white md:rounded-md md:ml-3 md:my-3">
           <ul className="space-y-1">
             {menuItems.map((item) => {
               const Icon = item.icon
@@ -183,31 +183,6 @@ const Sidebar = ({ isOpen, isCollapsed, onClose }) => {
           </ul>
         </nav>
 
-        {/* User Profile Card (bottom) */}
-        <div className={`border-t border-border p-3 flex-shrink-0 ${isCollapsed ? 'flex justify-center' : ''}`}>
-          {isCollapsed ? (
-            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm">
-              {initials}
-            </div>
-          ) : (
-            <div className="flex items-center gap-3 px-2 py-2">
-              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                {initials}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground truncate">{user?.name || 'User'}</p>
-                <p className="text-[11px] text-muted-foreground capitalize">{user?.role?.replace('_', ' ')}</p>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="text-muted-foreground hover:text-red-500 transition p-1"
-                title="Logout"
-              >
-                <LogOut size={18} />
-              </button>
-            </div>
-          )}
-        </div>
       </aside>
     </>
   )
