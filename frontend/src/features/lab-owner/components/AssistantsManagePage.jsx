@@ -1,12 +1,14 @@
 import React, { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Users, Plus, Search, Filter, ChevronRight, Eye, Pencil, Trash2, X, MoreVertical, Phone, Mail, Calendar, Shield } from 'lucide-react'
+import { Users, Plus, Search, ChevronRight, Eye, Pencil, Trash2, X, MoreVertical, Phone, Mail, Calendar, Shield } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { DataTable } from '@/components/ui/data-table'
 import { assistantColumns } from '@/features/lab-owner/columns/assistants.columns'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import ConfirmModal from '@/components/ui/ConfirmModal'
+import FilterPanel from '@/components/ui/FilterPanel'
+import FilterButton from '@/components/ui/FilterButton'
 import { Spinner } from '@/components/ui/Loader'
 import Can from '@/components/Can'
 import { createLabAssistant, updateUser, deleteUser } from '@/services/user.service'
@@ -31,8 +33,8 @@ const StatCard = ({ icon: Icon, iconBg, iconColor, label, value, change, changeT
 const AssistantsManagePage = ({ assistants, isLoading, isError, onRefresh }) => {
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
-  const [showFilters, setShowFilters] = useState(false)
+  const [activeFilters, setActiveFilters] = useState({})
+  const [filterPanelOpen, setFilterPanelOpen] = useState(null)
   const [menuOpen, setMenuOpen] = useState(null)
 
   // Modals
@@ -49,6 +51,58 @@ const AssistantsManagePage = ({ assistants, isLoading, isError, onRefresh }) => 
   const [form, setForm] = useState(emptyForm)
   const [errors, setErrors] = useState({})
 
+  const filterCategories = useMemo(() => {
+    const nameOptions = (assistants || []).map((a) => ({ value: a.name, label: a.name }))
+    const emailOptions = (assistants || []).map((a) => ({ value: a.email, label: a.email }))
+    const phoneOptions = (assistants || []).filter((a) => a.phone).map((a) => ({ value: a.phone, label: a.phone }))
+    return [
+      {
+        key: 'name',
+        label: 'Assistant',
+        type: 'search-checkbox',
+        searchPlaceholder: 'Search assistants...',
+        options: nameOptions,
+      },
+      {
+        key: 'email',
+        label: 'Email',
+        type: 'search-checkbox',
+        searchPlaceholder: 'Search emails...',
+        options: emailOptions,
+      },
+      {
+        key: 'phone',
+        label: 'Phone',
+        type: 'search-checkbox',
+        searchPlaceholder: 'Search phones...',
+        options: phoneOptions,
+      },
+      {
+        key: 'status',
+        label: 'Status',
+        type: 'checkbox',
+        options: [
+          { value: 'active', label: 'Active' },
+          { value: 'inactive', label: 'Inactive' },
+        ],
+      },
+      {
+        key: 'createdDate',
+        label: 'Created',
+        type: 'date-range',
+      },
+    ]
+  }, [assistants])
+
+  const activeFilterCount = useMemo(() => {
+    return Object.values(activeFilters).reduce((count, val) => {
+      if (Array.isArray(val)) return count + val.length
+      if (val && typeof val === 'object' && (val.start || val.end)) return count + 1
+      if (val) return count + 1
+      return count
+    }, 0)
+  }, [activeFilters])
+
   const filteredAssistants = useMemo(() => {
     let result = assistants || []
     const term = search.trim().toLowerCase()
@@ -60,12 +114,37 @@ const AssistantsManagePage = ({ assistants, isLoading, isError, onRefresh }) => 
           a.phone?.includes(term)
       )
     }
-    if (statusFilter) {
-      const isActive = statusFilter === 'active'
-      result = result.filter((a) => (a.role !== 'inactive') === isActive)
+    if (activeFilters.name?.length) {
+      result = result.filter((a) => activeFilters.name.includes(a.name))
+    }
+    if (activeFilters.email?.length) {
+      result = result.filter((a) => activeFilters.email.includes(a.email))
+    }
+    if (activeFilters.phone?.length) {
+      result = result.filter((a) => activeFilters.phone.includes(a.phone))
+    }
+    if (activeFilters.status?.length) {
+      result = result.filter((a) => {
+        const isActive = a.role !== 'inactive'
+        return activeFilters.status.includes(isActive ? 'active' : 'inactive')
+      })
+    }
+    if (activeFilters.createdDate?.start) {
+      result = result.filter((a) => new Date(a.createdAt) >= new Date(activeFilters.createdDate.start))
+    }
+    if (activeFilters.createdDate?.end) {
+      result = result.filter((a) => {
+        const end = new Date(activeFilters.createdDate.end)
+        end.setHours(23, 59, 59, 999)
+        return new Date(a.createdAt) <= end
+      })
     }
     return result
-  }, [assistants, search, statusFilter])
+  }, [assistants, search, activeFilters])
+
+  const handleApplyFilters = (filters) => {
+    setActiveFilters(filters)
+  }
 
   const stats = useMemo(() => {
     const list = assistants || []
@@ -240,12 +319,25 @@ const AssistantsManagePage = ({ assistants, isLoading, isError, onRefresh }) => 
           <h1 className="text-2xl font-bold text-foreground">Assistants</h1>
           <p className="mt-1 text-sm text-muted-foreground">Manage your lab assistants and their assignments.</p>
         </div>
-        <Can resource="lab_assistants" action="create">
-          <Button className="flex items-center gap-2 shrink-0" onClick={() => setShowAddModal(true)}>
-            <Plus size={16} />
-            Add Assistant
-          </Button>
-        </Can>
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input type="text" placeholder="Search assistant, email or phone..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary w-64" />
+          </div>
+          <FilterButton
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect()
+              setFilterPanelOpen({ top: rect.bottom + 8, left: Math.max(16, rect.right - 680) })
+            }}
+            activeCount={activeFilterCount}
+          />
+          <Can resource="lab_assistants" action="create">
+            <Button className="flex items-center gap-2" onClick={() => setShowAddModal(true)}>
+              <Plus size={16} />
+              Add Assistant
+            </Button>
+          </Can>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -253,28 +345,6 @@ const AssistantsManagePage = ({ assistants, isLoading, isError, onRefresh }) => 
         <StatCard icon={Users} iconBg="bg-blue-100" iconColor="text-blue-600" label="Total Assistants" value={stats.total} change="8.2%" changeType="up" />
         <StatCard icon={Shield} iconBg="bg-green-100" iconColor="text-green-600" label="Active Assistants" value={stats.active} change="5.1%" changeType="up" />
         <StatCard icon={Shield} iconBg="bg-amber-100" iconColor="text-amber-600" label="Inactive Assistants" value={stats.inactive} change="2.3%" changeType="down" />
-      </div>
-
-      {/* Filters Bar */}
-      <div className="bg-white border border-border rounded-xl p-4">
-        <div className="flex flex-col md:flex-row md:items-center gap-3">
-          <div className="relative flex-1">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input type="text" placeholder="Search assistant, email or phone..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
-          </div>
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-muted-foreground whitespace-nowrap">Status</label>
-            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="border border-border rounded-lg px-3 py-2.5 text-sm outline-none focus:border-primary bg-white min-w-[130px]">
-              <option value="">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
-          <button onClick={() => setShowFilters(!showFilters)} className="flex items-center gap-1.5 px-3 py-2.5 border border-border rounded-lg text-sm text-muted-foreground hover:bg-accent transition">
-            <Filter size={14} />
-            Filters
-          </button>
-        </div>
       </div>
 
       {/* Assistants Table */}
@@ -389,6 +459,19 @@ const AssistantsManagePage = ({ assistants, isLoading, isError, onRefresh }) => 
             </div>
           </div>
         </div>
+      )}
+
+      {/* Filter Panel */}
+      {filterPanelOpen && (
+        <FilterPanel
+          isOpen={true}
+          onClose={() => setFilterPanelOpen(null)}
+          onApply={handleApplyFilters}
+          position={filterPanelOpen}
+          title="Filters"
+          categories={filterCategories}
+          activeFilters={activeFilters}
+        />
       )}
 
       {/* Delete Confirmation */}

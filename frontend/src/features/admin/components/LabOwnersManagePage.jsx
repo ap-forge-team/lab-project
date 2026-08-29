@@ -60,37 +60,64 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
     return Array.from(set)
   }, [labOwners])
 
-  const filterCategories = useMemo(() => [
-    {
-      key: 'status',
-      label: 'Status',
-      type: 'checkbox',
-      options: [
-        { value: 'active', label: 'Active' },
-        { value: 'inactive', label: 'Inactive' },
-      ],
-    },
-    {
-      key: 'location',
-      label: 'Location',
-      type: 'search-checkbox',
-      searchPlaceholder: 'Search locations...',
-      options: locations.map((loc) => ({ value: loc, label: loc.length > 40 ? loc.slice(0, 40) + '...' : loc })),
-    },
-    {
-      key: 'serviceArea',
-      label: 'Service Area',
-      type: 'checkbox',
-      options: [
-        { value: 'has_areas', label: 'Has Service Areas' },
-        { value: 'no_areas', label: 'No Service Areas' },
-      ],
-    },
-  ], [locations])
+  const filterCategories = useMemo(() => {
+    const nameOptions = (labOwners || []).map((o) => ({ value: o.name, label: o.name }))
+    const emailOptions = (labOwners || []).map((o) => ({ value: o.email, label: o.email }))
+    const phoneOptions = (labOwners || []).filter((o) => o.phone).map((o) => ({ value: o.phone, label: o.phone }))
+    return [
+      {
+        key: 'name',
+        label: 'Lab Owner',
+        type: 'search-checkbox',
+        searchPlaceholder: 'Search lab owners...',
+        options: nameOptions,
+      },
+      {
+        key: 'email',
+        label: 'Contact',
+        type: 'search-checkbox',
+        searchPlaceholder: 'Search emails...',
+        options: emailOptions,
+      },
+      {
+        key: 'phone',
+        label: 'Phone',
+        type: 'search-checkbox',
+        searchPlaceholder: 'Search phones...',
+        options: phoneOptions,
+      },
+      {
+        key: 'location',
+        label: 'Lab Location',
+        type: 'search-checkbox',
+        searchPlaceholder: 'Search locations...',
+        options: locations.map((loc) => ({ value: loc, label: loc.length > 40 ? loc.slice(0, 40) + '...' : loc })),
+      },
+      {
+        key: 'serviceArea',
+        label: 'Service Areas',
+        type: 'checkbox',
+        options: [
+          { value: 'has_areas', label: 'Has Service Areas' },
+          { value: 'no_areas', label: 'No Service Areas' },
+        ],
+      },
+      {
+        key: 'status',
+        label: 'Status',
+        type: 'checkbox',
+        options: [
+          { value: 'active', label: 'Active' },
+          { value: 'inactive', label: 'Inactive' },
+        ],
+      },
+    ]
+  }, [locations, labOwners])
 
   const activeFilterCount = useMemo(() => {
     return Object.values(activeFilters).reduce((count, val) => {
       if (Array.isArray(val)) return count + val.length
+      if (val && typeof val === 'object' && (val.start || val.end)) return count + 1
       if (val) return count + 1
       return count
     }, 0)
@@ -111,11 +138,14 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
           o.phone?.includes(term)
       )
     }
-    if (activeFilters.status?.length) {
-      result = result.filter((o) => {
-        const isActive = o.role !== 'inactive'
-        return activeFilters.status.includes(isActive ? 'active' : 'inactive')
-      })
+    if (activeFilters.name?.length) {
+      result = result.filter((o) => activeFilters.name.includes(o.name))
+    }
+    if (activeFilters.email?.length) {
+      result = result.filter((o) => activeFilters.email.includes(o.email))
+    }
+    if (activeFilters.phone?.length) {
+      result = result.filter((o) => activeFilters.phone.includes(o.phone))
     }
     if (activeFilters.location?.length) {
       result = result.filter((o) => activeFilters.location.includes(o.labAddress))
@@ -127,6 +157,12 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
       if (activeFilters.serviceArea.includes('no_areas')) {
         result = result.filter((o) => !o.servicePincodes?.length)
       }
+    }
+    if (activeFilters.status?.length) {
+      result = result.filter((o) => {
+        const isActive = o.role !== 'inactive'
+        return activeFilters.status.includes(isActive ? 'active' : 'inactive')
+      })
     }
     return result
   }, [labOwners, search, activeFilters])

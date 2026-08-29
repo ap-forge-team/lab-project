@@ -1,29 +1,17 @@
 import React, { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Users, UserPlus, Search, Download, Filter, ChevronRight, Eye, Pencil, Trash2, ChevronDown, Calendar, X, MoreVertical, Edit2, Shield, Mail, Phone, Lock, MapPin } from 'lucide-react'
+import { Users, UserPlus, Search, Download, ChevronRight, Eye, Pencil, Trash2, ChevronDown, Calendar, X, MoreVertical, Edit2, Shield, Mail, Phone, Lock, MapPin } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { DataTable } from '@/components/ui/data-table'
 import { userColumns } from '@/features/admin/columns/users.columns'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import ConfirmModal from '@/components/ui/ConfirmModal'
+import FilterPanel from '@/components/ui/FilterPanel'
+import FilterButton from '@/components/ui/FilterButton'
 import { Spinner } from '@/components/ui/Loader'
 import Can from '@/components/Can'
 import { createLabOwner, createLabAssistant, updateUser, deleteUser } from '@/services/user.service'
-
-const roleOptions = [
-  { value: '', label: 'All Roles' },
-  { value: 'admin', label: 'Admin' },
-  { value: 'lab_owner', label: 'Lab Owner' },
-  { value: 'lab_assistant', label: 'Lab Technician' },
-  { value: 'patient', label: 'Customer' },
-]
-
-const statusOptions = [
-  { value: '', label: 'All Status' },
-  { value: 'active', label: 'Active' },
-  { value: 'inactive', label: 'Inactive' },
-]
 
 const StatCard = ({ icon: Icon, iconBg, iconColor, label, value, change, changeType }) => (
   <div className="bg-white border border-border rounded-xl p-5 flex items-center gap-4">
@@ -45,10 +33,8 @@ const StatCard = ({ icon: Icon, iconBg, iconColor, label, value, change, changeT
 const UsersManagePage = ({ users, isLoading, isError, onRefresh }) => {
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
-  const [roleFilter, setRoleFilter] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
-  const [dateFilter, setDateFilter] = useState('')
-  const [showFilters, setShowFilters] = useState(false)
+  const [activeFilters, setActiveFilters] = useState({})
+  const [filterPanelOpen, setFilterPanelOpen] = useState(null)
   const [menuOpen, setMenuOpen] = useState(null)
   const [showAddModal, setShowAddModal] = useState(false)
   const [showViewModal, setShowViewModal] = useState(false)
@@ -66,6 +52,61 @@ const UsersManagePage = ({ users, isLoading, isError, onRefresh }) => {
   })
   const [errors, setErrors] = useState({})
 
+  const filterCategories = useMemo(() => {
+    const nameOptions = (users || []).map((u) => ({ value: u.name, label: u.name }))
+    const phoneOptions = (users || []).filter((u) => u.phone).map((u) => ({ value: u.phone, label: u.phone }))
+    return [
+      {
+        key: 'name',
+        label: 'User',
+        type: 'search-checkbox',
+        searchPlaceholder: 'Search users...',
+        options: nameOptions,
+      },
+      {
+        key: 'role',
+        label: 'Role',
+        type: 'checkbox',
+        options: [
+          { value: 'admin', label: 'Admin' },
+          { value: 'lab_owner', label: 'Lab Owner' },
+          { value: 'lab_assistant', label: 'Lab Technician' },
+          { value: 'patient', label: 'Customer' },
+        ],
+      },
+      {
+        key: 'phone',
+        label: 'Phone',
+        type: 'search-checkbox',
+        searchPlaceholder: 'Search phones...',
+        options: phoneOptions,
+      },
+      {
+        key: 'status',
+        label: 'Status',
+        type: 'checkbox',
+        options: [
+          { value: 'active', label: 'Active' },
+          { value: 'inactive', label: 'Inactive' },
+        ],
+      },
+      {
+        key: 'registeredDate',
+        label: 'Registered On',
+        type: 'date-range',
+      },
+    ]
+  }, [users])
+
+  const activeFilterCount = useMemo(() => {
+    return Object.values(activeFilters).reduce((count, val) => {
+      if (Array.isArray(val)) return count + val.length
+      if (val && typeof val === 'object' && (val.start || val.end)) return count + 1
+      if (val) return count + 1
+      return count
+    }, 0)
+  }, [activeFilters])
+
   const filteredUsers = useMemo(() => {
     let result = users || []
     const term = search.trim().toLowerCase()
@@ -77,22 +118,37 @@ const UsersManagePage = ({ users, isLoading, isError, onRefresh }) => {
           u.phone?.includes(term)
       )
     }
-    if (roleFilter) {
-      result = result.filter((u) => u.role === roleFilter)
+    if (activeFilters.name?.length) {
+      result = result.filter((u) => activeFilters.name.includes(u.name))
     }
-    if (statusFilter) {
-      const isActive = statusFilter === 'active'
-      result = result.filter((u) => (u.role !== 'inactive') === isActive)
+    if (activeFilters.role?.length) {
+      result = result.filter((u) => activeFilters.role.includes(u.role))
     }
-    if (dateFilter) {
-      const filterDate = new Date(dateFilter)
+    if (activeFilters.phone?.length) {
+      result = result.filter((u) => activeFilters.phone.includes(u.phone))
+    }
+    if (activeFilters.status?.length) {
       result = result.filter((u) => {
-        const created = new Date(u.createdAt)
-        return created.toDateString() === filterDate.toDateString()
+        const isActive = u.role !== 'inactive'
+        return activeFilters.status.includes(isActive ? 'active' : 'inactive')
+      })
+    }
+    if (activeFilters.registeredDate?.start) {
+      result = result.filter((u) => new Date(u.createdAt) >= new Date(activeFilters.registeredDate.start))
+    }
+    if (activeFilters.registeredDate?.end) {
+      result = result.filter((u) => {
+        const end = new Date(activeFilters.registeredDate.end)
+        end.setHours(23, 59, 59, 999)
+        return new Date(u.createdAt) <= end
       })
     }
     return result
-  }, [users, search, roleFilter, statusFilter, dateFilter])
+  }, [users, search, activeFilters])
+
+  const handleApplyFilters = (filters) => {
+    setActiveFilters(filters)
+  }
 
   const stats = useMemo(() => {
     const list = users || []
@@ -312,12 +368,25 @@ const UsersManagePage = ({ users, isLoading, isError, onRefresh }) => {
           <h1 className="text-2xl font-bold text-foreground">Users</h1>
           <p className="mt-1 text-sm text-muted-foreground">Manage all users and their access</p>
         </div>
-        <Can resource="users" action="create">
-          <Button className="flex items-center gap-2 shrink-0" onClick={() => setShowAddModal(true)}>
-            <UserPlus size={16} />
-            Add New User
-          </Button>
-        </Can>
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input type="text" placeholder="Search by name, email or phone..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary w-64" />
+          </div>
+          <FilterButton
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect()
+              setFilterPanelOpen({ top: rect.bottom + 8, left: Math.max(16, rect.right - 680) })
+            }}
+            activeCount={activeFilterCount}
+          />
+          <Can resource="users" action="create">
+            <Button className="flex items-center gap-2" onClick={() => setShowAddModal(true)}>
+              <UserPlus size={16} />
+              Add New User
+            </Button>
+          </Can>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -367,79 +436,6 @@ const UsersManagePage = ({ users, isLoading, isError, onRefresh }) => {
           change="8.7%"
           changeType="up"
         />
-      </div>
-
-      {/* Filters Bar */}
-      <div className="bg-white border border-border rounded-xl p-4">
-        <div className="flex flex-col md:flex-row md:items-center gap-3">
-          {/* Search */}
-          <div className="relative flex-1">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search by name, email or phone..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-            />
-          </div>
-
-          {/* Role Filter */}
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-muted-foreground whitespace-nowrap">Role</label>
-            <select
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-              className="border border-border rounded-lg px-3 py-2.5 text-sm outline-none focus:border-primary bg-white min-w-[130px]"
-            >
-              {roleOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Status Filter */}
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-muted-foreground whitespace-nowrap">Status</label>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="border border-border rounded-lg px-3 py-2.5 text-sm outline-none focus:border-primary bg-white min-w-[130px]"
-            >
-              {statusOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Date Filter */}
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-muted-foreground whitespace-nowrap">Registered Date</label>
-            <div className="relative">
-              <input
-                type="date"
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-                className="border border-border rounded-lg px-3 py-2.5 text-sm outline-none focus:border-primary bg-white min-w-[160px]"
-              />
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2">
-            <button className="flex items-center gap-1.5 px-3 py-2.5 border border-border rounded-lg text-sm text-muted-foreground hover:bg-accent transition">
-              <Download size={14} />
-              Export
-            </button>
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-1.5 px-3 py-2.5 border border-border rounded-lg text-sm text-muted-foreground hover:bg-accent transition"
-            >
-              <Filter size={14} />
-              Filters
-            </button>
-          </div>
-        </div>
       </div>
 
       {/* Users Table */}
@@ -658,6 +654,19 @@ const UsersManagePage = ({ users, isLoading, isError, onRefresh }) => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Filter Panel */}
+      {filterPanelOpen && (
+        <FilterPanel
+          isOpen={true}
+          onClose={() => setFilterPanelOpen(null)}
+          onApply={handleApplyFilters}
+          position={filterPanelOpen}
+          title="Filters"
+          categories={filterCategories}
+          activeFilters={activeFilters}
+        />
       )}
 
       {/* Delete User Confirmation */}
