@@ -253,12 +253,32 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
 
   return (
     <section className="mx-auto max-w-[1500px] space-y-4 lg:space-y-5">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div><h1 className="text-3xl font-bold tracking-tight text-foreground">Tests</h1><p className="mt-1 text-sm text-muted-foreground">Manage and view all laboratory tests</p></div>
-        <div className="flex flex-wrap items-center gap-2">
-          {/* <button type="button" className="inline-flex items-center gap-2 rounded-lg border border-border bg-white px-4 py-2.5 text-sm font-semibold text-foreground shadow-sm transition hover:bg-accent"><Upload size={17} />Import Tests</button>
-          <button type="button" className="inline-flex items-center gap-2 rounded-lg border border-border bg-white px-4 py-2.5 text-sm font-semibold text-foreground shadow-sm transition hover:bg-accent"><Download size={17} />Export</button> */}
-          <Can resource="tests" action="create"><Button onClick={() => setShowCreate(true)}><Plus size={18} className="mr-2" />Add Test</Button></Can>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Tests</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Manage and view all laboratory tests</p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} placeholder="Search tests by name or code..." className="pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary w-64" />
+          </div>
+          <FilterButton
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect()
+              setFilterPanelOpen({ top: rect.bottom + 8, left: Math.max(16, rect.right - 680) })
+            }}
+            activeCount={activeFilterCount}
+          />
+          <div className="flex items-center rounded-lg border border-border p-1">
+            <button type="button" aria-label="Grid view" onClick={() => { setView('grid'); setSelectedTestId(null) }} className={`rounded p-1.5 ${view === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><Grid2X2 size={18} /></button>
+            <button type="button" aria-label="List view" onClick={() => setView('list')} className={`rounded p-1.5 ${view === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
+          </div>
+          <Can resource="tests" action="create">
+            <Button onClick={() => setShowCreate(true)}>
+              <Plus size={18} className="mr-2" />Add Test
+            </Button>
+          </Can>
         </div>
       </div>
 
@@ -267,24 +287,6 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
         <StatCard icon={CheckCircle2} iconClass="bg-emerald-50 text-emerald-500" title="Active Tests" value={activeTests.length} detail={tests.length ? `${((activeTests.length / tests.length) * 100).toFixed(2)}% of total` : '0% of total'} />
         <StatCard icon={XCircle} iconClass="bg-orange-50 text-orange-500" title="Inactive Tests" value={tests.length - activeTests.length} detail={tests.length ? `${(((tests.length - activeTests.length) / tests.length) * 100).toFixed(2)}% of total` : '0% of total'} />
         <StatCard icon={FlaskConical} iconClass="bg-violet-50 text-violet-500" title="Categories" value={categories.length} detail="Total categories" />
-      </div>
-
-      <div className="flex items-center gap-3 rounded-xl border border-border bg-white p-3 shadow-sm">
-        <div className="relative flex-1">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} placeholder="Search tests by name or code..." className="w-full rounded-lg border border-border bg-white py-2.5 pl-9 pr-3 text-sm outline-none focus:border-primary" />
-        </div>
-        <FilterButton
-          onClick={(e) => {
-            const rect = e.currentTarget.getBoundingClientRect()
-            setFilterPanelOpen({ top: rect.bottom + 8, left: Math.max(16, rect.right - 680) })
-          }}
-          activeCount={activeFilterCount}
-        />
-        <div className="flex items-center rounded-lg border border-border p-1">
-          <button type="button" aria-label="Grid view" onClick={() => { setView('grid'); setSelectedTestId(null) }} className={`rounded p-1.5 ${view === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><Grid2X2 size={18} /></button>
-          <button type="button" aria-label="List view" onClick={() => setView('list')} className={`rounded p-1.5 ${view === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
-        </div>
       </div>
 
       {isLoading ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">Loading tests…</div> : isError ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-destructive">Unable to load tests. Please try again.</div> : visibleTests.length === 0 ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">No tests match the selected filters.</div> : view === 'grid' ? (
