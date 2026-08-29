@@ -38,6 +38,7 @@ const defaultRoles = [
       subcategories: { create: false, read: true, update: false, delete: false },
       payments: { create: false, read: true, update: false, delete: false },
       reports: { create: true, read: true, update: false, delete: false },
+      lab_assistants: { create: true, read: true, update: true, delete: true },
       settlements: { create: false, read: true, update: false, delete: false },
     },
   },
