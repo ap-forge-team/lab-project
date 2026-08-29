@@ -26,6 +26,7 @@ import {
   X,
   XCircle,
 } from 'lucide-react'
+import Tooltip from '@mui/material/Tooltip'
 import { toast } from 'react-toastify'
 import Can from '@/components/Can'
 import Button from '@/components/ui/Button'
@@ -271,8 +272,12 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
             activeCount={activeFilterCount}
           />
           <div className="flex items-center rounded-lg border border-border p-1">
-            <button type="button" aria-label="Grid view" onClick={() => { setView('grid'); setSelectedTestId(null) }} className={`rounded p-1.5 ${view === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><Grid2X2 size={18} /></button>
-            <button type="button" aria-label="List view" onClick={() => setView('list')} className={`rounded p-1.5 ${view === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
+            <Tooltip title="Grid View" arrow placement="top">
+              <button type="button" aria-label="Grid view" onClick={() => { setView('grid'); setSelectedTestId(null) }} className={`rounded p-1.5 ${view === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><Grid2X2 size={18} /></button>
+            </Tooltip>
+            <Tooltip title="List View" arrow placement="top">
+              <button type="button" aria-label="List view" onClick={() => setView('list')} className={`rounded p-1.5 ${view === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
+            </Tooltip>
           </div>
           <Can resource="tests" action="create">
             <Button onClick={() => setShowCreate(true)}>
