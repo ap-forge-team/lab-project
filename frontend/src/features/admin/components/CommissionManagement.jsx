@@ -106,9 +106,6 @@ const CommissionManagement = () => {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 lg:space-y-7">
-      <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm text-muted-foreground">
-        <span>Settings</span><ChevronRight size={15} /><span className="text-foreground">Commission Settings</span>
-      </nav>
 
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-foreground">Commission Settings</h1>

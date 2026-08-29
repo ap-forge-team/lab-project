@@ -27,12 +27,12 @@ const TopBar = ({ onToggleSidebar }) => {
       {/* Left Side */}
       <div className="flex items-center gap-3">
         {/* Hamburger Menu */}
-        {/* <button
+        <button
           onClick={onToggleSidebar}
-          className="text-muted-foreground hover:text-foreground transition p-1.5 rounded-lg hover:bg-accent"
+          className="lg:hidden text-muted-foreground hover:text-foreground transition p-1.5 rounded-lg hover:bg-accent"
         >
           <Menu size={20} />
-        </button> */}
+        </button>
 
         {/* Search Bar */}
         {/* <div className="hidden sm:flex items-center gap-2 bg-gray-50 border border-border rounded-lg px-3 py-2 w-[300px] lg:w-[400px]">

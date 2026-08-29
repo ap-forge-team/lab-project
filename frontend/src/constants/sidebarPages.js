@@ -30,7 +30,7 @@ export const sidebarPagesByRole = {
     'lab-owners': page('Lab Owners', 'View laboratories and their owner accounts.', Building2, { resource: 'lab_owners', action: 'read' }, 'labOwners'),
     reports: page('Reports', 'Review completed bookings and uploaded reports.', FileText, { resource: 'reports', action: 'read' }, 'allBookings', 'No completed bookings with reports found.'),
     offers: page('Offers', 'Create and manage promotional offers for tests and packages.', Tag, { resource: 'offers', action: 'read' }, 'offers', 'Offer management will appear here when the offers API is available.'),
-    users: page('Users', 'View laboratory owners and user accounts.', Users, { resource: 'users', action: 'read' }, 'labOwners'),
+    users: page('Users', 'Manage all users and their access.', Users, { resource: 'users', action: 'read' }, 'allUsers'),
   },
   lab_owner: {
     tests: page('Tests', 'Browse tests available for your laboratory.', TestTube, { resource: 'tests', action: 'read' }, 'tests'),

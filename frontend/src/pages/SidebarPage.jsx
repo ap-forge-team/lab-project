@@ -9,10 +9,11 @@ import { ROUTES } from '@/constants/routes'
 import { getAllTests } from '@/services/test.service'
 import { getAllPackages } from '@/services/package.service'
 import { getAllBookings, getAssignedBookings, getLabOwnerBookings, getMyBookings } from '@/services/booking.service'
-import { getAllLabOwners } from '@/services/user.service'
+import { getAllLabOwners, getAllUsers } from '@/services/user.service'
 import { getAdminPaymentStats, getLabOwnerPaymentStats } from '@/services/payment.service'
 import { Spinner } from '@/components/ui/Loader'
 import TestsManagePage from '@/features/tests/components/TestsManagePage'
+import UsersManagePage from '@/features/admin/components/UsersManagePage'
 
 const sources = {
   tests: getAllTests,
@@ -22,6 +23,7 @@ const sources = {
   assignedBookings: getAssignedBookings,
   myBookings: getMyBookings,
   labOwners: getAllLabOwners,
+  allUsers: getAllUsers,
   adminPayments: getAdminPaymentStats,
   labOwnerPayments: getLabOwnerPaymentStats,
   labProfile: async (user) => ({ data: user ? [user] : [] }),
@@ -85,6 +87,14 @@ const SidebarPage = ({ page: pageProp }) => {
     return (
       <DashboardLayout>
         <TestsManagePage tests={items} isLoading={query.isLoading} isError={query.isError} onRefresh={query.refetch} />
+      </DashboardLayout>
+    )
+  }
+
+  if (slug === 'users') {
+    return (
+      <DashboardLayout>
+        <UsersManagePage users={items} isLoading={query.isLoading} isError={query.isError} onRefresh={query.refetch} />
       </DashboardLayout>
     )
   }

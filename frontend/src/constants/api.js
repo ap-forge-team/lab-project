@@ -33,7 +33,10 @@ export const API_ENDPOINTS = {
     CREATE_LAB_ASSISTANT: '/admin/create-lab-assistant',
   },
   USERS: {
+    BASE: '/users',
+    ALL: '/users',
     MY_ASSISTANTS: '/users/my-assistants',
+    BY_ID: (id) => `/users/${id}`,
   },
   PAYMENT: {
     CREATE: '/payment/create',

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import {
   Search,
@@ -71,7 +70,6 @@ const ITEMS_PER_PAGE = 5
 const emptyForm = { name: '', displayName: '', description: '', permissions: {} }
 
 const RoleManagement = () => {
-  const navigate = useNavigate()
   const [roles, setRoles] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -218,18 +216,6 @@ const RoleManagement = () => {
 
   return (
     <div>
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-        <button
-          onClick={() => navigate('/admin/settings')}
-          className="hover:text-foreground transition"
-        >
-          Settings
-        </button>
-        <span>/</span>
-        <span className="text-foreground font-medium">Role Management</span>
-      </div>
-
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-6">
         <div className="min-w-0">
