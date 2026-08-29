@@ -19,6 +19,7 @@ import {
   Shield,
   Syringe,
   TestTube2,
+  MoreVertical,
   Trash2,
   Upload,
   Wind,
@@ -137,6 +138,7 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
   const [selectedTestId, setSelectedTestId] = useState(null)
   const [editModal, setEditModal] = useState({ open: false, test: null, mode: 'create' })
   const [deleteModal, setDeleteModal] = useState({ open: false, test: null, loading: false })
+  const [menuOpen, setMenuOpen] = useState(null)
 
   const categories = useMemo(() => [...new Set(tests.map(getCategory))].sort(), [tests])
   const activeTests = useMemo(() => tests.filter(isActive), [tests])
@@ -223,7 +225,7 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
           const style = CARD_STYLES[index % CARD_STYLES.length]
           const Icon = style.icon
           const catColor = getCategoryColor(getCategory(test))
-          return <article key={test._id || test.id || `${getTitle(test)}-${index}`} className="flex min-h-[250px] flex-col rounded-xl border border-border bg-white p-4 shadow-sm transition hover:shadow-md"><div className="flex gap-3"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${style.bg} ${style.text}`}><Icon size={22} /></span><div className="min-w-0"><h2 className="truncate font-semibold text-foreground" title={getTitle(test)}>{getTitle(test)}</h2><p className="mt-0.5 text-xs text-muted-foreground">{test.code || test.testCode || '—'}</p><span className={`mt-1.5 inline-block rounded-md px-2 py-0.5 text-xs font-medium ${catColor.bg} ${catColor.text}`}>{getCategory(test)}</span></div></div><dl className="mt-3.5 space-y-2 text-xs"><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Sample Type</dt><dd className="text-right text-foreground">{getValue(test, ['sampleType', 'sample'])}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Method</dt><dd className="text-right text-foreground">{getValue(test, ['method'])}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Price</dt><dd className="text-right font-medium text-foreground">{formatPrice(getValue(test, ['price'], null))}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">TAT</dt><dd className="text-right text-foreground">{getValue(test, ['reportTime', 'tat', 'turnaroundTime'])}</dd></div></dl><div className="mt-auto flex items-center justify-between border-t border-border pt-3"><span className={`rounded-md px-2 py-1 text-xs font-medium ${isActive(test) ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>{isActive(test) ? 'Active' : 'Inactive'}</span><div className="flex gap-1.5"><button type="button" aria-label="View test" onClick={() => setSelectedTestId(getTestId(test, index))} className="rounded-md border border-border p-1.5 text-muted-foreground hover:bg-accent"><Eye size={15} /></button><Can resource="tests" action="update"><button type="button" aria-label="Edit test" onClick={() => handleEdit(test)} className="rounded-md border border-border p-1.5 text-muted-foreground hover:bg-accent"><Pencil size={15} /></button></Can><Can resource="tests" action="create"><button type="button" aria-label="Duplicate test" onClick={() => handleDuplicate(test)} className="rounded-md border border-border p-1.5 text-muted-foreground hover:bg-accent"><Copy size={15} /></button></Can><Can resource="tests" action="delete"><button type="button" aria-label="Delete test" onClick={() => handleDelete(test)} className="rounded-md border border-border p-1.5 text-red-500 hover:bg-red-50"><Trash2 size={15} /></button></Can></div></div></article>
+          return <article key={test._id || test.id || `${getTitle(test)}-${index}`} className="flex min-h-[250px] flex-col rounded-xl border border-border bg-white p-4 shadow-sm transition hover:shadow-md"><div className="flex gap-3"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${style.bg} ${style.text}`}><Icon size={22} /></span><div className="min-w-0"><h2 className="truncate font-semibold text-foreground" title={getTitle(test)}>{getTitle(test)}</h2><p className="mt-0.5 text-xs text-muted-foreground">{test.code || test.testCode || '—'}</p><span className={`mt-1.5 inline-block rounded-md px-2 py-0.5 text-xs font-medium ${catColor.bg} ${catColor.text}`}>{getCategory(test)}</span></div></div><dl className="mt-3.5 space-y-2 text-xs"><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Sample Type</dt><dd className="text-right text-foreground">{getValue(test, ['sampleType', 'sample'])}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Method</dt><dd className="text-right text-foreground">{getValue(test, ['method'])}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Price</dt><dd className="text-right font-medium text-foreground">{formatPrice(getValue(test, ['price'], null))}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">TAT</dt><dd className="text-right text-foreground">{getValue(test, ['reportTime', 'tat', 'turnaroundTime'])}</dd></div></dl><div className="mt-auto flex items-center justify-between border-t border-border pt-3"><span className={`rounded-md px-2 py-1 text-xs font-medium ${isActive(test) ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>{isActive(test) ? 'Active' : 'Inactive'}</span><div className="relative"><button type="button" onClick={(e) => { e.stopPropagation(); const rect = e.currentTarget.getBoundingClientRect(); setMenuOpen({ id: getTestId(test, index), test, top: rect.bottom + 4, left: rect.right - 140 }) }} className="p-1.5 text-muted-foreground hover:text-foreground rounded transition"><MoreVertical size={16} /></button></div></div></article>
         })}</div>
       ) : (
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
@@ -255,11 +257,22 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
                       <td className="px-4 py-3">{getValue(test, ['reportTime', 'tat', 'turnaroundTime'])}</td>
                       <td className="px-4 py-3"><span className={`rounded-md px-2 py-1 text-xs ${isActive(test) ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>{isActive(test) ? 'Active' : 'Inactive'}</span></td>
                       <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
-                        <div className="flex gap-1.5">
-                          <button type="button" aria-label="View test" onClick={() => setSelectedTestId(id)} className="rounded-md border border-border p-1.5 text-muted-foreground hover:bg-accent"><Eye size={15} /></button>
-                          <Can resource="tests" action="update"><button type="button" aria-label="Edit test" onClick={() => handleEdit(test)} className="rounded-md border border-border p-1.5 text-muted-foreground hover:bg-accent"><Pencil size={15} /></button></Can>
-                          <Can resource="tests" action="create"><button type="button" aria-label="Duplicate test" onClick={() => handleDuplicate(test)} className="rounded-md border border-border p-1.5 text-muted-foreground hover:bg-accent"><Copy size={15} /></button></Can>
-                          <Can resource="tests" action="delete"><button type="button" aria-label="Delete test" onClick={() => handleDelete(test)} className="rounded-md border border-border p-1.5 text-red-500 hover:bg-red-50"><Trash2 size={15} /></button></Can>
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (menuOpen?.id === id) {
+                                setMenuOpen(null)
+                              } else {
+                                const rect = e.currentTarget.getBoundingClientRect()
+                                setMenuOpen({ id, test, top: rect.bottom + 4, left: rect.right - 140 })
+                              }
+                            }}
+                            className="p-1.5 text-muted-foreground hover:text-foreground rounded transition"
+                          >
+                            <MoreVertical size={16} />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -294,6 +307,35 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
         confirmText="Delete"
         loading={deleteModal.loading}
       />
+
+      {menuOpen && (
+        <>
+          <div className="fixed inset-0 z-[99]" onClick={() => setMenuOpen(null)} />
+          <div
+            className="fixed bg-white border border-border rounded-lg shadow-lg py-1 z-[100] min-w-[140px]"
+            style={{ top: menuOpen.top, left: menuOpen.left }}
+          >
+            <button onClick={(e) => { e.stopPropagation(); setSelectedTestId(menuOpen.id); setMenuOpen(null) }} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left">
+              <Eye size={14} /> View
+            </button>
+            <Can resource="tests" action="update">
+              <button onClick={(e) => { e.stopPropagation(); handleEdit(menuOpen.test); setMenuOpen(null) }} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left">
+                <Pencil size={14} /> Edit
+              </button>
+            </Can>
+            <Can resource="tests" action="create">
+              <button onClick={(e) => { e.stopPropagation(); handleDuplicate(menuOpen.test); setMenuOpen(null) }} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left">
+                <Copy size={14} /> Duplicate
+              </button>
+            </Can>
+            <Can resource="tests" action="delete">
+              <button onClick={(e) => { e.stopPropagation(); handleDelete(menuOpen.test); setMenuOpen(null) }} className="flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 w-full text-left">
+                <Trash2 size={14} /> Delete
+              </button>
+            </Can>
+          </div>
+        </>
+      )}
     </section>
   )
 }
