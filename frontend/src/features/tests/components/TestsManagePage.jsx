@@ -31,6 +31,8 @@ import Can from '@/components/Can'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
 import ConfirmModal from '@/components/ui/ConfirmModal'
+import FilterPanel from '@/components/ui/FilterPanel'
+import FilterButton from '@/components/ui/FilterButton'
 import AddTestModal from './AddTestModal'
 import { deleteTest } from '@/services/test.service'
 
@@ -129,8 +131,6 @@ const TestDetailsPanel = ({ test, style, catColor, onClose }) => {
 
 const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
   const [search, setSearch] = useState('')
-  const [category, setCategory] = useState('all')
-  const [status, setStatus] = useState('all')
   const [view, setView] = useState('grid')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(PAGE_SIZE)
@@ -139,26 +139,83 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
   const [editModal, setEditModal] = useState({ open: false, test: null, mode: 'create' })
   const [deleteModal, setDeleteModal] = useState({ open: false, test: null, loading: false })
   const [menuOpen, setMenuOpen] = useState(null)
+  const [activeFilters, setActiveFilters] = useState({})
+  const [filterPanelOpen, setFilterPanelOpen] = useState(null)
 
   const categories = useMemo(() => [...new Set(tests.map(getCategory))].sort(), [tests])
   const activeTests = useMemo(() => tests.filter(isActive), [tests])
+
+  const filterCategories = useMemo(() => {
+    const nameOptions = (tests || []).map((t) => ({ value: getTitle(t), label: getTitle(t) }))
+    const categoryOptions = categories.map((c) => ({ value: c, label: c }))
+    const sampleTypeOptions = [...new Set((tests || []).map((t) => getValue(t, ['sampleType', 'sample'], null)).filter(Boolean))].map((s) => ({ value: s, label: s }))
+    return [
+      {
+        key: 'name',
+        label: 'Test Name',
+        type: 'search-checkbox',
+        searchPlaceholder: 'Search tests...',
+        options: nameOptions,
+      },
+      {
+        key: 'category',
+        label: 'Category',
+        type: 'checkbox',
+        options: categoryOptions,
+      },
+      {
+        key: 'sampleType',
+        label: 'Sample Type',
+        type: 'checkbox',
+        options: sampleTypeOptions,
+      },
+      {
+        key: 'status',
+        label: 'Status',
+        type: 'checkbox',
+        options: [
+          { value: 'active', label: 'Active' },
+          { value: 'inactive', label: 'Inactive' },
+        ],
+      },
+    ]
+  }, [tests, categories])
+
+  const activeFilterCount = useMemo(() => {
+    return Object.values(activeFilters).reduce((count, val) => {
+      if (Array.isArray(val)) return count + val.length
+      return count
+    }, 0)
+  }, [activeFilters])
+
+  const handleApplyFilters = useCallback((filters) => {
+    setActiveFilters(filters)
+    setPage(1)
+  }, [])
+
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase()
     return tests.filter((test) => {
       const matchesSearch = !term || `${getTitle(test)} ${test.code || ''} ${getCategory(test)}`.toLowerCase().includes(term)
-      const matchesCategory = category === 'all' || getCategory(test) === category
-      const matchesStatus = status === 'all' || (status === 'active' ? isActive(test) : !isActive(test))
-      return matchesSearch && matchesCategory && matchesStatus
+      if (!matchesSearch) return false
+      if (activeFilters.name?.length && !activeFilters.name.includes(getTitle(test))) return false
+      if (activeFilters.category?.length && !activeFilters.category.includes(getCategory(test))) return false
+      if (activeFilters.sampleType?.length) {
+        const sample = getValue(test, ['sampleType', 'sample'], null)
+        if (!activeFilters.sampleType.includes(sample)) return false
+      }
+      if (activeFilters.status?.length) {
+        const testActive = isActive(test)
+        if (!activeFilters.status.includes(testActive ? 'active' : 'inactive')) return false
+      }
+      return true
     })
-  }, [tests, search, category, status])
+  }, [tests, search, activeFilters])
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const visibleTests = filtered.slice((page - 1) * pageSize, page * pageSize)
   const pageNumbers = totalPages <= 5
     ? Array.from({ length: totalPages }, (_, index) => index + 1)
     : [1, 2, 3, 'ellipsis', totalPages]
-
-  const resetFilters = () => { setSearch(''); setCategory('all'); setStatus('all'); setPage(1) }
-  const changeFilter = (callback) => (event) => { callback(event.target.value); setPage(1) }
 
   const handleEdit = useCallback((test) => {
     setEditModal({ open: true, test, mode: 'edit' })
@@ -212,12 +269,22 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
         <StatCard icon={FlaskConical} iconClass="bg-violet-50 text-violet-500" title="Categories" value={categories.length} detail="Total categories" />
       </div>
 
-      <div className="flex flex-col gap-3 rounded-xl border border-border bg-white p-3 shadow-sm lg:flex-row lg:items-center">
-        <label className="relative min-w-0 flex-1"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" /><input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} placeholder="Search tests by name or code..." className="w-full rounded-lg border border-border bg-white py-2.5 pl-9 pr-3 text-sm outline-none focus:border-primary" /></label>
-        <select value={category} onChange={changeFilter(setCategory)} className="rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary lg:w-48"><option value="all">All Categories</option>{categories.map((item) => <option key={item} value={item}>{item}</option>)}</select>
-        <select value={status} onChange={changeFilter(setStatus)} className="rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary lg:w-44"><option value="all">All Status</option><option value="active">Active</option><option value="inactive">Inactive</option></select>
-        <button type="button" onClick={resetFilters} className="inline-flex items-center justify-center gap-2 rounded-lg border border-border px-3 py-2.5 text-sm font-medium text-primary transition hover:bg-primary/5"><RefreshCw size={16} />Clear Filters</button>
-        <div className="ml-auto flex items-center rounded-lg border border-border p-1"><button type="button" aria-label="Grid view" onClick={() => { setView('grid'); setSelectedTestId(null) }} className={`rounded p-1.5 ${view === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><Grid2X2 size={18} /></button><button type="button" aria-label="List view" onClick={() => setView('list')} className={`rounded p-1.5 ${view === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button></div>
+      <div className="flex items-center gap-3 rounded-xl border border-border bg-white p-3 shadow-sm">
+        <div className="relative flex-1">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} placeholder="Search tests by name or code..." className="w-full rounded-lg border border-border bg-white py-2.5 pl-9 pr-3 text-sm outline-none focus:border-primary" />
+        </div>
+        <FilterButton
+          onClick={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect()
+            setFilterPanelOpen({ top: rect.bottom + 8, left: Math.max(16, rect.right - 680) })
+          }}
+          activeCount={activeFilterCount}
+        />
+        <div className="flex items-center rounded-lg border border-border p-1">
+          <button type="button" aria-label="Grid view" onClick={() => { setView('grid'); setSelectedTestId(null) }} className={`rounded p-1.5 ${view === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><Grid2X2 size={18} /></button>
+          <button type="button" aria-label="List view" onClick={() => setView('list')} className={`rounded p-1.5 ${view === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
+        </div>
       </div>
 
       {isLoading ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">Loading tests…</div> : isError ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-destructive">Unable to load tests. Please try again.</div> : visibleTests.length === 0 ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">No tests match the selected filters.</div> : view === 'grid' ? (
@@ -307,6 +374,18 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
         confirmText="Delete"
         loading={deleteModal.loading}
       />
+
+      {filterPanelOpen && (
+        <FilterPanel
+          isOpen={true}
+          onClose={() => setFilterPanelOpen(null)}
+          onApply={handleApplyFilters}
+          position={filterPanelOpen}
+          title="Filters"
+          categories={filterCategories}
+          activeFilters={activeFilters}
+        />
+      )}
 
       {menuOpen && (
         <>
