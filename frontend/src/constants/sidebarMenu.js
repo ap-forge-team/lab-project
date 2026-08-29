@@ -29,6 +29,7 @@ export const sidebarMenuByRole = {
   ],
   lab_owner: [
     { label: 'Dashboard', icon: LayoutDashboard, route: '/lab-owner' },
+    { label: 'Assistants', icon: Users, route: '/lab-owner/assistants', permission: { resource: 'lab_assistants', action: 'read' } },
     { label: 'Tests', icon: TestTube, route: '/lab-owner/tests', permission: { resource: 'tests', action: 'read' } },
     { label: 'Bookings', icon: Calendar, route: '/lab-owner/bookings', permission: { resource: 'bookings', action: 'read' } },
     { label: 'Sample Pickups', icon: ClipboardList, route: '/lab-owner/sample-pickups', permission: { resource: 'bookings', action: 'read' } },

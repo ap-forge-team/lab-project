@@ -25,6 +25,7 @@ export const ROUTES = {
   ADMIN_SETTINGS_TAT: '/admin/settings/tat',
   ADMIN_SETTINGS_EMAIL_TEMPLATES: '/admin/settings/email-templates',
   LAB_OWNER: '/lab-owner',
+  LAB_OWNER_ASSISTANTS: '/lab-owner/assistants',
   LAB_ASSISTANT: '/lab-assistant',
   FORGOT_PASSWORD: '/forgot-password',
   VERIFY_OTP: '/verify-otp',

@@ -33,6 +33,7 @@ export const sidebarPagesByRole = {
     users: page('Users', 'Manage all users and their access.', Users, { resource: 'users', action: 'read' }, 'allUsers'),
   },
   lab_owner: {
+    assistants: page('Assistants', 'Manage lab assistants and their assignments.', Users, { resource: 'lab_assistants', action: 'read' }, 'myAssistants'),
     tests: page('Tests', 'Browse tests available for your laboratory.', TestTube, { resource: 'tests', action: 'read' }, 'tests'),
     bookings: page('Bookings', 'Manage bookings assigned to your laboratory.', Calendar, { resource: 'bookings', action: 'read' }, 'labOwnerBookings'),
     'sample-pickups': page('Sample Pickups', 'Track sample collection for your bookings.', ClipboardList, { resource: 'bookings', action: 'read' }, 'labOwnerBookings'),
