@@ -94,7 +94,7 @@ const FilterPanel = ({
       <div className="fixed inset-0 z-[99]" onClick={onClose} />
       {/* Dropdown */}
       <div
-        className="fixed bg-white border border-border rounded-xl shadow-xl z-[100] w-[680px] h-[450px] flex flex-col"
+        className="fixed bg-white border border-border rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.15)] z-[100] w-[680px] h-[450px] flex flex-col"
         style={{ top: position.top, left: position.left }}
       >
         {/* Header */}
