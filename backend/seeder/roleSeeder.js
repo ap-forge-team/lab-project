@@ -21,7 +21,6 @@ const defaultRoles = [
       settlements: { create: true, read: true, update: true, delete: true },
       paymentSettings: { create: true, read: true, update: true, delete: true },
       lab_owners: { create: true, read: true, update: true, delete: true },
-      lab_assistants: { create: true, read: true, update: true, delete: true },
     },
   },
   {

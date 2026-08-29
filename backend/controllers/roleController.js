@@ -17,7 +17,6 @@ const AVAILABLE_RESOURCES = [
   "settlements",
   "paymentSettings",
   "lab_owners",
-  "lab_assistants",
 ];
 
 const ACTIONS = ["create", "read", "update", "delete"];

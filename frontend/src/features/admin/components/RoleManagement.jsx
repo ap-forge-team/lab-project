@@ -55,7 +55,7 @@ const RESOURCES_CONFIG = {
   settlements: { label: 'Settlements', icon: Banknote, color: 'text-orange-600', bg: 'bg-orange-100' },
   paymentSettings: { label: 'Payment Settings', icon: Settings, color: 'text-gray-600', bg: 'bg-gray-100' },
   lab_owners: { label: 'Lab Owners', icon: Building2, color: 'text-indigo-600', bg: 'bg-indigo-100' },
-  lab_assistants: { label: 'Assistants', icon: Users, color: 'text-cyan-600', bg: 'bg-cyan-100' },
+  lab_assistants: { label: 'Lab Assistants', icon: Users, color: 'text-cyan-600', bg: 'bg-cyan-100' },
 }
 
 const ROLE_COLORS = [

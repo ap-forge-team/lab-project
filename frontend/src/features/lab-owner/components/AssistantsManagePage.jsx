@@ -45,7 +45,7 @@ const AssistantsManagePage = ({ assistants, isLoading, isError, onRefresh }) => 
   const [deleting, setDeleting] = useState(false)
 
   // Form state
-  const emptyForm = { name: '', email: '', phone: '', password: '' }
+  const emptyForm = { name: '', email: '', phone: '', password: '', verificationDoc: '' }
   const [form, setForm] = useState(emptyForm)
   const [errors, setErrors] = useState({})
 
@@ -131,6 +131,7 @@ const AssistantsManagePage = ({ assistants, isLoading, isError, onRefresh }) => 
         email: form.email,
         phone: form.phone,
         password: form.password,
+        verificationDoc: form.verificationDoc,
       })
       toast.success('Assistant created successfully')
       setShowAddModal(false)
@@ -233,13 +234,6 @@ const AssistantsManagePage = ({ assistants, isLoading, isError, onRefresh }) => 
         </>
       )}
 
-      {/* Breadcrumb */}
-      <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm text-muted-foreground">
-        <button onClick={() => navigate('/lab-owner')} className="hover:text-foreground transition">Dashboard</button>
-        <ChevronRight size={15} />
-        <span className="text-foreground font-medium">Assistants</span>
-      </nav>
-
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -316,6 +310,7 @@ const AssistantsManagePage = ({ assistants, isLoading, isError, onRefresh }) => 
               <Input label="Email" name="email" type="email" value={form.email} onChange={(e) => handleChange('email', e.target.value)} placeholder="e.g. john@example.com" error={errors.email} required />
               <Input label="Phone" name="phone" value={form.phone} onChange={(e) => handleChange('phone', e.target.value)} placeholder="e.g. 9876543210" inputMode="numeric" maxLength={10} error={errors.phone} required />
               <Input label="Password" name="password" type="password" value={form.password} onChange={(e) => handleChange('password', e.target.value)} placeholder="Min 6 characters" error={errors.password} required />
+              <Input label="Verification Document" name="verificationDoc" value={form.verificationDoc} onChange={(e) => handleChange('verificationDoc', e.target.value)} placeholder="e.g. Aadhaar, PAN, License number" />
             </div>
             <div className="flex items-center justify-end gap-3 p-4 border-t border-border">
               <button onClick={handleCloseAdd} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-accent rounded-lg transition">Cancel</button>
