@@ -1,12 +1,14 @@
 import React, { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Building2, Plus, Search, Filter, ChevronRight, Eye, Pencil, Trash2, X, MoreVertical, MapPin, Mail, Phone, Calendar, Shield } from 'lucide-react'
+import { Building2, Plus, Search, ChevronRight, Eye, Pencil, Trash2, X, MoreVertical, MapPin, Mail, Phone, Calendar, Shield } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { DataTable } from '@/components/ui/data-table'
 import { labOwnerManageColumns } from '@/features/admin/columns/lab-owners-manage.columns'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import ConfirmModal from '@/components/ui/ConfirmModal'
+import FilterPanel from '@/components/ui/FilterPanel'
+import FilterButton from '@/components/ui/FilterButton'
 import LocationPicker from '@/components/LocationPicker'
 import { Spinner } from '@/components/ui/Loader'
 import Can from '@/components/Can'
@@ -32,10 +34,8 @@ const StatCard = ({ icon: Icon, iconBg, iconColor, label, value, change, changeT
 const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
   const navigate = useNavigate()
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
-  const [locationFilter, setLocationFilter] = useState('')
-  const [serviceAreaFilter, setServiceAreaFilter] = useState('')
-  const [showFilters, setShowFilters] = useState(false)
+  const [activeFilters, setActiveFilters] = useState({})
+  const [filterPanelOpen, setFilterPanelOpen] = useState(null)
   const [menuOpen, setMenuOpen] = useState(null)
 
   // Modals
@@ -60,6 +60,46 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
     return Array.from(set)
   }, [labOwners])
 
+  const filterCategories = useMemo(() => [
+    {
+      key: 'status',
+      label: 'Status',
+      type: 'checkbox',
+      options: [
+        { value: 'active', label: 'Active' },
+        { value: 'inactive', label: 'Inactive' },
+      ],
+    },
+    {
+      key: 'location',
+      label: 'Location',
+      type: 'search-checkbox',
+      searchPlaceholder: 'Search locations...',
+      options: locations.map((loc) => ({ value: loc, label: loc.length > 40 ? loc.slice(0, 40) + '...' : loc })),
+    },
+    {
+      key: 'serviceArea',
+      label: 'Service Area',
+      type: 'checkbox',
+      options: [
+        { value: 'has_areas', label: 'Has Service Areas' },
+        { value: 'no_areas', label: 'No Service Areas' },
+      ],
+    },
+  ], [locations])
+
+  const activeFilterCount = useMemo(() => {
+    return Object.values(activeFilters).reduce((count, val) => {
+      if (Array.isArray(val)) return count + val.length
+      if (val) return count + 1
+      return count
+    }, 0)
+  }, [activeFilters])
+
+  const handleApplyFilters = (filters) => {
+    setActiveFilters(filters)
+  }
+
   const filteredOwners = useMemo(() => {
     let result = labOwners || []
     const term = search.trim().toLowerCase()
@@ -71,18 +111,25 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
           o.phone?.includes(term)
       )
     }
-    if (statusFilter) {
-      const isActive = statusFilter === 'active'
-      result = result.filter((o) => (o.role !== 'inactive') === isActive)
+    if (activeFilters.status?.length) {
+      result = result.filter((o) => {
+        const isActive = o.role !== 'inactive'
+        return activeFilters.status.includes(isActive ? 'active' : 'inactive')
+      })
     }
-    if (locationFilter) {
-      result = result.filter((o) => o.labAddress === locationFilter)
+    if (activeFilters.location?.length) {
+      result = result.filter((o) => activeFilters.location.includes(o.labAddress))
     }
-    if (serviceAreaFilter) {
-      result = result.filter((o) => o.servicePincodes?.length > 0)
+    if (activeFilters.serviceArea?.length) {
+      if (activeFilters.serviceArea.includes('has_areas')) {
+        result = result.filter((o) => o.servicePincodes?.length > 0)
+      }
+      if (activeFilters.serviceArea.includes('no_areas')) {
+        result = result.filter((o) => !o.servicePincodes?.length)
+      }
     }
     return result
-  }, [labOwners, search, statusFilter, locationFilter, serviceAreaFilter])
+  }, [labOwners, search, activeFilters])
 
   const stats = useMemo(() => {
     const list = labOwners || []
@@ -269,12 +316,25 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
           <h1 className="text-2xl font-bold text-foreground">Lab Owners</h1>
           <p className="mt-1 text-sm text-muted-foreground">Manage laboratory owners, their locations and service availability.</p>
         </div>
-        <Can resource="lab_owners" action="create">
-          <Button className="flex items-center gap-2 shrink-0" onClick={() => setShowAddModal(true)}>
-            <Plus size={16} />
-            Add Lab Owner
-          </Button>
-        </Can>
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input type="text" placeholder="Search lab owner, email or phone..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary w-64" />
+          </div>
+          <FilterButton
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect()
+              setFilterPanelOpen({ top: rect.bottom + 8, left: Math.max(16, rect.right - 680) })
+            }}
+            activeCount={activeFilterCount}
+          />
+          <Can resource="lab_owners" action="create">
+            <Button className="flex items-center gap-2" onClick={() => setShowAddModal(true)}>
+              <Plus size={16} />
+              Add Lab Owner
+            </Button>
+          </Can>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -283,42 +343,6 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
         <StatCard icon={Shield} iconBg="bg-green-100" iconColor="text-green-600" label="Active Labs" value={stats.active} change="8.3%" changeType="up" />
         <StatCard icon={Shield} iconBg="bg-amber-100" iconColor="text-amber-600" label="Inactive Labs" value={stats.inactive} change="3.1%" changeType="down" />
         <StatCard icon={MapPin} iconBg="bg-purple-100" iconColor="text-purple-600" label="Total Locations" value={stats.locations} change="5.6%" changeType="up" />
-      </div>
-
-      {/* Filters Bar */}
-      <div className="bg-white border border-border rounded-xl p-4">
-        <div className="flex flex-col md:flex-row md:items-center gap-3">
-          <div className="relative flex-1">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input type="text" placeholder="Search lab owner, email or phone..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
-          </div>
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-muted-foreground whitespace-nowrap">Status</label>
-            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="border border-border rounded-lg px-3 py-2.5 text-sm outline-none focus:border-primary bg-white min-w-[130px]">
-              <option value="">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-muted-foreground whitespace-nowrap">Location</label>
-            <select value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)} className="border border-border rounded-lg px-3 py-2.5 text-sm outline-none focus:border-primary bg-white min-w-[150px]">
-              <option value="">All Locations</option>
-              {locations.map((loc) => <option key={loc} value={loc}>{loc.length > 30 ? loc.slice(0, 30) + '...' : loc}</option>)}
-            </select>
-          </div>
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-muted-foreground whitespace-nowrap">Service Area</label>
-            <select value={serviceAreaFilter} onChange={(e) => setServiceAreaFilter(e.target.value)} className="border border-border rounded-lg px-3 py-2.5 text-sm outline-none focus:border-primary bg-white min-w-[150px]">
-              <option value="">All Service Areas</option>
-              <option value="has_areas">Has Service Areas</option>
-            </select>
-          </div>
-          <button onClick={() => setShowFilters(!showFilters)} className="flex items-center gap-1.5 px-3 py-2.5 border border-border rounded-lg text-sm text-muted-foreground hover:bg-accent transition">
-            <Filter size={14} />
-            Filters
-          </button>
-        </div>
       </div>
 
       {/* Lab Owners Table */}
@@ -505,6 +529,19 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Filter Panel */}
+      {filterPanelOpen && (
+        <FilterPanel
+          isOpen={true}
+          onClose={() => setFilterPanelOpen(null)}
+          onApply={handleApplyFilters}
+          position={filterPanelOpen}
+          title="Filters"
+          categories={filterCategories}
+          activeFilters={activeFilters}
+        />
       )}
 
       {/* Delete Confirmation */}
