@@ -92,6 +92,11 @@ const testSchema = new mongoose.Schema(
       default: "",
     },
 
+    icon: {
+      type: Object,
+      default: { name: "flask", category: "" },
+    },
+
     image: {
       type: String,
       default: "",

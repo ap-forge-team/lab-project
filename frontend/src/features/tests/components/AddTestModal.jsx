@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { toast } from 'react-toastify'
 import {
   ArrowLeft,
@@ -83,6 +83,7 @@ const AddTestModal = ({ open, onClose, onCreated, initialData, testId, mode = 'c
   const [subcategories, setSubcategories] = useState([])
   const [iconPickerOpen, setIconPickerOpen] = useState(false)
   const [iconPickerMode, setIconPickerMode] = useState('library')
+  const initialDataLoaded = useRef(false)
 
   const buildErrors = (t) => ({
     testName: !t.testName ? 'Test name is required' : '',
@@ -125,6 +126,7 @@ const AddTestModal = ({ open, onClose, onCreated, initialData, testId, mode = 'c
   useEffect(() => {
     if (!open) return
     if (initialData) {
+      initialDataLoaded.current = true
       const mapped = {
         testName: initialData.testName || initialData.title || initialData.name || '',
         shortName: initialData.shortName || '',
@@ -146,6 +148,7 @@ const AddTestModal = ({ open, onClose, onCreated, initialData, testId, mode = 'c
       }
       setTestData(mapped)
     } else {
+      initialDataLoaded.current = false
       setTestData(INITIAL_DATA)
     }
   }, [open, initialData])
@@ -158,10 +161,14 @@ const AddTestModal = ({ open, onClose, onCreated, initialData, testId, mode = 'c
     }
     const selectedCat = categories.find((c) => String(c._id) === String(testData.category))
     if (selectedCat) {
-      setTestData((prev) => ({
-        ...prev,
-        icon: { name: selectedCat.icon || 'flask', category: selectedCat.name },
-      }))
+      if (initialDataLoaded.current) {
+        initialDataLoaded.current = false
+      } else {
+        setTestData((prev) => ({
+          ...prev,
+          icon: { name: selectedCat.icon || 'flask', category: selectedCat.name },
+        }))
+      }
     }
     getSubcategories({ category: testData.category })
       .then(({ data }) => setSubcategories(data?.subcategories || []))

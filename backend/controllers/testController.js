@@ -23,6 +23,7 @@ export const createTest = async (req, res) => {
       collectionMethod,
       sampleType,
       image,
+      icon,
       displayOrder,
       isActive,
     } = req.body;
@@ -98,6 +99,7 @@ export const createTest = async (req, res) => {
       collectionMethod: collectionMethod || "",
       sampleType: sampleType || "",
       image: req.file?.path || image || "",
+      icon: icon ? JSON.parse(icon) : { name: "flask", category: "" },
       displayOrder: Number(displayOrder || 0),
       isActive: isActive !== undefined ? isActive : true,
     });
@@ -179,6 +181,7 @@ export const updateTest = async (req, res) => {
       collectionMethod,
       sampleType,
       image,
+      icon,
     } = req.body;
 
     const test = await Test.findById(req.params.id);
@@ -214,6 +217,9 @@ export const updateTest = async (req, res) => {
     test.collectionMethod = collectionMethod ?? test.collectionMethod;
     test.sampleType = sampleType ?? test.sampleType;
     test.image = req.file?.path ?? image ?? test.image;
+    if (icon) {
+      test.icon = typeof icon === "string" ? JSON.parse(icon) : icon;
+    }
 
     const updatedTest = await test.save();
 

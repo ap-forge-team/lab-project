@@ -36,6 +36,7 @@ import FilterPanel from '@/components/ui/FilterPanel'
 import FilterButton from '@/components/ui/FilterButton'
 import AddTestModal from './AddTestModal'
 import { deleteTest } from '@/services/test.service'
+import { getIconById } from '@/components/icons/MedicalIcons'
 
 const PAGE_SIZE = 12
 const PAGE_SIZES = [12, 24, 48]
@@ -49,6 +50,36 @@ const CARD_STYLES = [
   { icon: HeartPulse, bg: 'bg-sky-50', text: 'text-sky-500' },
   { icon: Wind, bg: 'bg-indigo-50', text: 'text-indigo-500' },
 ]
+
+const ICON_STYLES = {
+  blood: { bg: 'bg-red-50', text: 'text-red-500' },
+  flask: { bg: 'bg-teal-50', text: 'text-teal-500' },
+  shield: { bg: 'bg-violet-50', text: 'text-violet-500' },
+  heart: { bg: 'bg-pink-50', text: 'text-pink-500' },
+  kidney: { bg: 'bg-orange-50', text: 'text-orange-500' },
+  liver: { bg: 'bg-red-50', text: 'text-red-500' },
+  thyroid: { bg: 'bg-pink-50', text: 'text-pink-500' },
+  stomach: { bg: 'bg-teal-50', text: 'text-teal-500' },
+  brain: { bg: 'bg-teal-50', text: 'text-teal-500' },
+  user: { bg: 'bg-orange-50', text: 'text-orange-500' },
+  dna: { bg: 'bg-blue-50', text: 'text-blue-500' },
+  pill: { bg: 'bg-orange-50', text: 'text-orange-500' },
+  ribbon: { bg: 'bg-pink-50', text: 'text-pink-500' },
+  microscope: { bg: 'bg-blue-50', text: 'text-blue-500' },
+  stethoscope: { bg: 'bg-teal-50', text: 'text-teal-500' },
+}
+
+const DEFAULT_ICON_STYLE = { bg: 'bg-blue-50', text: 'text-blue-500' }
+
+const getTestIcon = (test) => {
+  const iconName = test.icon?.name || test.category?.icon || 'flask'
+  return getIconById(iconName)
+}
+
+const getTestIconStyle = (test) => {
+  const iconName = test.icon?.name || test.category?.icon || 'flask'
+  return ICON_STYLES[iconName] || DEFAULT_ICON_STYLE
+}
 
 const CATEGORY_COLORS = [
   { bg: 'bg-violet-100', text: 'text-violet-700' },
@@ -96,7 +127,7 @@ const DetailRow = ({ label, value, valueClass = 'text-foreground' }) => (
 
 const TestDetailsPanel = ({ test, style, catColor, onClose }) => {
   if (!test) return null
-  const Icon = style.icon
+  const Icon = getTestIcon(test)
   return (
     <Modal open={!!test} title="Test Details" onClose={onClose} size="md">
       <div className="flex items-start gap-3">
@@ -248,8 +279,7 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
   }, [deleteModal.test, onRefresh])
   const getTestId = (test, index) => test._id || test.id || `${getTitle(test)}-${index}`
   const selectedTest = visibleTests.find((test, index) => getTestId(test, index) === selectedTestId) || null
-  const selectedTestIndex = selectedTest ? visibleTests.indexOf(selectedTest) : -1
-  const selectedTestStyle = selectedTestIndex >= 0 ? CARD_STYLES[selectedTestIndex % CARD_STYLES.length] : CARD_STYLES[0]
+  const selectedTestStyle = selectedTest ? getTestIconStyle(selectedTest) : DEFAULT_ICON_STYLE
   const selectedTestCatColor = selectedTest ? getCategoryColor(getCategory(selectedTest)) : CATEGORY_COLORS[0]
 
   return (
@@ -296,8 +326,8 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
 
       {isLoading ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">Loading tests…</div> : isError ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-destructive">Unable to load tests. Please try again.</div> : visibleTests.length === 0 ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">No tests match the selected filters.</div> : view === 'grid' ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">{visibleTests.map((test, index) => {
-          const style = CARD_STYLES[index % CARD_STYLES.length]
-          const Icon = style.icon
+          const Icon = getTestIcon(test)
+          const style = getTestIconStyle(test)
           const catColor = getCategoryColor(getCategory(test))
           return <article key={test._id || test.id || `${getTitle(test)}-${index}`} className="flex min-h-[250px] flex-col rounded-xl border border-border bg-white p-4 shadow-sm transition hover:shadow-md"><div className="flex gap-3"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${style.bg} ${style.text}`}><Icon size={22} /></span><div className="min-w-0"><h2 className="truncate font-semibold text-foreground" title={getTitle(test)}>{getTitle(test)}</h2><p className="mt-0.5 text-xs text-muted-foreground">{test.code || test.testCode || '—'}</p><span className={`mt-1.5 inline-block rounded-md px-2 py-0.5 text-xs font-medium ${catColor.bg} ${catColor.text}`}>{getCategory(test)}</span></div></div><dl className="mt-3.5 space-y-2 text-xs"><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Sample Type</dt><dd className="text-right text-foreground">{getValue(test, ['sampleType', 'sample'])}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Method</dt><dd className="text-right text-foreground">{getValue(test, ['method'])}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Price</dt><dd className="text-right font-medium text-foreground">{formatPrice(getValue(test, ['price'], null))}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">TAT</dt><dd className="text-right text-foreground">{getValue(test, ['reportTime', 'tat', 'turnaroundTime'])}</dd></div></dl><div className="mt-auto flex items-center justify-between border-t border-border pt-3"><span className={`rounded-md px-2 py-1 text-xs font-medium ${isActive(test) ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>{isActive(test) ? 'Active' : 'Inactive'}</span><div className="relative"><button type="button" onClick={(e) => { e.stopPropagation(); const rect = e.currentTarget.getBoundingClientRect(); setMenuOpen({ id: getTestId(test, index), test, top: rect.bottom + 4, left: rect.right - 140 }) }} className="p-1.5 text-muted-foreground hover:text-foreground rounded transition"><MoreVertical size={16} /></button></div></div></article>
         })}</div>
@@ -355,10 +385,11 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
               </tbody>
             </table>
           </div>
-          {selectedTest && (
-            <TestDetailsPanel test={selectedTest} style={selectedTestStyle} catColor={selectedTestCatColor} onClose={() => setSelectedTestId(null)} />
-          )}
         </div>
+      )}
+
+      {selectedTest && (
+        <TestDetailsPanel test={selectedTest} style={selectedTestStyle} catColor={selectedTestCatColor} onClose={() => setSelectedTestId(null)} />
       )}
 
       {filtered.length > 0 && <div className="flex flex-col gap-3 pb-2 text-sm text-muted-foreground lg:flex-row lg:items-center lg:justify-between"><p>Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, filtered.length)} of {filtered.length} tests</p><div className="flex flex-wrap items-center gap-2"><button type="button" aria-label="Previous page" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page === 1} className="rounded-lg border border-border p-2 transition hover:bg-accent disabled:opacity-40"><ChevronLeft size={17} /></button>{pageNumbers.map((item, index) => item === 'ellipsis' ? <span key={`ellipsis-${index}`} className="px-1">…</span> : <button key={item} type="button" onClick={() => setPage(item)} className={`flex h-9 min-w-9 items-center justify-center rounded-lg px-3 font-medium transition ${page === item ? 'bg-primary text-white' : 'hover:bg-accent text-foreground'}`}>{item}</button>)}<button type="button" aria-label="Next page" onClick={() => setPage((current) => Math.min(totalPages, current + 1))} disabled={page === totalPages} className="rounded-lg border border-border p-2 transition hover:bg-accent disabled:opacity-40"><ChevronRight size={17} /></button><select aria-label="Tests per page" value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value)); setPage(1) }} className="ml-1 rounded-lg border border-border bg-white px-3 py-2 text-sm text-foreground outline-none focus:border-primary">{PAGE_SIZES.map((size) => <option key={size} value={size}>{size} per page</option>)}</select></div></div>}
