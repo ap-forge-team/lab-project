@@ -87,8 +87,10 @@ export default function useBookingForm() {
     try {
       setFetchError(null)
       const [testsRes, packagesRes] = await Promise.all([getAllTests(), getAllPackages()])
-      setTests(testsRes.data)
-      setPackages(packagesRes.data)
+      const testsList = Array.isArray(testsRes.data?.data) ? testsRes.data.data : Array.isArray(testsRes.data) ? testsRes.data : []
+      const packagesList = Array.isArray(packagesRes.data?.data) ? packagesRes.data.data : Array.isArray(packagesRes.data) ? packagesRes.data : []
+      setTests(testsList)
+      setPackages(packagesList)
     } catch {
       setFetchError('Failed to load tests and packages. Please try again.')
     }
