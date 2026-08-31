@@ -10,11 +10,12 @@ import { getAllTests } from '@/services/test.service'
 import { getAllPackages } from '@/services/package.service'
 import { getAllBookings, getAssignedBookings, getLabOwnerBookings, getMyBookings } from '@/services/booking.service'
 import { getAllLabOwners, getAllUsers, getMyAssistants } from '@/services/user.service'
-import { getAdminPaymentStats, getLabOwnerPaymentStats } from '@/services/payment.service'
+import { getAdminPaymentStats, getLabOwnerPaymentStats, getAdminPayments } from '@/services/payment.service'
 import { Spinner } from '@/components/ui/Loader'
 import TestsManagePage from '@/features/tests/components/TestsManagePage'
 import PackagesManagePage from '@/features/packages/components/PackagesManagePage'
 import BookingsManagePage from '@/features/bookings/components/BookingsManagePage'
+import PaymentsManagePage from '@/features/payments/components/PaymentsManagePage'
 import UsersManagePage from '@/features/admin/components/UsersManagePage'
 import LabOwnersManagePage from '@/features/admin/components/LabOwnersManagePage'
 import AssistantsManagePage from '@/features/lab-owner/components/AssistantsManagePage'
@@ -30,6 +31,7 @@ const sources = {
   allUsers: getAllUsers,
   myAssistants: getMyAssistants,
   adminPayments: getAdminPaymentStats,
+  paymentsList: getAdminPayments,
   labOwnerPayments: getLabOwnerPaymentStats,
   labProfile: async (user) => ({ data: user ? [user] : [] }),
   offers: async () => ({ data: [] }),
@@ -108,6 +110,14 @@ const SidebarPage = ({ page: pageProp }) => {
     return (
       <DashboardLayout>
         <BookingsManagePage bookings={items} isLoading={query.isLoading} isError={query.isError} onRefresh={query.refetch} />
+      </DashboardLayout>
+    )
+  }
+
+  if (slug === 'payments') {
+    return (
+      <DashboardLayout>
+        <PaymentsManagePage payments={items} isLoading={query.isLoading} isError={query.isError} onRefresh={query.refetch} />
       </DashboardLayout>
     )
   }

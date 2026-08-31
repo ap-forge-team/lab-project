@@ -26,7 +26,7 @@ export const sidebarPagesByRole = {
     tests: page('Tests', 'Manage the laboratory tests available to patients.', TestTube, { resource: 'tests', action: 'read' }, 'tests'),
     packages: page('Packages', 'Manage health-check packages and their included tests.', Package, { resource: 'packages', action: 'read' }, 'packages'),
     bookings: page('Bookings', 'View and manage bookings across all laboratories.', Calendar, { resource: 'bookings', action: 'read' }, 'allBookings'),
-    payments: page('Payments', 'Monitor payment totals and recent payment activity.', CreditCard, { resource: 'payments', action: 'read' }, 'adminPayments'),
+    payments: page('Payments', 'Monitor payment totals and recent payment activity.', CreditCard, { resource: 'payments', action: 'read' }, 'paymentsList'),
     'lab-owners': page('Lab Owners', 'View laboratories and their owner accounts.', Building2, { resource: 'lab_owners', action: 'read' }, 'labOwners'),
     reports: page('Reports', 'Review completed bookings and uploaded reports.', FileText, { resource: 'reports', action: 'read' }, 'allBookings', 'No completed bookings with reports found.'),
     offers: page('Offers', 'Create and manage promotional offers for tests and packages.', Tag, { resource: 'offers', action: 'read' }, 'offers', 'Offer management will appear here when the offers API is available.'),

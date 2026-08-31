@@ -8,3 +8,7 @@ export const getLabOwnerPaymentStats = () => {
 export const getAdminPaymentStats = () => {
   return API.get(API_ENDPOINTS.PAYMENT_STATS.ADMIN)
 }
+
+export const getAdminPayments = (params = {}) => {
+  return API.get(API_ENDPOINTS.PAYMENT_STATS.ADMIN_PAYMENTS, { params })
+}
