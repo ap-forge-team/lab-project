@@ -13,6 +13,7 @@ import { getAllLabOwners, getAllUsers, getMyAssistants } from '@/services/user.s
 import { getAdminPaymentStats, getLabOwnerPaymentStats } from '@/services/payment.service'
 import { Spinner } from '@/components/ui/Loader'
 import TestsManagePage from '@/features/tests/components/TestsManagePage'
+import PackagesManagePage from '@/features/packages/components/PackagesManagePage'
 import UsersManagePage from '@/features/admin/components/UsersManagePage'
 import LabOwnersManagePage from '@/features/admin/components/LabOwnersManagePage'
 import AssistantsManagePage from '@/features/lab-owner/components/AssistantsManagePage'
@@ -90,6 +91,14 @@ const SidebarPage = ({ page: pageProp }) => {
     return (
       <DashboardLayout>
         <TestsManagePage tests={items} isLoading={query.isLoading} isError={query.isError} onRefresh={query.refetch} />
+      </DashboardLayout>
+    )
+  }
+
+  if (slug === 'packages') {
+    return (
+      <DashboardLayout>
+        <PackagesManagePage packages={items} isLoading={query.isLoading} isError={query.isError} onRefresh={query.refetch} />
       </DashboardLayout>
     )
   }
