@@ -26,16 +26,18 @@ const linkGroups = [
     links: [
       { label: 'Help center', href: '/help' },
       { label: 'Track a report', href: '/reports' },
-      { label: 'Cancellations & refunds', href: '/refunds' },
+      { label: 'Cancellations & refunds', href: ROUTES.REFUND_POLICY },
       { label: 'FAQs', href: '/faqs' },
+      { label: 'Terms & Conditions', href: ROUTES.TERMS_OF_SERVICE },
     ],
   },
   {
     title: 'Legal',
     links: [
-      { label: 'Privacy policy', href: '/privacy' },
-      { label: 'Terms of service', href: '/terms' },
-      { label: 'Lab accreditation', href: '/accreditation' },
+      { label: 'Privacy Policy', href: ROUTES.PRIVACY_POLICY },
+      { label: 'Terms of Service', href: ROUTES.TERMS_OF_SERVICE },
+      { label: 'Refund Policy', href: ROUTES.REFUND_POLICY },
+      { label: 'Cookie Policy', href: ROUTES.COOKIE_POLICY },
     ],
   },
 ]

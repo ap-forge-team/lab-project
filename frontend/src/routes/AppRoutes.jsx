@@ -22,6 +22,11 @@ const ForgotPassword = lazy(() => import('@/pages/ForgotPassword'))
 const VerifyOtp = lazy(() => import('@/pages/VerifyOtp'))
 const ResetPassword = lazy(() => import('@/pages/ResetPassword'))
 const AboutUs = lazy(() => import('@/pages/AboutUs'))
+const ContactUs = lazy(() => import('@/pages/ContactUs'))
+const PrivacyPolicy = lazy(() => import('@/pages/PrivacyPolicy'))
+const TermsOfService = lazy(() => import('@/pages/TermsOfService'))
+const RefundPolicy = lazy(() => import('@/pages/RefundPolicy'))
+const CookiePolicy = lazy(() => import('@/pages/CookiePolicy'))
 const NotFound = lazy(() => import('@/pages/NotFound'))
 
 const AppRoutes = () => {
@@ -41,6 +46,7 @@ const AppRoutes = () => {
           }
         />
         <Route path={ROUTES.ABOUT} element={<PageTransition><AboutUs /></PageTransition>} />
+        <Route path={ROUTES.CONTACT} element={<PageTransition><ContactUs /></PageTransition>} />
         <Route path={ROUTES.SIGNUP} element={<PageTransition><Signup /></PageTransition>} />
         <Route path={ROUTES.PACKAGES} element={<PageTransition><PackagesPage /></PageTransition>} />
         <Route
@@ -111,6 +117,10 @@ const AppRoutes = () => {
         <Route path={ROUTES.FORGOT_PASSWORD} element={<PageTransition><ForgotPassword /></PageTransition>} />
         <Route path={ROUTES.VERIFY_OTP} element={<PageTransition><VerifyOtp /></PageTransition>} />
         <Route path={ROUTES.RESET_PASSWORD} element={<PageTransition><ResetPassword /></PageTransition>} />
+        <Route path={ROUTES.PRIVACY_POLICY} element={<PageTransition><PrivacyPolicy /></PageTransition>} />
+        <Route path={ROUTES.TERMS_OF_SERVICE} element={<PageTransition><TermsOfService /></PageTransition>} />
+        <Route path={ROUTES.REFUND_POLICY} element={<PageTransition><RefundPolicy /></PageTransition>} />
+        <Route path={ROUTES.COOKIE_POLICY} element={<PageTransition><CookiePolicy /></PageTransition>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
       </AnimatePresence>

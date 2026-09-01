@@ -30,4 +30,9 @@ export const ROUTES = {
   FORGOT_PASSWORD: '/forgot-password',
   VERIFY_OTP: '/verify-otp',
   RESET_PASSWORD: '/reset-password',
+  CONTACT: '/contact',
+  PRIVACY_POLICY: '/privacy-policy',
+  TERMS_OF_SERVICE: '/terms-of-service',
+  REFUND_POLICY: '/refund-policy',
+  COOKIE_POLICY: '/cookie-policy',
 }

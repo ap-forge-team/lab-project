@@ -156,6 +156,12 @@ const Navbar = () => {
           >
             About Us
           </Link>
+          <Link 
+            to={ROUTES.CONTACT} 
+            className={`type-primary-body-b1-medium transition ${isActive(ROUTES.CONTACT) ? 'text-primary !font-semibold' : 'text-foreground hover:text-primary'}`}
+          >
+            Contact Us
+          </Link>
         </div>
 
         {/* Desktop Right Side */}
@@ -426,6 +432,13 @@ const Navbar = () => {
                   className={`py-3 type-primary-body-b2-medium transition ${isActive(ROUTES.ABOUT) ? 'text-primary !font-bold' : 'text-foreground hover:text-primary'}`}
                 >
                   About Us
+                </Link>
+                <Link 
+                  to={ROUTES.CONTACT} 
+                  onClick={() => setMenuOpen(false)} 
+                  className={`py-3 type-primary-body-b2-medium transition ${isActive(ROUTES.CONTACT) ? 'text-primary !font-bold' : 'text-foreground hover:text-primary'}`}
+                >
+                  Contact Us
                 </Link>
               </div>
 
