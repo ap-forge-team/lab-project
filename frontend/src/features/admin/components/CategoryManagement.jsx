@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import {
   Search,
@@ -13,6 +14,7 @@ import {
   X,
   ToggleLeft,
   ToggleRight,
+  ArrowLeft,
 } from 'lucide-react'
 import {
   getCategories,
@@ -31,10 +33,12 @@ import Button from '@/components/ui/Button'
 import ConfirmModal from '@/components/ui/ConfirmModal'
 import Can from '@/components/Can'
 import { getIconById } from '@/components/icons/MedicalIcons'
+import { ROUTES } from '@/constants/routes'
 
 const ITEMS_PER_PAGE = 6
 
 const CategoryManagement = () => {
+  const navigate = useNavigate()
   const [categories, setCategories] = useState([])
   const [selectedCategory, setSelectedCategory] = useState(null)
   const [subcategories, setSubcategories] = useState([])
@@ -218,8 +222,16 @@ const CategoryManagement = () => {
       <div className="mb-6">
         <div className="flex items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Category Management</h1>
-            <p className="text-muted-foreground text-sm mt-1">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => navigate(ROUTES.ADMIN_SETTINGS)}
+                className="text-muted-foreground hover:text-foreground transition"
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <h1 className="text-2xl font-bold text-foreground">Category Management</h1>
+            </div>
+            <p className="text-muted-foreground text-sm mt-1 ml-7">
               Create and manage test categories and their subcategories.
             </p>
           </div>

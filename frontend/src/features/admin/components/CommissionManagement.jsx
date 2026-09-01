@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { BadgePercent, ChevronLeft, ChevronRight, Clock3, Pencil, Plus } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { BadgePercent, ChevronLeft, ChevronRight, Clock3, Pencil, Plus, ArrowLeft } from 'lucide-react'
 import { toast } from 'react-toastify'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
@@ -13,6 +14,7 @@ import {
   getCommissionHistory,
   updateCommission,
 } from '@/services/commission.service'
+import { ROUTES } from '@/constants/routes'
 
 const emptyForm = { commissionType: 'Percentage', commissionValue: '', reason: '' }
 const HISTORY_PAGE_SIZE = 5
@@ -23,6 +25,7 @@ const formatCommission = (commissionType, value) => {
 }
 
 const CommissionManagement = () => {
+  const navigate = useNavigate()
   const [commission, setCommission] = useState(null)
   const [history, setHistory] = useState([])
   const [form, setForm] = useState(emptyForm)
@@ -108,8 +111,16 @@ const CommissionManagement = () => {
     <div className="mx-auto max-w-7xl space-y-6 lg:space-y-7">
 
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Commission Settings</h1>
-        <p className="mt-1.5 text-sm text-muted-foreground">Set the active platform commission and review every change.</p>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate(ROUTES.ADMIN_SETTINGS)}
+            className="text-muted-foreground hover:text-foreground transition"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Commission Settings</h1>
+        </div>
+        <p className="mt-1.5 text-sm text-muted-foreground ml-7">Set the active platform commission and review every change.</p>
       </div>
 
       <section className="rounded-2xl border border-border bg-white p-6 shadow-sm sm:p-8">

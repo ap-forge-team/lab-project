@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import {
   Search,
@@ -28,6 +29,7 @@ import {
   CircleDollarSign,
   Lock,
   Building2,
+  ArrowLeft,
 } from 'lucide-react'
 import {
   getRoles,
@@ -40,6 +42,7 @@ import Input from '@/components/ui/Input'
 import Textarea from '@/components/ui/Textarea'
 import Button from '@/components/ui/Button'
 import ConfirmModal from '@/components/ui/ConfirmModal'
+import { ROUTES } from '@/constants/routes'
 
 const RESOURCES_CONFIG = {
   users: { label: 'Users', icon: Users, color: 'text-blue-600', bg: 'bg-blue-100' },
@@ -73,6 +76,7 @@ const ITEMS_PER_PAGE = 5
 const emptyForm = { name: '', displayName: '', description: '', permissions: {} }
 
 const RoleManagement = () => {
+  const navigate = useNavigate()
   const [roles, setRoles] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -222,8 +226,16 @@ const RoleManagement = () => {
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-6">
         <div className="min-w-0">
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Role Management</h1>
-          <p className="text-muted-foreground text-sm mt-1">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate(ROUTES.ADMIN_SETTINGS)}
+              className="text-muted-foreground hover:text-foreground transition"
+            >
+              <ArrowLeft size={20} />
+            </button>
+            <h1 className="text-2xl font-bold text-foreground">Role Management</h1>
+          </div>
+          <p className="text-muted-foreground text-sm mt-1 ml-7">
             View, create, and manage roles and their permissions.
           </p>
         </div>
