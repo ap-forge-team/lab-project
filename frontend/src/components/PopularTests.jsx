@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Droplet, Activity, Heart, Pill, FlaskConical, ArrowRight, ChevronRight, ChevronLeft, TestTube, Stethoscope, Microscope } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
 import { useTests } from '@/hooks/useTests'
-import { useAuth } from '@/hooks/useAuth'
+import useAuth from '@/hooks/useAuth'
 import { ROLES } from '@/constants/roles'
 
 const categoryIcons = {

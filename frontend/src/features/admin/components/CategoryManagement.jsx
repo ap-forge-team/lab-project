@@ -15,6 +15,8 @@ import {
   ToggleLeft,
   ToggleRight,
   ArrowLeft,
+  GripVertical,
+  FlaskConical,
 } from 'lucide-react'
 import {
   getCategories,
@@ -612,14 +614,15 @@ const CategoryManagement = () => {
                     </div>
 
                     {/* Desktop Table Layout */}
-                    <div className="hidden sm:block">
+                    <div className="hidden sm:block p-4">
+                      <div className="border border-border rounded-xl overflow-hidden">
                       <table className="w-full">
                         <thead>
-                          <tr className="border-b border-border text-left">
-                            <th className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Subcategory Name</th>
-                            <th className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Tests</th>
-                            <th className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase">Status</th>
-                            <th className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase text-right">Actions</th>
+                          <tr className="border-b border-border bg-gray-50/50 text-left">
+                            <th className="px-4 py-3 text-xs font-semibold text-muted-foreground">Subcategory Name</th>
+                            <th className="px-4 py-3 text-xs font-semibold text-muted-foreground">Tests</th>
+                            <th className="px-4 py-3 text-xs font-semibold text-muted-foreground">Status</th>
+                            <th className="px-4 py-3 text-xs font-semibold text-muted-foreground text-right">Actions</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -633,24 +636,28 @@ const CategoryManagement = () => {
                             paginatedSubcategories.map((sub) => (
                               <tr key={sub._id} className="border-b border-border hover:bg-accent/50 transition">
                                 <td className="px-4 py-3">
-                                  <p className="text-sm font-medium text-foreground">{sub.name}</p>
-                                  {sub.description && (
-                                    <p className="text-xs text-muted-foreground mt-0.5">{sub.description}</p>
-                                  )}
+                                  <div>
+                                    <p className="text-sm font-medium text-foreground">{sub.name}</p>
+                                    {sub.description && (
+                                      <p className="text-xs text-muted-foreground mt-0.5">{sub.description}</p>
+                                    )}
+                                  </div>
                                 </td>
-                                <td className="px-4 py-3 text-sm text-muted-foreground">{sub.testCount || 0} Tests</td>
                                 <td className="px-4 py-3">
-                                  <button
-                                    onClick={() => handleToggleSubcategoryStatus(sub._id)}
-                                    className={`text-xs font-semibold px-2 py-0.5 rounded-full cursor-pointer ${
-                                      sub.isActive !== false ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
-                                    }`}
-                                  >
+                                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                                    <FlaskConical size={14} />
+                                    <span>{sub.testCount || 0} Tests</span>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                                    sub.isActive !== false ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                                  }`}>
                                     {sub.isActive !== false ? 'Active' : 'Inactive'}
-                                  </button>
+                                  </span>
                                 </td>
                                 <td className="px-4 py-3">
-                                  <div className="flex items-center justify-end gap-1">
+                                  <div className="flex items-center justify-end gap-2">
                                     <Can resource="subcategories" action="update">
                                       <button
                                         onClick={() => {
@@ -662,7 +669,7 @@ const CategoryManagement = () => {
                                           })
                                           setShowSubcategoryModal(true)
                                         }}
-                                        className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded transition"
+                                        className="w-8 h-8 flex items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition"
                                       >
                                         <Edit2 size={14} />
                                       </button>
@@ -670,7 +677,7 @@ const CategoryManagement = () => {
                                     <Can resource="subcategories" action="delete">
                                       <button
                                         onClick={() => handleDeleteSubcategory(sub._id)}
-                                        className="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded transition"
+                                        className="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-100 transition"
                                       >
                                         <Trash2 size={14} />
                                       </button>
@@ -722,6 +729,7 @@ const CategoryManagement = () => {
                           </div>
                         </div>
                       )}
+                    </div>
                     </div>
                   </div>
                 )}

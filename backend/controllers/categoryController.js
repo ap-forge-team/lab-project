@@ -1,5 +1,6 @@
 import Category from "../models/Category.js";
 import Test from "../models/Test.js";
+import Subcategory from "../models/Subcategory.js";
 import MESSAGES from "../Utils/messages.js";
 import logger from "../Utils/logger.js";
 
@@ -153,12 +154,47 @@ export const getAllCategories = async (
         item.count;
     });
 
+    /*
+      Get subcategory counts
+    */
+
+    const subcategoryCounts =
+      await Subcategory.aggregate([
+        {
+          $match: {
+            category: {
+              $in: categoryIds,
+            },
+          },
+        },
+
+        {
+          $group: {
+            _id: "$category",
+            count: {
+              $sum: 1,
+            },
+          },
+        },
+      ]);
+
+    const subcategoryCountMap = {};
+
+    subcategoryCounts.forEach((item) => {
+      subcategoryCountMap[item._id.toString()] =
+        item.count;
+    });
+
     const result =
       categories.map((category) => ({
         ...category,
 
         testCount:
           countMap[
+            category._id.toString()
+          ] || 0,
+        subcategoryCount:
+          subcategoryCountMap[
             category._id.toString()
           ] || 0,
       }));
