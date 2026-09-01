@@ -35,6 +35,7 @@ import {
   getRoles,
   createRole,
   updateRole,
+  updateRolePermissions,
   deleteRole,
   getAvailableResources,
 } from '@/services/role.service'
@@ -172,8 +173,8 @@ const RoleManagement = () => {
         await updateRole(editingRole._id, {
           displayName: form.displayName,
           description: form.description,
-          permissions: form.permissions,
         })
+        await updateRolePermissions(editingRole._id, form.permissions)
       } else {
         await createRole({
           name: form.name,
@@ -182,10 +183,12 @@ const RoleManagement = () => {
           permissions: form.permissions,
         })
       }
+      toast.success(editingRole ? 'Role updated successfully' : 'Role created successfully')
       handleCloseModal()
       fetchRoles()
     } catch (err) {
       console.error('Failed to save role', err)
+      toast.error(err.response?.data?.message || 'Failed to save role')
     } finally {
       setSaving(false)
     }
@@ -290,9 +293,11 @@ const RoleManagement = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-sm font-semibold text-foreground">{role.displayName || role.name}</p>
-                        <span className={`text-[10px] sm:text-[11px] font-semibold px-1.5 sm:px-2 py-0.5 rounded-full ${colorSet.badge}`}>
-                          {role.name}
-                        </span>
+                        {role.name !== 'admin' && (
+                          <span className={`text-[10px] sm:text-[11px] font-semibold px-1.5 sm:px-2 py-0.5 rounded-full ${colorSet.badge}`}>
+                            {role.name}
+                          </span>
+                        )}
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5">
                         {role.description || 'No description'}
@@ -319,16 +324,28 @@ const RoleManagement = () => {
                       {menuOpen === role._id && (
                         <div className="absolute right-0 top-full mt-1 bg-white border border-border rounded-lg shadow-lg py-1 z-50 min-w-[120px]">
                           <button
-                            onClick={(e) => { e.stopPropagation(); handleOpenModal(role) }}
-                            className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left"
+                            onClick={(e) => { e.stopPropagation(); if (role.name !== 'admin') { handleOpenModal(role) } }}
+                            disabled={role.name === 'admin'}
+                            className={`flex items-center gap-2 px-3 py-2 text-sm w-full text-left ${
+                              role.name === 'admin'
+                                ? 'text-muted-foreground/50 cursor-not-allowed'
+                                : 'text-foreground hover:bg-accent'
+                            }`}
                           >
                             <Edit2 size={14} /> Edit
+                            {role.name === 'admin' && <Lock size={12} className="ml-auto" />}
                           </button>
                           <button
-                            onClick={(e) => { e.stopPropagation(); handleDelete(role._id); setMenuOpen(null) }}
-                            className="flex items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-50 w-full text-left"
+                            onClick={(e) => { e.stopPropagation(); if (role.name !== 'admin') { handleDelete(role._id); setMenuOpen(null) } }}
+                            disabled={role.name === 'admin'}
+                            className={`flex items-center gap-2 px-3 py-2 text-sm w-full text-left ${
+                              role.name === 'admin'
+                                ? 'text-muted-foreground/50 cursor-not-allowed'
+                                : 'text-red-500 hover:bg-red-50'
+                            }`}
                           >
                             <Trash2 size={14} /> Delete
+                            {role.name === 'admin' && <Lock size={12} className="ml-auto" />}
                           </button>
                         </div>
                       )}

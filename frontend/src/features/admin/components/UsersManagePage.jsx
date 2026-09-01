@@ -489,9 +489,7 @@ const UsersManagePage = ({ users, isLoading, isError, onRefresh }) => {
                 <label className="block text-xs font-medium text-muted-foreground mb-1.5">Role</label>
                 <select value={form.role} onChange={(e) => handleChange('role', e.target.value)} className="w-full border border-border rounded-lg px-4 py-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary bg-card">
                   <option value="patient">Customer</option>
-                  <option value="lab_owner">Lab Owner</option>
                   <option value="lab_assistant">Lab Technician</option>
-                  <option value="admin">Admin</option>
                 </select>
                 {errors.role && <p className="text-destructive text-xs mt-1.5 font-medium">{errors.role}</p>}
               </div>
@@ -635,9 +633,7 @@ const UsersManagePage = ({ users, isLoading, isError, onRefresh }) => {
                   className="w-full border border-border rounded-lg px-4 py-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary bg-card"
                 >
                   <option value="patient">Customer</option>
-                  <option value="lab_owner">Lab Owner</option>
                   <option value="lab_assistant">Lab Technician</option>
-                  <option value="admin">Admin</option>
                 </select>
               </div>
             </div>

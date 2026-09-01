@@ -17,6 +17,10 @@ export const updateRole = (id, data) => {
   return API.put(API_ENDPOINTS.ROLES.BY_ID(id), data)
 }
 
+export const updateRolePermissions = (id, permissions) => {
+  return API.put(`${API_ENDPOINTS.ROLES.BY_ID(id)}/permissions`, { permissions })
+}
+
 export const deleteRole = (id) => {
   return API.delete(API_ENDPOINTS.ROLES.BY_ID(id))
 }
