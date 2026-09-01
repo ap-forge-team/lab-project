@@ -111,9 +111,17 @@ const TestCategories = () => {
                 onClick={() => handleCategoryClick(cat.name)}
                 className="flex-shrink-0 w-[120px] lg:w-[155px] bg-gray-50 hover:bg-primary/5 border border-gray-100 hover:border-primary/20 rounded-2xl p-4 lg:p-5 cursor-pointer transition group text-center"
               >
-                <div className={`w-12 h-12 lg:w-14 lg:h-14 rounded-full ${bgColor} flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition`}>
-                  <IconComponent size={24} className={`${textColor} lg:hidden`} />
-                  <IconComponent size={28} className={`${textColor} hidden lg:block`} />
+                <div
+                  className={`w-12 h-12 lg:w-14 lg:h-14 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition overflow-hidden ${cat.customIcon ? 'bg-primary/10' : bgColor}`}
+                >
+                  {cat.customIcon ? (
+                    <img src={cat.customIcon} alt={cat.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <>
+                      <IconComponent size={24} className={`${textColor} lg:hidden`} />
+                      <IconComponent size={28} className={`${textColor} hidden lg:block`} />
+                    </>
+                  )}
                 </div>
                 <h3 className="font-semibold text-xs lg:text-sm text-foreground mb-1 truncate">
                   {cat.name}

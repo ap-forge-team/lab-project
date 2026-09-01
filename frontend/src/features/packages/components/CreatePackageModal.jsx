@@ -390,7 +390,7 @@ const CreatePackageModal = ({ open, onClose, onCreated, initialData, packageId, 
           {/* Actions */}
           <div className="flex items-center justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" loading={creating}>
+            <Button type="submit" loading={creating} disabled={!packageData.title || !packageData.category || !packageData.price}>
               <Package size={16} className="mr-2" />
               {mode === 'edit' ? 'Update Package' : 'Create Package'}
             </Button>

@@ -15,6 +15,7 @@ export const createCategory = async (req, res) => {
       name,
       description,
       icon,
+      customIcon,
       illustration,
       displayOrder,
       isActive,
@@ -41,11 +42,13 @@ export const createCategory = async (req, res) => {
 
     const iconFile = req.files?.icon?.[0];
     const illustrationFile = req.files?.illustration?.[0];
+    const customIconFile = req.files?.customIcon?.[0];
 
     const category = await Category.create({
       name: name.trim(),
       description: description || "",
       icon: iconFile?.path || icon || "",
+      customIcon: customIconFile?.path || customIcon || "",
       illustration: illustrationFile?.path || illustration || "",
       displayOrder:
         displayOrder !== undefined
@@ -243,6 +246,7 @@ export const updateCategory = async (
       name,
       description,
       icon,
+      customIcon,
       displayOrder,
       isActive,
     } = req.body;
@@ -287,6 +291,11 @@ export const updateCategory = async (
     if (icon !== undefined || req.files?.icon?.length) {
       category.icon =
         req.files?.icon?.[0]?.path || icon;
+    }
+
+    if (customIcon !== undefined || req.files?.customIcon?.length) {
+      category.customIcon =
+        req.files?.customIcon?.[0]?.path || customIcon;
     }
 
     if (req.files?.illustration?.length) {

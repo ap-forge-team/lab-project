@@ -341,9 +341,8 @@ const AddPackageModal = ({ open, onClose, onCreated, initialData, packageId, mod
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" loading={creating}>
-            {mode === 'edit' ? 'Update Package' : 'Save & Next'}
-            <ArrowLeft size={16} className="ml-1.5 rotate-180" />
+          <Button type="submit" loading={creating} disabled={!packageData.title || !packageData.category || !packageData.price}>
+            {mode === 'edit' ? 'Update Package' : 'Save'}
           </Button>
         </div>
       </form>

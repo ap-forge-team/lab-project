@@ -22,6 +22,10 @@ router.post("/", protect, authorizePermissions("categories", "create"),  imageUp
       name: "illustration",
       maxCount: 1,
     },
+    {
+      name: "customIcon",
+      maxCount: 1,
+    },
   ]),createCategory);
 
 router.get("/", protect, authorizePermissions("categories", "read"), getAllCategories);
@@ -35,6 +39,10 @@ router.put("/:id", protect, authorizePermissions("categories", "update"),  image
     },
     {
       name: "illustration",
+      maxCount: 1,
+    },
+    {
+      name: "customIcon",
       maxCount: 1,
     },
   ]),updateCategory);

@@ -37,6 +37,42 @@ import { ROUTES } from '@/constants/routes'
 
 const ITEMS_PER_PAGE = 6
 
+const iconBgColors = {
+  blood: 'bg-red-100',
+  flask: 'bg-teal-100',
+  shield: 'bg-purple-100',
+  heart: 'bg-pink-100',
+  kidney: 'bg-orange-100',
+  liver: 'bg-rose-100',
+  thyroid: 'bg-pink-100',
+  stomach: 'bg-teal-100',
+  brain: 'bg-teal-100',
+  user: 'bg-orange-100',
+  dna: 'bg-blue-100',
+  pill: 'bg-amber-100',
+  ribbon: 'bg-pink-100',
+  microscope: 'bg-blue-100',
+  stethoscope: 'bg-teal-100',
+}
+
+const iconTextColors = {
+  blood: 'text-red-500',
+  flask: 'text-teal-500',
+  shield: 'text-purple-500',
+  heart: 'text-pink-500',
+  kidney: 'text-orange-500',
+  liver: 'text-rose-500',
+  thyroid: 'text-pink-500',
+  stomach: 'text-teal-500',
+  brain: 'text-teal-500',
+  user: 'text-orange-500',
+  dna: 'text-blue-500',
+  pill: 'text-amber-500',
+  ribbon: 'text-pink-500',
+  microscope: 'text-blue-500',
+  stethoscope: 'text-teal-500',
+}
+
 const CategoryManagement = () => {
   const navigate = useNavigate()
   const [categories, setCategories] = useState([])
@@ -50,7 +86,7 @@ const CategoryManagement = () => {
   const [showSubcategoryModal, setShowSubcategoryModal] = useState(false)
   const [editingCategory, setEditingCategory] = useState(null)
   const [editingSubcategory, setEditingSubcategory] = useState(null)
-  const [categoryForm, setCategoryForm] = useState({ name: '', description: '', icon: 'flask', isActive: true })
+  const [categoryForm, setCategoryForm] = useState({ name: '', description: '', icon: 'flask', customIcon: null, isActive: true })
   const [subcategoryForm, setSubcategoryForm] = useState({ name: '', description: '', isActive: true })
   const [menuOpen, setMenuOpen] = useState(null)
   const [deleteModal, setDeleteModal] = useState({ open: false, type: null, target: null })
@@ -122,7 +158,7 @@ const CategoryManagement = () => {
       }
       setShowCategoryModal(false)
       setEditingCategory(null)
-      setCategoryForm({ name: '', description: '', icon: '🧪', isActive: true })
+      setCategoryForm({ name: '', description: '', icon: 'flask', customIcon: null, isActive: true })
       fetchCategories()
     } catch (err) {
       console.error('Failed to save category', err)
@@ -237,7 +273,7 @@ const CategoryManagement = () => {
           </div>
           <Can resource="categories" action="create">
             <button
-              onClick={() => { setEditingCategory(null); setCategoryForm({ name: '', description: '', icon: 'flask', isActive: true }); setShowCategoryModal(true) }}
+              onClick={() => { setEditingCategory(null); setCategoryForm({ name: '', description: '', icon: 'flask', customIcon: null, isActive: true }); setShowCategoryModal(true) }}
               className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-4 py-2.5 rounded-lg font-semibold text-sm transition flex-shrink-0"
             >
               <Plus size={16} />
@@ -286,11 +322,16 @@ const CategoryManagement = () => {
                         : 'hover:bg-accent border-l-2 border-l-transparent'
                       }`}
                   >
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      {(() => {
-                        const IconComponent = getIconById(category.icon || 'flask')
-                        return <IconComponent size={20} />
-                      })()}
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden ${category.customIcon ? 'bg-primary/10' : (iconBgColors[category.icon] || 'bg-primary/10')}`}>
+                      {category.customIcon ? (
+                        <img src={category.customIcon} alt={category.name} className="w-full h-full object-cover" />
+                      ) : (
+                        (() => {
+                          const IconComponent = getIconById(category.icon || 'flask')
+                          const textColor = iconTextColors[category.icon] || 'text-primary'
+                          return <IconComponent size={20} className={textColor} />
+                        })()
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
@@ -323,6 +364,7 @@ const CategoryManagement = () => {
                                   name: category.name,
                                   description: category.description || '',
                                   icon: category.icon || 'flask',
+                                  customIcon: category.customIcon || null,
                                   isActive: category.isActive !== false,
                                 })
                                 setShowCategoryModal(true)
@@ -361,7 +403,7 @@ const CategoryManagement = () => {
             <div className="p-3 border-t border-border">
               <Can resource="categories" action="create">
                 <button
-                  onClick={() => { setEditingCategory(null); setCategoryForm({ name: '', description: '', icon: 'flask', isActive: true }); setShowCategoryModal(true) }}
+                  onClick={() => { setEditingCategory(null); setCategoryForm({ name: '', description: '', icon: 'flask', customIcon: null, isActive: true }); setShowCategoryModal(true) }}
                   className="flex items-center gap-2 text-sm text-primary font-semibold hover:underline"
                 >
                   <Plus size={14} /> Add New Category
@@ -379,11 +421,16 @@ const CategoryManagement = () => {
               <div className="bg-white border border-border rounded-xl p-5 mb-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      {(() => {
-                        const IconComponent = getIconById(selectedCategory.icon || 'flask')
-                        return <IconComponent size={28} />
-                      })()}
+                    <div className={`w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden ${selectedCategory.customIcon ? 'bg-primary/10' : (iconBgColors[selectedCategory.icon] || 'bg-primary/10')}`}>
+                      {selectedCategory.customIcon ? (
+                        <img src={selectedCategory.customIcon} alt={selectedCategory.name} className="w-full h-full object-cover" />
+                      ) : (
+                        (() => {
+                          const IconComponent = getIconById(selectedCategory.icon || 'flask')
+                          const textColor = iconTextColors[selectedCategory.icon] || 'text-primary'
+                          return <IconComponent size={28} className={textColor} />
+                        })()
+                      )}
                     </div>
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
@@ -412,6 +459,7 @@ const CategoryManagement = () => {
                           name: selectedCategory.name,
                           description: selectedCategory.description || '',
                           icon: selectedCategory.icon || 'flask',
+                          customIcon: selectedCategory.customIcon || null,
                           isActive: selectedCategory.isActive !== false,
                         })
                         setShowCategoryModal(true)
@@ -689,15 +737,20 @@ const CategoryManagement = () => {
                   <div className="p-6">
                     <h3 className="font-semibold text-foreground mb-2">Category Icon</h3>
                     <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                        {(() => {
-                          const IconComponent = getIconById(selectedCategory.icon || 'flask')
-                          return <IconComponent size={32} />
-                        })()}
+                      <div className={`w-16 h-16 rounded-xl flex items-center justify-center overflow-hidden ${selectedCategory.customIcon ? 'bg-primary/10' : (iconBgColors[selectedCategory.icon] || 'bg-primary/10')}`}>
+                        {selectedCategory.customIcon ? (
+                          <img src={selectedCategory.customIcon} alt={selectedCategory.name} className="w-full h-full object-cover" />
+                        ) : (
+                          (() => {
+                            const IconComponent = getIconById(selectedCategory.icon || 'flask')
+                            const textColor = iconTextColors[selectedCategory.icon] || 'text-primary'
+                            return <IconComponent size={32} className={textColor} />
+                          })()
+                        )}
                       </div>
                       <div>
-                        <p className="text-sm text-foreground font-medium">{selectedCategory.icon || 'flask'}</p>
-                        <p className="text-xs text-muted-foreground">Icon identifier</p>
+                        <p className="text-sm text-foreground font-medium">{selectedCategory.customIcon ? 'Custom Icon' : selectedCategory.icon || 'flask'}</p>
+                        <p className="text-xs text-muted-foreground">{selectedCategory.customIcon ? 'Uploaded image' : 'Icon identifier'}</p>
                       </div>
                     </div>
                   </div>

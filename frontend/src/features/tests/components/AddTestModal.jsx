@@ -593,9 +593,8 @@ const AddTestModal = ({ open, onClose, onCreated, initialData, testId, mode = 'c
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" loading={creating}>
-            {mode === 'edit' ? 'Update Test' : 'Save & Next'}
-            <ArrowLeft size={16} className="ml-1.5 rotate-180" />
+          <Button type="submit" loading={creating} disabled={!testData.testName || !testData.category || !testData.price || !testData.sampleType || !testData.collectionMethod || !testData.reportTime}>
+            {mode === 'edit' ? 'Update Test' : 'Save'}
           </Button>
         </div>
       </form>

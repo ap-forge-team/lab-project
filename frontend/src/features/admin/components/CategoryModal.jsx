@@ -1,9 +1,48 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import { X, Info, Upload } from 'lucide-react'
 import { MedicalIcons, getIconById } from '@/components/icons/MedicalIcons'
 import Button from '@/components/ui/Button'
 
+const iconBgColors = {
+  blood: 'bg-red-100',
+  flask: 'bg-teal-100',
+  shield: 'bg-purple-100',
+  heart: 'bg-pink-100',
+  kidney: 'bg-orange-100',
+  liver: 'bg-rose-100',
+  thyroid: 'bg-pink-100',
+  stomach: 'bg-teal-100',
+  brain: 'bg-teal-100',
+  user: 'bg-orange-100',
+  dna: 'bg-blue-100',
+  pill: 'bg-amber-100',
+  ribbon: 'bg-pink-100',
+  microscope: 'bg-blue-100',
+  stethoscope: 'bg-teal-100',
+  custom: 'bg-gray-100',
+}
+
+const iconTextColors = {
+  blood: 'text-red-500',
+  flask: 'text-teal-500',
+  shield: 'text-purple-500',
+  heart: 'text-pink-500',
+  kidney: 'text-orange-500',
+  liver: 'text-rose-500',
+  thyroid: 'text-pink-500',
+  stomach: 'text-teal-500',
+  brain: 'text-teal-500',
+  user: 'text-orange-500',
+  dna: 'text-blue-500',
+  pill: 'text-amber-500',
+  ribbon: 'text-pink-500',
+  microscope: 'text-blue-500',
+  stethoscope: 'text-teal-500',
+  custom: 'text-gray-500',
+}
+
 const CategoryModal = ({ isOpen, onClose, onSave, editingCategory, form, setForm, saving = false }) => {
+  const fileInputRef = useRef(null)
   if (!isOpen) return null
 
   const handleChange = (field, value) => {
@@ -12,6 +51,41 @@ const CategoryModal = ({ isOpen, onClose, onSave, editingCategory, form, setForm
 
   const handleIconSelect = (iconId) => {
     handleChange('icon', iconId)
+  }
+
+  const handleCustomIconUpload = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const validTypes = ['image/svg+xml', 'image/png', 'image/jpeg', 'image/jpg']
+    if (!validTypes.includes(file.type)) {
+      alert('Please upload an SVG, PNG, or JPG file')
+      return
+    }
+
+    const img = new Image()
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        const maxSize = 64
+        let width = img.width
+        let height = img.height
+        if (width > height) {
+          if (width > maxSize) { height = (height * maxSize) / width; width = maxSize }
+        } else {
+          if (height > maxSize) { width = (width * maxSize) / height; height = maxSize }
+        }
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(img, 0, 0, width, height)
+        const compressed = canvas.toDataURL('image/png')
+
+        setForm({ ...form, customIcon: compressed, icon: 'custom' })
+      }
+      img.src = event.target.result
+    }
+    reader.readAsDataURL(file)
   }
 
   const SelectedIcon = getIconById(form.icon || 'flask')
@@ -78,8 +152,16 @@ const CategoryModal = ({ isOpen, onClose, onSave, editingCategory, form, setForm
               <span>You can upload a custom icon in SVG, PNG or JPG format.</span>
             </div>
 
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/svg+xml,image/png,image/jpeg,image/jpg"
+              className="hidden"
+              onChange={handleCustomIconUpload}
+            />
             <button
               type="button"
+              onClick={() => fileInputRef.current?.click()}
               className="inline-flex items-center gap-1.5 text-sm text-primary font-semibold mt-3 hover:underline"
             >
               <Upload size={14} /> Upload Custom Icon
@@ -103,7 +185,7 @@ const CategoryModal = ({ isOpen, onClose, onSave, editingCategory, form, setForm
 
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Description <span className="text-red-500">*</span>
+                Description
               </label>
               <textarea
                 value={form.description}
@@ -137,8 +219,16 @@ const CategoryModal = ({ isOpen, onClose, onSave, editingCategory, form, setForm
             <div>
               <p className="text-sm font-medium text-foreground mb-2">Preview</p>
               <div className="border border-border rounded-xl p-3 flex items-center gap-3">
-                <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <SelectedIcon size={22} />
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden ${form.icon === 'custom' ? 'bg-primary/10' : (iconBgColors[form.icon] || 'bg-primary/10')}`}>
+                  {form.customIcon ? (
+                    <img src={form.customIcon} alt="Custom icon" className="w-full h-full object-cover" />
+                  ) : (
+                    (() => {
+                      const IconComp = getIconById(form.icon || 'flask')
+                      const textColor = iconTextColors[form.icon] || 'text-primary'
+                      return <IconComp size={22} className={textColor} />
+                    })()
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">

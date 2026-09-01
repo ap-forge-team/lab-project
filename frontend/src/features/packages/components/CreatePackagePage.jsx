@@ -462,7 +462,7 @@ const CreatePackagePage = () => {
               <Button type="button" variant="outline" onClick={() => navigate('/admin/packages')}>
                 Cancel
               </Button>
-              <Button type="submit" loading={creating}>
+              <Button type="submit" loading={creating} disabled={!packageData.title || !packageData.category || !packageData.price}>
                 <Package size={16} className="mr-2" />
                 {isEdit ? 'Update Package' : 'Create Package'}
               </Button>
