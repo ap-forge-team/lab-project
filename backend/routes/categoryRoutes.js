@@ -28,7 +28,7 @@ router.post("/", protect, authorizePermissions("categories", "create"),  imageUp
     },
   ]),createCategory);
 
-router.get("/", protect, authorizePermissions("categories", "read"), getAllCategories);
+router.get("/", getAllCategories);
 
 router.get("/:id", protect, authorizePermissions("categories", "read"), getCategoryById);
 

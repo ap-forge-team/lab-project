@@ -222,7 +222,9 @@ const Login = () => {
       {/* Left Panel — desktop: side panel, mobile: full background */}
       <div className="flex flex-col w-full md:w-[44%] bg-tertiary px-[32px] py-[36px] relative overflow-hidden justify-between">
         {/* Top: Logo */}
-        <Logo variant="white" />
+        <div className="relative z-20">
+          <Logo variant="white" />
+        </div>
         
         {/* Middle: DNA Animation & Text */}
         <div className="flex flex-col items-center justify-center z-10 w-full mt-4">

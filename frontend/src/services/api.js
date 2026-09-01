@@ -25,8 +25,13 @@ API.interceptors.response.use(
     const status = error.response?.status
 
     if (status === 401) {
-      sessionStorage.removeItem('user')
-      window.location.href = ROUTES.LOGIN
+      const currentPath = window.location.pathname
+      const isPublicPage = [ROUTES.LOGIN, ROUTES.SIGNUP, ROUTES.FORGOT_PASSWORD, ROUTES.HOME, ROUTES.TESTS, ROUTES.PACKAGES, ROUTES.ABOUT].includes(currentPath)
+
+      if (!isPublicPage) {
+        sessionStorage.removeItem('user')
+        window.location.href = ROUTES.LOGIN
+      }
     }
 
     if (status === 500) {

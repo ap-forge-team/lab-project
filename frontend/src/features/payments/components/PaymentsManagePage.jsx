@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from 'react'
+import React, { useMemo, useState, useCallback, useEffect } from 'react'
 import {
   Calendar,
   CheckCircle2,
@@ -13,6 +13,7 @@ import {
   MoreVertical,
   Pencil,
   Search,
+  Settings,
   Wallet,
   XCircle,
   RefreshCw,
@@ -24,6 +25,7 @@ import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
 import FilterPanel from '@/components/ui/FilterPanel'
 import FilterButton from '@/components/ui/FilterButton'
+import { getPaymentSetting, createPaymentSetting, updatePaymentSetting } from '@/services/user.service'
 
 const PAGE_SIZE = 10
 const PAGE_SIZES = [10, 25, 50]
@@ -146,6 +148,48 @@ const PaymentsManagePage = ({ payments, isLoading, isError, onRefresh }) => {
   const [activeFilters, setActiveFilters] = useState({})
   const [filterPanelOpen, setFilterPanelOpen] = useState(null)
   const [menuOpen, setMenuOpen] = useState(null)
+  const [showPaymentSettings, setShowPaymentSettings] = useState(false)
+  const [payment, setPayment] = useState(null)
+  const [qrImage, setQrImage] = useState(null)
+  const [savingPayment, setSavingPayment] = useState(false)
+
+  const fetchPayment = useCallback(async () => {
+    try {
+      const { data } = await getPaymentSetting()
+      if (data.data) {
+        setPayment(data.data)
+      }
+    } catch (err) {
+      console.log(err)
+    }
+  }, [])
+
+  const handlePaymentSettingsSubmit = async () => {
+    try {
+      setSavingPayment(true)
+      const formData = new FormData()
+      if (qrImage) {
+        formData.append('qrImage', qrImage)
+      }
+      if (payment) {
+        await updatePaymentSetting(formData)
+      } else {
+        await createPaymentSetting(formData)
+      }
+      toast.success('Payment settings saved successfully')
+      fetchPayment()
+      setShowPaymentSettings(false)
+      setQrImage(null)
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Something went wrong')
+    } finally {
+      setSavingPayment(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchPayment()
+  }, [fetchPayment])
 
   const stats = useMemo(() => {
     const total = payments.reduce((sum, p) => sum + (p.totalAmount || p.paymentAmount || p.test?.price || p.package?.price || 0), 0)
@@ -240,9 +284,10 @@ const PaymentsManagePage = ({ payments, isLoading, isError, onRefresh }) => {
               <button type="button" aria-label="Grid view" onClick={() => setView('grid')} className={`rounded p-1.5 ${view === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><Grid2X2 size={18} /></button>
             </Tooltip>
           </div>
-          <Can resource="payments" action="create">
-            <Button onClick={() => toast.info('New payment creation coming soon')} size="sm">
-              + New Payment
+          <Can resource="payments" action="update">
+            <Button onClick={() => { setQrImage(null); setShowPaymentSettings(true) }} size="sm" variant="outline">
+              <Settings size={14} className="mr-1.5" />
+              Payment Settings
             </Button>
           </Can>
         </div>
@@ -465,6 +510,52 @@ const PaymentsManagePage = ({ payments, isLoading, isError, onRefresh }) => {
           </div>
         </>
       )}
+      {/* Payment Settings Modal */}
+      <Modal
+        open={showPaymentSettings}
+        title="Payment Settings"
+        subtitle="Upload a QR code for payments"
+        onClose={() => { setShowPaymentSettings(false); setQrImage(null) }}
+        size="lg"
+      >
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            handlePaymentSettingsSubmit()
+          }}
+          className="space-y-6"
+        >
+          <div>
+            <label className="block mb-2 font-semibold">QR Code</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setQrImage(e.target.files[0])}
+              className="w-full"
+            />
+          </div>
+          {qrImage && (
+            <div className="space-y-2">
+              <p className="font-semibold text-sm">Selected File</p>
+              <img src={URL.createObjectURL(qrImage)} alt="QR Code Preview" className="w-64 rounded-xl border" />
+            </div>
+          )}
+          {payment?.qrImage && (
+            <div className="space-y-3">
+              <p className="font-semibold text-sm">Current QR Code</p>
+              <img src={payment.qrImage} alt="" className="w-64 rounded-xl border" />
+            </div>
+          )}
+          <Button
+            type="submit"
+            fullWidth
+            loading={savingPayment}
+          >
+            {payment ? 'Update Payment Settings' : 'Save Payment Settings'}
+          </Button>
+        </form>
+      </Modal>
+
     </section>
   )
 }
