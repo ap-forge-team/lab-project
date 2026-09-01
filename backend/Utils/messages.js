@@ -103,6 +103,7 @@ const MESSAGES = {
     DELETED: "Category deleted successfully",
     ACTIVATED: "Category activated",
     DEACTIVATED: "Category deactivated",
+    CANNOT_USE_INACTIVE: "Cannot use an inactive category. Please activate it first.",
   },
 
   // ─── Subcategory ──────────────────────────────────
@@ -170,6 +171,7 @@ const MESSAGES = {
     USER_ID_ROLE_NAME_REQUIRED: "userId and roleName are required",
     ASSIGNED: (roleName, userName) =>
       `Role "${roleName}" assigned to ${userName}`,
+    CANNOT_MODIFY_ADMIN: "Admin role permissions cannot be modified by anyone",
   },
 
   // ─── Commission ───────────────────────────────────

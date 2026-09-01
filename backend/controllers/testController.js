@@ -57,6 +57,13 @@ export const createTest = async (req, res) => {
       });
     }
 
+    if (categoryExists.isActive === false) {
+      return res.status(400).json({
+        success: false,
+        message: MESSAGES.CATEGORY.CANNOT_USE_INACTIVE,
+      });
+    }
+
     if (subcategory) {
       const subcategoryExists = await Subcategory.findById(subcategory);
       if (!subcategoryExists) {
@@ -202,6 +209,22 @@ export const updateTest = async (req, res) => {
         return res.status(400).json({
           success: false,
           message: MESSAGES.TEST.TITLE_EXISTS,
+        });
+      }
+    }
+
+    if (category) {
+      const categoryDoc = await Category.findById(category);
+      if (!categoryDoc) {
+        return res.status(404).json({
+          success: false,
+          message: MESSAGES.CATEGORY.NOT_FOUND,
+        });
+      }
+      if (categoryDoc.isActive === false) {
+        return res.status(400).json({
+          success: false,
+          message: MESSAGES.CATEGORY.CANNOT_USE_INACTIVE,
         });
       }
     }

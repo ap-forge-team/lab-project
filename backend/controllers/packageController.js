@@ -102,6 +102,13 @@ export const createPackage = async (req, res) => {
       });
     }
 
+    if (categoryExists.isActive === false) {
+      return res.status(400).json({
+        success: false,
+        message: MESSAGES.CATEGORY.CANNOT_USE_INACTIVE,
+      });
+    }
+
     // ---------------------------------------------
     // Check duplicate package
     // ---------------------------------------------
@@ -438,6 +445,13 @@ export const updatePackage = async (
         return res.status(404).json({
           success: false,
           message: MESSAGES.CATEGORY.NOT_FOUND,
+        });
+      }
+
+      if (categoryExists.isActive === false) {
+        return res.status(400).json({
+          success: false,
+          message: MESSAGES.CATEGORY.CANNOT_USE_INACTIVE,
         });
       }
     }

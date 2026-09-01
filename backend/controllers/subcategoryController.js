@@ -130,12 +130,10 @@ export const getAllSubcategories =
         };
       }
 
-      if (status === "active") {
-        filter.isActive = true;
-      }
-
       if (status === "inactive") {
         filter.isActive = false;
+      } else {
+        filter.isActive = true;
       }
 
       const subcategories =

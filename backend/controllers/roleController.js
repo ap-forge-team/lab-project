@@ -147,6 +147,13 @@ export const updateRole = async (req, res) => {
       });
     }
 
+    if (role.name === "admin") {
+      return res.status(403).json({
+        success: false,
+        message: MESSAGES.ROLE.CANNOT_MODIFY_ADMIN,
+      });
+    }
+
     if (displayName) role.displayName = displayName;
     if (description !== undefined) role.description = description;
 
@@ -174,6 +181,13 @@ export const deleteRole = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: MESSAGES.ROLE.NOT_FOUND,
+      });
+    }
+
+    if (role.name === "admin") {
+      return res.status(403).json({
+        success: false,
+        message: MESSAGES.ROLE.CANNOT_MODIFY_ADMIN,
       });
     }
 
@@ -227,15 +241,23 @@ export const updateRolePermissions = async (req, res) => {
       });
     }
 
-    const currentPerms = role.permissions?.toObject() || {};
+    if (role.name === "admin") {
+      return res.status(403).json({
+        success: false,
+        message: MESSAGES.ROLE.CANNOT_MODIFY_ADMIN,
+      });
+    }
+
+    const update = {};
+    const unset = {};
 
     for (const [resource, perms] of Object.entries(permissions)) {
       if (!AVAILABLE_RESOURCES.includes(resource)) continue;
 
       if (perms === null || perms === false) {
-        delete currentPerms[resource];
+        unset[`permissions.${resource}`] = "";
       } else {
-        currentPerms[resource] = {
+        update[`permissions.${resource}`] = {
           create: Boolean(perms.create),
           read: Boolean(perms.read),
           update: Boolean(perms.update),
@@ -244,13 +266,19 @@ export const updateRolePermissions = async (req, res) => {
       }
     }
 
-    role.permissions = currentPerms;
-    await role.save();
+    const ops = {};
+    if (Object.keys(update).length > 0) ops.$set = update;
+    if (Object.keys(unset).length > 0) ops.$unset = unset;
+
+    const updatedRole = await Role.findByIdAndUpdate(req.params.id, ops, {
+      new: true,
+      runValidators: true,
+    });
 
     res.status(200).json({
       success: true,
       message: MESSAGES.ROLE.PERMISSIONS_UPDATED,
-      role,
+      role: updatedRole,
     });
   } catch (error) {
     logger.error(error);

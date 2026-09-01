@@ -73,10 +73,6 @@ export const seedRoles = async () => {
       if (!exists) {
         await Role.create(roleData);
         logger.info(`Role "${roleData.name}" seeded`);
-      } else {
-        exists.permissions = roleData.permissions;
-        await exists.save();
-        logger.info(`Role "${roleData.name}" permissions updated`);
       }
     }
   } catch (error) {
