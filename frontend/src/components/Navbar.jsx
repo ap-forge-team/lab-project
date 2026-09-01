@@ -21,7 +21,7 @@ const roleConfig = {
     menuItems: [
       { label: 'Book a Test', description: 'Book lab tests at home', icon: Calendar, route: ROUTES.BOOKING },
       { label: 'Upload Prescription', description: 'Get tests recommended', icon: FileText, route: '/upload-prescription' },
-      { label: 'Account Settings', description: 'Manage your preferences', icon: Settings, route: '/settings' },
+      { label: 'Account Settings', description: 'Manage your preferences', icon: Settings, route: ROUTES.ADMIN_SETTINGS },
     ],
   },
   [ROLES.LAB_OWNER]: {
@@ -33,7 +33,7 @@ const roleConfig = {
       { label: 'Sample Pickups', description: 'Assigned home collections', icon: ClipboardList, route: '/sample-pickups' },
       { label: 'Upload Reports', description: 'Attach results to bookings', icon: FileText, route: '/upload-reports' },
       { label: 'Lab Profile', description: 'Accreditation and center details', icon: UserCog, route: '/lab-profile' },
-      { label: 'Account Settings', description: 'Login and notification preferences', icon: Settings, route: '/settings' },
+      { label: 'Account Settings', description: 'Login and notification preferences', icon: Settings, route: ROUTES.ADMIN_SETTINGS },
     ],
   },
   [ROLES.LAB_ASSISTANT]: {
@@ -44,7 +44,7 @@ const roleConfig = {
       { label: 'Lab Dashboard', description: "Today's collections and queue", icon: LayoutDashboard, route: ROUTES.LAB_ASSISTANT },
       { label: 'Sample Pickups', description: 'Assigned home collections', icon: ClipboardList, route: '/sample-pickups' },
       { label: 'Upload Reports', description: 'Attach results to bookings', icon: FileText, route: '/upload-reports' },
-      { label: 'Account Settings', description: 'Login and notification preferences', icon: Settings, route: '/settings' },
+      { label: 'Account Settings', description: 'Login and notification preferences', icon: Settings, route: ROUTES.ADMIN_SETTINGS },
     ],
   },
   [ROLES.ADMIN]: {
@@ -55,7 +55,7 @@ const roleConfig = {
       { label: 'Admin Dashboard', description: 'Overview and analytics', icon: LayoutDashboard, route: ROUTES.ADMIN },
       { label: 'Manage Tests', description: 'Add, edit, remove tests', icon: TestTube, route: '/admin/tests' },
       { label: 'Manage Packages', description: 'Configure health packages', icon: ClipboardList, route: '/admin/packages' },
-      { label: 'Account Settings', description: 'System preferences', icon: Settings, route: '/settings' },
+      { label: 'Account Settings', description: 'Roles, categories & commissions', icon: Settings, route: ROUTES.ADMIN_SETTINGS },
     ],
   },
 }
@@ -200,16 +200,18 @@ const Navbar = () => {
                 <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full"></span>
               </button> */}
 
-              {/* Book a Test - icon only with tooltip */}
-              <Link 
-                to={ROUTES.TESTS} 
-                className="relative group/icon p-2 text-foreground hover:text-primary transition"
-              >
-                <TestTube size={20} />
-                <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-foreground text-white text-[10px] font-medium rounded whitespace-nowrap opacity-0 group-hover/icon:opacity-100 transition pointer-events-none z-50">
-                  Book a Test
-                </span>
-              </Link>
+              {/* Book a Test - icon only with tooltip - Patient only */}
+              {(!user || user?.role === ROLES.PATIENT) && (
+                <Link 
+                  to={ROUTES.TESTS} 
+                  className="relative group/icon p-2 text-foreground hover:text-primary transition"
+                >
+                  <TestTube size={20} />
+                  <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-foreground text-white text-[10px] font-medium rounded whitespace-nowrap opacity-0 group-hover/icon:opacity-100 transition pointer-events-none z-50">
+                    Book a Test
+                  </span>
+                </Link>
+              )}
 
               {/* Profile Dropdown */}
               <div className="relative" ref={profileDropdownRef}>

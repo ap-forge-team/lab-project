@@ -1,8 +1,10 @@
-import React, { useRef, useState, useEffect, useMemo } from 'react'
+import React, { useRef, useState, useEffect, useMemo, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Droplet, Activity, Heart, Pill, FlaskConical, ArrowRight, ChevronRight, ChevronLeft, TestTube, Stethoscope, Microscope } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
 import { useTests } from '@/hooks/useTests'
+import { useAuth } from '@/hooks/useAuth'
+import { ROLES } from '@/constants/roles'
 
 const categoryIcons = {
   'Blood Tests': <Droplet size={24} />,
@@ -33,6 +35,8 @@ const PopularTests = () => {
   const scrollRef = useRef(null)
   const [canScrollRight, setCanScrollRight] = useState(true)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const { user } = useAuth()
+  const isPatient = !user || user?.role === ROLES.PATIENT
 
   const { data: testsData, isLoading } = useTests()
   const tests = Array.isArray(testsData?.data?.data) ? testsData.data.data : Array.isArray(testsData?.data) ? testsData.data : []
@@ -141,13 +145,15 @@ const PopularTests = () => {
               Book tests by category
             </h2>
           </div>
-          <button
-            onClick={() => navigate(ROUTES.TESTS)}
-            className="hidden sm:flex items-center gap-1 text-sm font-semibold text-primary hover:text-primary/80 transition"
-          >
-            View all tests
-            <ArrowRight size={16} />
-          </button>
+          {isPatient && (
+            <button
+              onClick={() => navigate(ROUTES.TESTS)}
+              className="hidden sm:flex items-center gap-1 text-sm font-semibold text-primary hover:text-primary/80 transition"
+            >
+              View all tests
+              <ArrowRight size={16} />
+            </button>
+          )}
         </div>
 
         {/* Categories Scroll */}
@@ -200,15 +206,17 @@ const PopularTests = () => {
         </div>
 
         {/* Mobile View All */}
-        <div className="mt-6 sm:hidden">
-          <button
-            onClick={() => navigate(ROUTES.TESTS)}
-            className="flex items-center justify-center gap-1 w-full text-sm font-semibold text-primary border border-primary rounded-lg py-2 hover:bg-primary hover:text-white transition"
-          >
-            View all tests
-            <ArrowRight size={16} />
-          </button>
-        </div>
+        {isPatient && (
+          <div className="mt-6 sm:hidden">
+            <button
+              onClick={() => navigate(ROUTES.TESTS)}
+              className="flex items-center justify-center gap-1 w-full text-sm font-semibold text-primary border border-primary rounded-lg py-2 hover:bg-primary hover:text-white transition"
+            >
+              View all tests
+              <ArrowRight size={16} />
+            </button>
+          </div>
+        )}
       </div>
     </section>
   )

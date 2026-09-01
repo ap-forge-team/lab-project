@@ -65,16 +65,16 @@ const Features = () => {
           </div>
         </div>
 
-        {/* Mobile: Stacked list with aligned icons */}
-        <div className="flex flex-col gap-5 lg:hidden">
+        {/* Mobile: 2-column grid */}
+        <div className="grid grid-cols-2 gap-3 lg:hidden">
           {features.map((item, index) => (
-            <div key={index} className="flex items-center gap-4">
-              <div className={`w-12 h-12 rounded-full ${item.iconBg} flex items-center justify-center flex-shrink-0`}>
-                <span className={item.iconColor}>{item.icon}</span>
+            <div key={index} className="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-xl p-3">
+              <div className={`w-10 h-10 rounded-full ${item.iconBg} flex items-center justify-center flex-shrink-0`}>
+                <span className={item.iconColor}>{React.cloneElement(item.icon, { size: 20 })}</span>
               </div>
               <div>
-                <p className="text-base font-semibold text-foreground leading-tight">{item.title}</p>
-                <p className="text-sm text-muted-foreground">{item.desc}</p>
+                <p className="text-xs font-semibold text-foreground leading-tight">{item.title}</p>
+                <p className="text-[10px] text-muted-foreground">{item.desc}</p>
               </div>
             </div>
           ))}

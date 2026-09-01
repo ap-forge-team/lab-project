@@ -74,10 +74,10 @@ const TestCategories = () => {
           <h2 className="font-heading font-bold text-xl lg:text-2xl text-foreground text-center mb-8">
             Popular Health Test Categories
           </h2>
-          <div className="flex justify-center gap-4 flex-wrap">
+          <div className="flex gap-3 overflow-x-auto pb-4 lg:justify-center lg:flex-wrap lg:gap-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="w-[140px] lg:w-[155px] bg-gray-50 border border-gray-100 rounded-2xl p-5 animate-pulse">
-                <div className="w-14 h-14 rounded-full bg-gray-200 mx-auto mb-3"></div>
+              <div key={i} className="flex-shrink-0 w-[120px] lg:w-[155px] bg-gray-50 border border-gray-100 rounded-2xl p-4 lg:p-5 animate-pulse">
+                <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-full bg-gray-200 mx-auto mb-3"></div>
                 <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto mb-2"></div>
                 <div className="h-3 bg-gray-200 rounded w-1/2 mx-auto"></div>
               </div>
@@ -99,7 +99,7 @@ const TestCategories = () => {
           Popular Health Test Categories
         </h2>
 
-        <div className="flex justify-center gap-4 flex-wrap">
+        <div className="flex gap-3 overflow-x-auto pb-4 lg:justify-center lg:flex-wrap lg:gap-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           {categoriesWithCount.map((cat) => {
             const iconId = cat.icon || 'flask'
             const IconComponent = getIconById(iconId)
@@ -109,17 +109,18 @@ const TestCategories = () => {
               <div
                 key={cat._id}
                 onClick={() => handleCategoryClick(cat.name)}
-                className="w-[140px] lg:w-[155px] bg-gray-50 hover:bg-primary/5 border border-gray-100 hover:border-primary/20 rounded-2xl p-5 cursor-pointer transition group text-center"
+                className="flex-shrink-0 w-[120px] lg:w-[155px] bg-gray-50 hover:bg-primary/5 border border-gray-100 hover:border-primary/20 rounded-2xl p-4 lg:p-5 cursor-pointer transition group text-center"
               >
-                <div className={`w-14 h-14 rounded-full ${bgColor} flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition`}>
-                  <IconComponent size={28} className={textColor} />
+                <div className={`w-12 h-12 lg:w-14 lg:h-14 rounded-full ${bgColor} flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition`}>
+                  <IconComponent size={24} className={`${textColor} lg:hidden`} />
+                  <IconComponent size={28} className={`${textColor} hidden lg:block`} />
                 </div>
-                <h3 className="font-semibold text-sm text-foreground mb-1">
+                <h3 className="font-semibold text-xs lg:text-sm text-foreground mb-1 truncate">
                   {cat.name}
                 </h3>
-                <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+                <div className="flex items-center justify-center gap-1 text-[10px] lg:text-xs text-muted-foreground">
                   <span>{cat.testCount}+ Tests</span>
-                  <ChevronRight size={12} className="text-muted-foreground group-hover:text-primary transition" />
+                  <ChevronRight size={10} className="lg:hidden text-muted-foreground group-hover:text-primary transition" />
                 </div>
               </div>
             )
