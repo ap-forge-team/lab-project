@@ -76,7 +76,7 @@ const Hero = () => {
       <div className="enterprise-container relative z-10">
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-center">
           {/* Left Content */}
-          <div className="w-full lg:w-[42%] xl:w-[42%]">
+          <div className="w-full lg:w-[35%] xl:w-[35%]">
             {/* Badge */}
             <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-full px-3 py-1 mb-4">
               <ShieldCheck size={18} className="text-primary" />
@@ -140,11 +140,11 @@ const Hero = () => {
           </div>
 
           {/* Center — Hero Image */}
-          <div className="w-full lg:w-[38%] xl:w-[38%] flex-shrink-0 flex justify-center">
+          <div className="w-full lg:w-[45%] xl:w-[45%] flex-shrink-0 flex justify-center">
             <img
               src={heroMain}
               alt="Lab microscope and test tubes"
-              className="w-full max-w-[480px] h-auto object-contain"
+              className="w-full max-w-[600px] h-auto object-contain"
             />
           </div>
 
