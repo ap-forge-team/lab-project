@@ -69,7 +69,7 @@ const TestsPage = () => {
   const initialCategory = searchParams.get('category') || 'All'
   const [activeCategory, setActiveCategory] = useState(initialCategory)
 
-  const categories = ['All', ...new Set(tests.map(t => t.category).filter(Boolean))]
+  const categories = ['All', ...new Set(tests.map(t => typeof t.category === 'object' ? t.category?.name : t.category).filter(Boolean))]
 
   const fetchTests = async () => {
     try {
@@ -135,7 +135,10 @@ const TestsPage = () => {
       )
     }
     if (category !== 'All') {
-      filtered = filtered.filter((item) => item.category === category)
+      filtered = filtered.filter((item) => {
+        const catName = typeof item.category === 'object' ? item.category?.name : item.category
+        return catName === category
+      })
     }
     setFilteredTests(filtered)
   }
@@ -221,7 +224,7 @@ const TestsPage = () => {
                   <div className="p-5 flex flex-col flex-1">
                     {/* Category Badge */}
                     <span className="text-primary w-fit px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-primary/10 mb-3">
-                      {item.category}
+                      {typeof item.category === 'object' ? item.category?.name : item.category}
                     </span>
                     {/* Title */}
                     <h2 className="font-heading font-bold text-base lg:text-lg text-foreground mb-2">{item.title}</h2>
