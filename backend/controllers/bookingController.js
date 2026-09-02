@@ -302,6 +302,14 @@ export const assignAssistant = async (req, res) => {
       });
     }
 
+    const assignableStatuses = ["Pending", "Assigned"];
+    if (!assignableStatuses.includes(booking.status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot assign assistant when status is "${booking.status}"`,
+      });
+    }
+
     booking.assignedLabAssistant = assistantId;
     booking.status = "Assigned";
     await booking.save();

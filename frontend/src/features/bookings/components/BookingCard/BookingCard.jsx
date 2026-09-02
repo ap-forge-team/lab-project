@@ -70,6 +70,7 @@ const BookingCard = ({
         assistants={isLabOwner ? assistants : null}
         onAssignAssistant={onAssignAssistant}
         bookingId={booking._id}
+        bookingStatus={booking.status}
       />
 
       <BookingCardBadges
