@@ -251,9 +251,25 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
   }, [tests, search, activeFilters])
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const visibleTests = filtered.slice((page - 1) * pageSize, page * pageSize)
-  const pageNumbers = totalPages <= 5
-    ? Array.from({ length: totalPages }, (_, index) => index + 1)
-    : [1, 2, 3, 'ellipsis', totalPages]
+
+  const getPageNumbers = () => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1)
+    }
+    const pages = []
+    const showAround = 1
+    pages.push(1)
+    const start = Math.max(2, page - showAround)
+    const end = Math.min(totalPages - 1, page + showAround)
+    if (start > 2) pages.push('ellipsis-start')
+    for (let i = start; i <= end; i++) {
+      pages.push(i)
+    }
+    if (end < totalPages - 1) pages.push('ellipsis-end')
+    if (totalPages > 1) pages.push(totalPages)
+    return pages
+  }
+  const pageNumbers = getPageNumbers()
 
   const handleEdit = useCallback((test) => {
     setEditModal({ open: true, test, mode: 'edit' })
@@ -290,50 +306,59 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
 
   return (
     <section className="mx-auto max-w-[1500px] space-y-4 lg:space-y-5">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Tests</h1>
           <p className="mt-1 text-sm text-muted-foreground">Manage and view all laboratory tests</p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} placeholder="Search tests by name or code..." className="pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary w-64" />
-          </div>
-          <FilterButton
-            onClick={(e) => {
-              const rect = e.currentTarget.getBoundingClientRect()
-              setFilterPanelOpen({ top: rect.bottom + 8, left: Math.max(16, rect.right - 680) })
-            }}
-            activeCount={activeFilterCount}
-          />
-          <div className="flex items-center rounded-lg border border-border p-1">
-            <Tooltip title="Grid View" arrow placement="top">
-              <button type="button" aria-label="Grid view" onClick={() => { setView('grid'); setSelectedTestId(null) }} className={`rounded p-1.5 ${view === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><Grid2X2 size={18} /></button>
-            </Tooltip>
-            <Tooltip title="List View" arrow placement="top">
-              <button type="button" aria-label="List view" onClick={() => setView('list')} className={`rounded p-1.5 ${view === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
-            </Tooltip>
-          </div>
-          {isPatient ? (
-            <Button onClick={() => setBookModal({ open: true, test: null })}>
-              <ShoppingCart size={18} className="mr-2" />Book a Test
+        {isPatient ? (
+          <Button onClick={() => setBookModal({ open: true, test: null })} className="shrink-0">
+            <ShoppingCart size={18} className="mr-2" />Book a Test
+          </Button>
+        ) : (
+          <Can resource="tests" action="create">
+            <Button onClick={() => setShowCreate(true)} className="shrink-0">
+              <Plus size={18} className="mr-2" />Add Test
             </Button>
-          ) : (
-            <Can resource="tests" action="create">
-              <Button onClick={() => setShowCreate(true)}>
-                <Plus size={18} className="mr-2" />Add Test
-              </Button>
-            </Can>
-          )}
+          </Can>
+        )}
+      </div>
+
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} placeholder="Search tests by name or code..." className="w-full pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
+        </div>
+        <FilterButton
+          onClick={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect()
+            setFilterPanelOpen({ top: rect.bottom + 8, left: Math.max(16, rect.right - 680) })
+          }}
+          activeCount={activeFilterCount}
+        />
+        <div className="flex items-center rounded-lg border border-border p-1">
+          <Tooltip title="Grid View" arrow placement="top">
+            <button type="button" aria-label="Grid view" onClick={() => { setView('grid'); setSelectedTestId(null) }} className={`rounded p-1.5 ${view === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><Grid2X2 size={18} /></button>
+          </Tooltip>
+          <Tooltip title="List View" arrow placement="top">
+            <button type="button" aria-label="List view" onClick={() => setView('list')} className={`rounded p-1.5 ${view === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
+          </Tooltip>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard icon={List} iconClass="bg-blue-50 text-primary" title="Total Tests" value={tests.length} detail="All time" />
-        <StatCard icon={CheckCircle2} iconClass="bg-emerald-50 text-emerald-500" title="Active Tests" value={activeTests.length} detail={tests.length ? `${((activeTests.length / tests.length) * 100).toFixed(2)}% of total` : '0% of total'} />
-        <StatCard icon={XCircle} iconClass="bg-orange-50 text-orange-500" title="Inactive Tests" value={tests.length - activeTests.length} detail={tests.length ? `${(((tests.length - activeTests.length) / tests.length) * 100).toFixed(2)}% of total` : '0% of total'} />
-        <StatCard icon={FlaskConical} iconClass="bg-violet-50 text-violet-500" title="Categories" value={categories.length} detail="Total categories" />
+      <div className="overflow-x-auto snap-x snap-mandatory sm:overflow-visible">
+        <div className="flex gap-4 sm:grid sm:grid-cols-2 xl:grid-cols-4 min-w-max sm:min-w-0">
+          <div className="snap-start min-w-[200px] sm:min-w-0"><StatCard icon={List} iconClass="bg-blue-50 text-primary" title="Total Tests" value={tests.length} detail="All time" /></div>
+          <div className="snap-start min-w-[200px] sm:min-w-0"><StatCard icon={CheckCircle2} iconClass="bg-emerald-50 text-emerald-500" title="Active Tests" value={activeTests.length} detail={tests.length ? `${((activeTests.length / tests.length) * 100).toFixed(2)}% of total` : '0% of total'} /></div>
+          <div className="snap-start min-w-[200px] sm:min-w-0"><StatCard icon={XCircle} iconClass="bg-orange-50 text-orange-500" title="Inactive Tests" value={tests.length - activeTests.length} detail={tests.length ? `${(((tests.length - activeTests.length) / tests.length) * 100).toFixed(2)}% of total` : '0% of total'} /></div>
+          <div className="snap-start min-w-[200px] sm:min-w-0"><StatCard icon={FlaskConical} iconClass="bg-violet-50 text-violet-500" title="Categories" value={categories.length} detail="Total categories" /></div>
+        </div>
+      </div>
+      <div className="flex justify-center gap-1.5 sm:hidden">
+        <span className="w-2 h-2 rounded-full bg-primary"></span>
+        <span className="w-2 h-2 rounded-full bg-border"></span>
+        <span className="w-2 h-2 rounded-full bg-border"></span>
+        <span className="w-2 h-2 rounded-full bg-border"></span>
       </div>
 
       {isLoading ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">Loading tests…</div> : isError ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-destructive">Unable to load tests. Please try again.</div> : visibleTests.length === 0 ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">No tests match the selected filters.</div> : view === 'grid' ? (
@@ -415,7 +440,60 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
         <TestDetailsPanel test={selectedTest} style={selectedTestStyle} catColor={selectedTestCatColor} onClose={() => setSelectedTestId(null)} />
       )}
 
-      {filtered.length > 0 && <div className="flex flex-col gap-3 pb-2 text-sm text-muted-foreground lg:flex-row lg:items-center lg:justify-between"><p>Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, filtered.length)} of {filtered.length} tests</p><div className="flex flex-wrap items-center gap-2"><button type="button" aria-label="Previous page" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page === 1} className="rounded-lg border border-border p-2 transition hover:bg-accent disabled:opacity-40"><ChevronLeft size={17} /></button>{pageNumbers.map((item, index) => item === 'ellipsis' ? <span key={`ellipsis-${index}`} className="px-1">…</span> : <button key={item} type="button" onClick={() => setPage(item)} className={`flex h-9 min-w-9 items-center justify-center rounded-lg px-3 font-medium transition ${page === item ? 'bg-primary text-white' : 'hover:bg-accent text-foreground'}`}>{item}</button>)}<button type="button" aria-label="Next page" onClick={() => setPage((current) => Math.min(totalPages, current + 1))} disabled={page === totalPages} className="rounded-lg border border-border p-2 transition hover:bg-accent disabled:opacity-40"><ChevronRight size={17} /></button><select aria-label="Tests per page" value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value)); setPage(1) }} className="ml-1 rounded-lg border border-border bg-white px-3 py-2 text-sm text-foreground outline-none focus:border-primary">{PAGE_SIZES.map((size) => <option key={size} value={size}>{size} per page</option>)}</select></div></div>}
+      {filtered.length > 0 && (
+        <div className="flex flex-col gap-3 pb-2 text-sm text-muted-foreground">
+          <div className="flex items-center justify-between sm:hidden">
+            <p className="shrink-0">Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, filtered.length)} of {filtered.length} tests</p>
+            <select aria-label="Tests per page" value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value)); setPage(1) }} className="rounded-lg border border-border bg-white px-3 py-2 text-sm text-foreground outline-none focus:border-primary">
+              {PAGE_SIZES.map((size) => <option key={size} value={size}>{size} per page</option>)}
+            </select>
+          </div>
+          <div className="hidden items-center justify-between sm:flex">
+            <p className="shrink-0">Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, filtered.length)} of {filtered.length} tests</p>
+            <div className="flex items-center gap-2">
+              <button type="button" aria-label="Previous page" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page === 1} className="rounded-lg border border-border p-2 transition hover:bg-accent disabled:opacity-40"><ChevronLeft size={17} /></button>
+              {pageNumbers.map((item, index) => {
+                if (typeof item === 'string' && item.startsWith('ellipsis')) {
+                  return <span key={item} className="px-1">…</span>
+                }
+                return (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => setPage(item)}
+                    className={`flex h-9 min-w-9 items-center justify-center rounded-lg px-3 font-medium transition ${page === item ? 'bg-primary text-white' : 'hover:bg-accent text-foreground'}`}
+                  >
+                    {item}
+                  </button>
+                )
+              })}
+              <button type="button" aria-label="Next page" onClick={() => setPage((current) => Math.min(totalPages, current + 1))} disabled={page === totalPages} className="rounded-lg border border-border p-2 transition hover:bg-accent disabled:opacity-40"><ChevronRight size={17} /></button>
+            </div>
+            <select aria-label="Tests per page" value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value)); setPage(1) }} className="rounded-lg border border-border bg-white px-3 py-2 text-sm text-foreground outline-none focus:border-primary">
+              {PAGE_SIZES.map((size) => <option key={size} value={size}>{size} per page</option>)}
+            </select>
+          </div>
+          <div className="flex items-center justify-center gap-2 sm:hidden">
+            <button type="button" aria-label="Previous page" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page === 1} className="rounded-lg border border-border p-2 transition hover:bg-accent disabled:opacity-40"><ChevronLeft size={17} /></button>
+            {pageNumbers.map((item, index) => {
+              if (typeof item === 'string' && item.startsWith('ellipsis')) {
+                return <span key={item} className="px-1">…</span>
+              }
+              return (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => setPage(item)}
+                  className={`flex h-9 min-w-9 items-center justify-center rounded-lg px-3 font-medium transition ${page === item ? 'bg-primary text-white' : 'hover:bg-accent text-foreground'}`}
+                >
+                  {item}
+                </button>
+              )
+            })}
+            <button type="button" aria-label="Next page" onClick={() => setPage((current) => Math.min(totalPages, current + 1))} disabled={page === totalPages} className="rounded-lg border border-border p-2 transition hover:bg-accent disabled:opacity-40"><ChevronRight size={17} /></button>
+          </div>
+        </div>
+      )}
 
       <AddTestModal open={showCreate} onClose={() => setShowCreate(false)} onCreated={onRefresh} />
       <AddTestModal
