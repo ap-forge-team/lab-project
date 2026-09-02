@@ -22,6 +22,7 @@ import {
   MapPinCheck,
   Microscope,
   Banknote,
+  FileUp,
 } from 'lucide-react'
 import Tooltip from '@mui/material/Tooltip'
 import { toast } from 'react-toastify'
@@ -33,9 +34,10 @@ import FilterButton from '@/components/ui/FilterButton'
 import useAuth from '@/hooks/useAuth'
 import { ROLES } from '@/constants/roles'
 import { BOOKING_STATUS, PAYMENT_STATUS } from '@/constants/status'
-import { updateBookingLab, assignAssistant, markReached, uploadSample, uploadPaymentReceipt } from '@/services/booking.service'
+import { updateBookingLab, assignAssistant, markReached, uploadSample, uploadPaymentReceipt, uploadReport } from '@/services/booking.service'
 import { getAllLabOwners, getMyAssistants, getPaymentSetting } from '@/services/user.service'
 import LabAssistantSampleModal from '@/features/lab-assistant/components/LabAssistantSampleModal'
+import ReportViewerModal from '@/components/Dashboard/ReportViewerModal'
 import { BookingCard } from './BookingCard'
 
 const PAGE_SIZE = 12
@@ -167,6 +169,7 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
   const user = userProp || authUser
   const isAdmin = user?.role === ROLES.ADMIN
   const isLabAssistant = user?.role === ROLES.LAB_ASSISTANT
+  const isLabOwner = user?.role === ROLES.LAB_OWNER
   const [search, setSearch] = useState('')
   const [view, setView] = useState('grid')
   const [page, setPage] = useState(1)
@@ -192,6 +195,7 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
   const [paymentReceipt, setPaymentReceipt] = useState(null)
   const [uploadingPayment, setUploadingPayment] = useState(false)
   const [paymentSetting, setPaymentSetting] = useState(null)
+  const [reportModalBooking, setReportModalBooking] = useState(null)
 
   const completedBookings = useMemo(() => bookings.filter((b) => b.status === 'Completed'), [bookings])
   const inProgressBookings = useMemo(() => bookings.filter((b) => !['Completed', 'Cancelled'].includes(b.status)), [bookings])
@@ -270,11 +274,28 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
 
   const handleViewReport = useCallback((booking) => {
     if (booking.report) {
-      window.open(booking.report, '_blank')
+      setReportModalBooking(booking)
     } else {
       toast.info('No report available for this booking')
     }
   }, [])
+
+  const [uploadingReportId, setUploadingReportId] = useState(null)
+
+  const handleUploadReport = useCallback(async (bookingId, file) => {
+    try {
+      setUploadingReportId(bookingId)
+      const formData = new FormData()
+      formData.append('report', file)
+      await uploadReport(bookingId, formData)
+      toast.success('Report uploaded successfully')
+      onRefresh?.()
+    } catch {
+      toast.error('Failed to upload report')
+    } finally {
+      setUploadingReportId(null)
+    }
+  }, [onRefresh])
 
   const openEditModal = useCallback((booking) => {
     setSelectedBookingForEdit(booking)
@@ -654,6 +675,14 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
         <BookingDetailsModal booking={selectedBooking} onClose={() => setSelectedBookingId(null)} />
       )}
 
+      {/* Report View Modal */}
+      <ReportViewerModal
+        isOpen={!!reportModalBooking}
+        onClose={() => setReportModalBooking(null)}
+        reportUrl={reportModalBooking?.report}
+        title={reportModalBooking?.test?.title || reportModalBooking?.package?.title || 'Test Report'}
+      />
+
       {/* Pagination */}
       {filtered.length > 0 && (
         <div className="flex flex-col gap-3 pb-2 text-sm text-muted-foreground lg:flex-row lg:items-center lg:justify-between">
@@ -822,12 +851,55 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
                     <Pencil size={14} className="text-amber-500" /> Edit Lab
                   </button>
                 )}
-                {menuOpen.booking?.report && (
-                  <button onClick={(e) => { e.stopPropagation(); handleViewReport(menuOpen.booking); setMenuOpen(null) }} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left">
-                    <Download size={14} className="text-blue-500" /> View Report
-                  </button>
+                {isLabOwner && (
+                  <>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleViewReport(menuOpen.booking)
+                        setMenuOpen(null)
+                      }}
+                      disabled={!menuOpen.booking?.report}
+                      className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <span className="inline-flex items-center justify-center size-6 rounded-md bg-gray-100 text-gray-600">
+                        <Download size={14} />
+                      </span>
+                      View Report
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        const input = document.createElement('input')
+                        input.type = 'file'
+                        input.accept = '.pdf,.jpg,.jpeg,.png'
+                        input.onchange = (ev) => {
+                          const file = ev.target.files?.[0]
+                          if (file && menuOpen.booking?._id) {
+                            handleUploadReport(menuOpen.booking._id, file)
+                          }
+                        }
+                        input.click()
+                        setMenuOpen(null)
+                      }}
+                      disabled={uploadingReportId === menuOpen.booking?._id}
+                      className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <span className="inline-flex items-center justify-center size-6 rounded-md bg-green-100 text-green-600">
+                        {uploadingReportId === menuOpen.booking?._id ? (
+                          <svg className="animate-spin size-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                        ) : (
+                          <FileUp size={14} />
+                        )}
+                      </span>
+                      {uploadingReportId === menuOpen.booking?._id ? 'Uploading...' : 'Upload Report'}
+                    </button>
+                  </>
                 )}
-                {!isAdmin && (
+                {!isAdmin && !isLabOwner && (
                   <button onClick={(e) => { e.stopPropagation(); setSelectedBookingId(menuOpen.id); setMenuOpen(null) }} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left">
                     <Eye size={14} /> View
                   </button>

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useCallback, useId } from 'react'
 import { X } from 'lucide-react'
 
-const Modal = ({ open, onClose, title, subtitle, children, size = 'md', className = '' }) => {
+const Modal = ({ open, onClose, title, subtitle, headerActions, children, size = 'md', className = '' }) => {
   const modalRef = useRef(null)
   const previousFocusRef = useRef(null)
   const generatedId = useId()
@@ -102,15 +102,21 @@ const Modal = ({ open, onClose, title, subtitle, children, size = 'md', classNam
                 </p>
               )}
             </div>
-            {onClose && (
-              <button
-                onClick={onClose}
-                aria-label="Close modal"
-                className="text-muted-foreground hover:text-foreground transition p-1 shrink-0 ml-2"
-              >
-                <X size={16} />
-              </button>
-            )}
+            <div className="flex items-center gap-2 shrink-0 ml-2">
+              {headerActions}
+              {headerActions && onClose && (
+                <div className="w-px h-4 bg-border" />
+              )}
+              {onClose && (
+                <button
+                  onClick={onClose}
+                  aria-label="Close modal"
+                  className="text-muted-foreground hover:text-foreground transition p-1"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
           </div>
         )}
         <div className="p-4 sm:p-5 overflow-y-auto overscroll-contain">
