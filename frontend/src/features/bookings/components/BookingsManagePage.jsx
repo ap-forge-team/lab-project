@@ -1,10 +1,14 @@
 import React, { useMemo, useState, useCallback, useEffect } from 'react'
 import {
+  ArrowDown,
+  ArrowUp,
   Calendar,
   CheckCircle2,
+  ChevronsUpDown,
   Clock,
   Copy,
   Eye,
+  EyeOff,
   FlaskConical,
   Grid2X2,
   List,
@@ -105,11 +109,60 @@ const AssistantStatusBadge = ({ status }) => (
   </span>
 )
 
-const StatCard = ({ icon: Icon, iconClass, title, value, detail }) => (
-  <div className="rounded-xl border border-border bg-white p-3 shadow-sm sm:p-4">
+const SortableHeader = ({ title, sortKey, sortConfig, onSort, onHide }) => {
+  const [open, setOpen] = useState(false)
+  const currentSort = sortConfig?.key === sortKey ? sortConfig.direction : null
+
+  const handleSort = (direction) => {
+    onSort(sortKey, direction)
+    setOpen(false)
+  }
+
+  return (
+    <th className="px-4 py-3 relative">
+      <div className="flex items-center gap-1">
+        <span>{title}</span>
+        <button type="button" onClick={() => setOpen(!open)} className="p-0.5 rounded hover:bg-accent">
+          {currentSort === 'asc' ? <ArrowUp size={14} /> : currentSort === 'desc' ? <ArrowDown size={14} /> : <ChevronsUpDown size={14} className="text-muted-foreground" />}
+        </button>
+      </div>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-[99]" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 top-full mt-1 bg-white border border-border rounded-lg shadow-lg py-1 z-[100] min-w-[120px]">
+            <button onClick={() => handleSort('asc')} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left">
+              <ArrowUp size={14} /> Asc
+            </button>
+            <button onClick={() => handleSort('desc')} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left">
+              <ArrowDown size={14} /> Desc
+            </button>
+            {onHide && (
+              <button onClick={() => { onHide(); setOpen(false) }} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left">
+                <EyeOff size={14} /> Hide
+              </button>
+            )}
+          </div>
+        </>
+      )}
+    </th>
+  )
+}
+
+const StatCard = ({ icon: Icon, borderColor, iconColor, cardBg, title, value, detailTop, detailBottom }) => (
+  <div className={`rounded-2xl border ${borderColor} px-4 py-3 ${cardBg}`}>
     <div className="flex items-center gap-3">
-      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${iconClass}`}>{React.createElement(Icon, { size: 20 })}</span>
-      <div><p className="text-xs text-muted-foreground">{title}</p><p className="mt-0.5 text-xl font-bold text-foreground">{value}</p><p className="mt-0.5 text-[11px] text-muted-foreground">{detail}</p></div>
+      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border ${borderColor} ${iconColor}`}>
+        {React.createElement(Icon, { size: 18 })}
+      </span>
+      <div className="min-w-0 flex-1 space-y-0">
+        <p className="text-xs text-muted-foreground">{title}</p>
+        <p className="text-xl font-bold leading-tight text-foreground">{value}</p>
+      </div>
+      <div className="h-8 w-px shrink-0 self-stretch my-auto bg-border" />
+      <div className="shrink-0 text-right leading-tight">
+        <p className="text-xs text-muted-foreground">{detailTop}</p>
+        <p className="text-xs text-muted-foreground">{detailBottom}</p>
+      </div>
     </div>
   </div>
 )
@@ -177,6 +230,18 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
   const [activeFilters, setActiveFilters] = useState({})
   const [filterPanelOpen, setFilterPanelOpen] = useState(null)
   const [menuOpen, setMenuOpen] = useState(null)
+  const [sampleImagesModal, setSampleImagesModal] = useState({ open: false, images: [], bookingId: null })
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: null })
+  const [hiddenColumns, setHiddenColumns] = useState({})
+
+  const handleSort = useCallback((key, direction) => {
+    setSortConfig((prev) => {
+      if (prev.key === key && prev.direction === direction) {
+        return { key: null, direction: null }
+      }
+      return { key, direction }
+    })
+  }, [])
   const [showEditModal, setShowEditModal] = useState(false)
   const [selectedBookingForEdit, setSelectedBookingForEdit] = useState(null)
   const [selectedLab, setSelectedLab] = useState('')
@@ -251,9 +316,22 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
     setPage(1)
   }, [])
 
+  const getSortValue = useCallback((booking, key) => {
+    switch (key) {
+      case 'patient': return (booking.patientName || '').toLowerCase()
+      case 'test': return (booking.test?.title || booking.package?.title || '').toLowerCase()
+      case 'amount': return booking.totalAmount || booking.test?.price || booking.package?.price || 0
+      case 'date': return booking.bookingDate || ''
+      case 'status': return (booking.status || '').toLowerCase()
+      case 'payment': return (booking.paymentStatus || '').toLowerCase()
+      case 'assistant': return (booking.assignedLabAssistant?.name || '').toLowerCase()
+      default: return ''
+    }
+  }, [])
+
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase()
-    return bookings.filter((booking) => {
+    let result = bookings.filter((booking) => {
       const matchesSearch = !term || `${booking.patientName || ''} ${booking.phone || ''} ${booking.test?.title || ''} ${booking.package?.title || ''}`.toLowerCase().includes(term)
       if (!matchesSearch) return false
       if (activeFilters.patientName?.length && !activeFilters.patientName.includes(booking.patientName)) return false
@@ -261,7 +339,21 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
       if (activeFilters.paymentStatus?.length && !activeFilters.paymentStatus.includes(booking.paymentStatus)) return false
       return true
     })
-  }, [bookings, search, activeFilters])
+
+    if (sortConfig.key && sortConfig.direction) {
+      result = [...result].sort((a, b) => {
+        const aVal = getSortValue(a, sortConfig.key)
+        const bVal = getSortValue(b, sortConfig.key)
+        if (typeof aVal === 'number' && typeof bVal === 'number') {
+          return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal
+        }
+        const comparison = String(aVal).localeCompare(String(bVal))
+        return sortConfig.direction === 'asc' ? comparison : -comparison
+      })
+    }
+
+    return result
+  }, [bookings, search, activeFilters, sortConfig, getSortValue])
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const visibleBookings = filtered.slice((page - 1) * pageSize, page * pageSize)
 
@@ -425,13 +517,18 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
 
   return (
     <section className="mx-auto max-w-[1500px] space-y-4 lg:space-y-5">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+      {/* Mobile Header */}
+      <div className="flex items-center justify-between gap-3 sm:hidden">
+        <h1 className="text-2xl font-bold text-foreground">Bookings</h1>
+      </div>
+
+      {/* Desktop Header */}
+      <div className="hidden sm:flex items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Bookings</h1>
           <p className="mt-1 text-sm text-muted-foreground">Manage all test bookings and their status</p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2">
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} placeholder="Search by patient, phone, test..." className="pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary w-72" />
@@ -454,13 +551,100 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <StatCard icon={Calendar} iconClass="bg-blue-50 text-primary" title="Total Bookings" value={bookings.length} detail="All time" />
-        <StatCard icon={CheckCircle2} iconClass="bg-emerald-50 text-emerald-500" title="Completed" value={completedBookings.length} detail={bookings.length ? `${((completedBookings.length / bookings.length) * 100).toFixed(1)}% of total` : '0% of total'} />
-        <StatCard icon={Clock} iconClass="bg-amber-50 text-amber-500" title="In Progress" value={inProgressBookings.length} detail={bookings.length ? `${((inProgressBookings.length / bookings.length) * 100).toFixed(1)}% of total` : '0% of total'} />
-        <StatCard icon={FlaskConical} iconClass="bg-purple-50 text-purple-500" title="Sample Collected" value={sampleCollectedBookings.length} detail={bookings.length ? `${((sampleCollectedBookings.length / bookings.length) * 100).toFixed(1)}% of total` : '0% of total'} />
-        <StatCard icon={XCircle} iconClass="bg-red-50 text-red-500" title="Cancelled" value={cancelledBookings.length} detail={bookings.length ? `${((cancelledBookings.length / bookings.length) * 100).toFixed(1)}% of total` : '0% of total'} />
+      {/* Mobile Search */}
+      <div className="flex sm:hidden items-center gap-2">
+        <div className="relative flex-1">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} placeholder="Search by patient, phone, test..." className="w-full pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
+        </div>
+        <FilterButton
+          onClick={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect()
+            setFilterPanelOpen({ top: rect.bottom + 8, left: Math.max(16, rect.right - 680) })
+          }}
+          activeCount={activeFilterCount}
+        />
+        <div className="flex items-center rounded-lg border border-border p-1">
+          <Tooltip title="Grid View" arrow placement="top">
+            <button type="button" aria-label="Grid view" onClick={() => { setView('grid'); setSelectedBookingId(null) }} className={`rounded p-1.5 ${view === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><Grid2X2 size={18} /></button>
+          </Tooltip>
+          <Tooltip title="List View" arrow placement="top">
+            <button type="button" aria-label="List view" onClick={() => setView('list')} className={`rounded p-1.5 ${view === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
+          </Tooltip>
+        </div>
+      </div>
+
+      {/* Stat Cards */}
+      <div className="overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex gap-4 min-w-max">
+          <div className="snap-start min-w-[220px] shrink-0">
+            <StatCard
+              icon={Calendar}
+              borderColor="border-blue-200"
+              iconColor="text-blue-500"
+              cardBg="bg-blue-50"
+              title="Total Bookings"
+              value={bookings.length}
+              detailTop="All"
+              detailBottom="time"
+            />
+          </div>
+          <div className="snap-start min-w-[220px] shrink-0">
+            <StatCard
+              icon={CheckCircle2}
+              borderColor="border-emerald-200"
+              iconColor="text-emerald-500"
+              cardBg="bg-emerald-50"
+              title="Completed"
+              value={completedBookings.length}
+              detailTop={bookings.length ? `${((completedBookings.length / bookings.length) * 100).toFixed(1)}%` : '0%'}
+              detailBottom="of total"
+            />
+          </div>
+          <div className="snap-start min-w-[220px] shrink-0">
+            <StatCard
+              icon={Clock}
+              borderColor="border-amber-200"
+              iconColor="text-amber-500"
+              cardBg="bg-amber-50"
+              title="In Progress"
+              value={inProgressBookings.length}
+              detailTop={bookings.length ? `${((inProgressBookings.length / bookings.length) * 100).toFixed(1)}%` : '0%'}
+              detailBottom="of total"
+            />
+          </div>
+          <div className="snap-start min-w-[220px] shrink-0">
+            <StatCard
+              icon={FlaskConical}
+              borderColor="border-purple-200"
+              iconColor="text-purple-500"
+              cardBg="bg-purple-50"
+              title="Sample Collected"
+              value={sampleCollectedBookings.length}
+              detailTop={bookings.length ? `${((sampleCollectedBookings.length / bookings.length) * 100).toFixed(1)}%` : '0%'}
+              detailBottom="of total"
+            />
+          </div>
+          <div className="snap-start min-w-[220px] shrink-0">
+            <StatCard
+              icon={XCircle}
+              borderColor="border-red-200"
+              iconColor="text-red-500"
+              cardBg="bg-red-50"
+              title="Cancelled"
+              value={cancelledBookings.length}
+              detailTop={bookings.length ? `${((cancelledBookings.length / bookings.length) * 100).toFixed(1)}%` : '0%'}
+              detailBottom="of total"
+            />
+          </div>
+        </div>
+      </div>
+      <div className="flex justify-center gap-1.5 sm:hidden">
+        <span className="w-2 h-2 rounded-full bg-primary"></span>
+        <span className="w-2 h-2 rounded-full bg-border"></span>
+        <span className="w-2 h-2 rounded-full bg-border"></span>
+        <span className="w-2 h-2 rounded-full bg-border"></span>
+        <span className="w-2 h-2 rounded-full bg-border"></span>
       </div>
 
       {/* Content */}
@@ -471,12 +655,13 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
       ) : visibleBookings.length === 0 ? (
         <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">No bookings match the selected filters.</div>
       ) : view === 'grid' ? (
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pb-2">
+          <div className="flex gap-5 min-w-max lg:min-w-0">
           {visibleBookings.map((booking, index) => {
             const id = getBookingId(booking, index)
             return (
+              <div key={id} className="w-[280px] lg:w-[calc((100%-60px)/4)] shrink-0">
               <BookingCard
-                key={id}
                 booking={booking}
                 role={user?.role}
                 cardId={id}
@@ -495,32 +680,35 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
                 }}
                 menuOpen={menuOpen}
               />
+              </div>
             )
           })}
+          </div>
         </div>
       ) : (
         /* List View */
-        <div className="overflow-x-auto rounded-xl border border-border bg-white">
+        <div className="overflow-y-auto max-h-[calc(100vh-250px)] pb-2 pr-1">
+          <div className="rounded-xl border border-border bg-white">
           <table className="w-full min-w-[900px] text-sm">
-            <thead className="bg-accent text-left text-muted-foreground">
+            <thead className="bg-accent text-left text-muted-foreground sticky top-0">
               <tr>
-                <th className="px-4 py-3">Patient</th>
+                <SortableHeader title="Patient" sortKey="patient" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, patient: true }))} />
                 {isLabAssistant ? (
                   <>
-                    <th className="px-4 py-3">Test</th>
-                    <th className="px-4 py-3">Date</th>
+                    <SortableHeader title="Test" sortKey="test" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, test: true }))} />
+                    <SortableHeader title="Date" sortKey="date" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, date: true }))} />
                     <th className="px-4 py-3">Address</th>
                   </>
                 ) : (
                   <>
-                    <th className="px-4 py-3">Test / Package</th>
-                    <th className="px-4 py-3">Amount</th>
-                    <th className="px-4 py-3">Date</th>
-                    <th className="px-4 py-3">Assistant</th>
+                    <SortableHeader title="Test / Package" sortKey="test" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, test: true }))} />
+                    <SortableHeader title="Amount" sortKey="amount" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, amount: true }))} />
+                    <SortableHeader title="Date" sortKey="date" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, date: true }))} />
+                    <SortableHeader title="Assistant" sortKey="assistant" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, assistant: true }))} />
                   </>
                 )}
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Payment</th>
+                <SortableHeader title="Status" sortKey="status" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, status: true }))} />
+                <SortableHeader title="Payment" sortKey="payment" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, payment: true }))} />
                 {!isLabAssistant && <th className="px-4 py-3">Samples</th>}
                 <th className="px-4 py-3">Actions</th>
               </tr>
@@ -535,6 +723,7 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
                   <tr key={id} onClick={() => setSelectedBookingId(id)} className="cursor-pointer border-t border-border transition hover:bg-accent/40">
                     {isLabAssistant ? (
                       <>
+                        {!hiddenColumns.patient && (
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
                             <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -546,6 +735,8 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
                             </div>
                           </div>
                         </td>
+                        )}
+                        {!hiddenColumns.test && (
                         <td className="px-4 py-3">
                           <div>
                             <p className="text-sm font-medium text-foreground">
@@ -556,12 +747,15 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
                             </p>
                           </div>
                         </td>
+                        )}
+                        {!hiddenColumns.date && (
                         <td className="px-4 py-3">
                           <div>
                             <p className="text-sm font-medium text-foreground">{booking.bookingDate}</p>
                             <p className="text-[11px] text-muted-foreground mt-0.5">{booking.bookingTime}</p>
                           </div>
                         </td>
+                        )}
                         <td className="px-4 py-3">
                           <div className="flex gap-1.5 items-start max-w-[200px]">
                             <MapPin className="text-red-500 mt-0.5 flex-shrink-0" size={14} />
@@ -570,15 +764,20 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
                             </span>
                           </div>
                         </td>
+                        {!hiddenColumns.status && (
                         <td className="px-4 py-3">
                           <AssistantStatusBadge status={booking.status} />
                         </td>
+                        )}
+                        {!hiddenColumns.payment && (
                         <td className="px-4 py-3">
                           <AssistantStatusBadge status={booking.paymentStatus} />
                         </td>
+                        )}
                       </>
                     ) : (
                       <>
+                        {!hiddenColumns.patient && (
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2.5">
                             <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${getAvatarColor(booking.patientName)} text-white font-semibold text-[10px]`}>
@@ -590,13 +789,19 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
                             </div>
                           </div>
                         </td>
+                        )}
+                        {!hiddenColumns.test && (
                         <td className="px-4 py-3">
                           <span className="text-sm font-semibold text-foreground">{booking.test?.title || booking.package?.title || 'N/A'}</span>
                           {(booking.test?.city || booking.package?.city) && (
                             <p className="text-xs text-muted-foreground">{booking.test?.city || booking.package?.city}</p>
                           )}
                         </td>
+                        )}
+                        {!hiddenColumns.amount && (
                         <td className="px-4 py-3 font-semibold text-foreground">₹{amount.toLocaleString('en-IN')}</td>
+                        )}
+                        {!hiddenColumns.date && (
                         <td className="px-4 py-3">
                           <span className="text-sm text-foreground">{booking.bookingDate}</span>
                           <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
@@ -604,6 +809,7 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
                             <span>{booking.bookingTime}</span>
                           </div>
                         </td>
+                        )}
                         <td className="px-4 py-3">
                           {booking.assignedLabAssistant ? (
                             <div>
@@ -625,26 +831,33 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
                             </select>
                           )}
                         </td>
+                        {!hiddenColumns.status && (
                         <td className="px-4 py-3">
                           <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-medium ${statusStyle.bg} ${statusStyle.text}`}>
                             <span className={`w-1.5 h-1.5 rounded-full ${statusStyle.dot}`}></span>{booking.status}
                           </span>
                         </td>
+                        )}
+                        {!hiddenColumns.payment && (
                         <td className="px-4 py-3">
                           <span className={`rounded-md px-2 py-0.5 text-[11px] font-medium ${paymentStyle.bg} ${paymentStyle.text}`}>{booking.paymentStatus}</span>
                         </td>
+                        )}
                         <td className="px-4 py-3">
                           {booking.sampleImages?.length ? (
-                            <div className="flex items-center gap-1.5 flex-wrap max-w-[160px]">
-                              {booking.sampleImages.slice(0, 3).map((image, index) => (
-                                <a key={index} href={image} target="_blank" rel="noreferrer" className="shrink-0 hover:scale-110 transition-transform">
-                                  <img src={image} alt={`Sample ${index + 1}`} className="w-10 h-10 rounded-md object-cover border border-border" />
-                                </a>
-                              ))}
-                              {booking.sampleImages.length > 3 && (
-                                <span className="w-10 h-10 bg-primary/10 border border-border rounded-md flex items-center justify-center text-[10px] font-medium text-primary">
-                                  +{booking.sampleImages.length - 3}
-                                </span>
+                            <div className="relative inline-block">
+                              <img src={booking.sampleImages[0]} alt="Sample" className="w-10 h-10 rounded-md object-cover border border-border" />
+                              {booking.sampleImages.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setSampleImagesModal({ open: true, images: booking.sampleImages, bookingId: id })
+                                  }}
+                                  className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-primary text-white rounded-full flex items-center justify-center text-[10px] font-bold shadow hover:bg-primary/90 transition"
+                                >
+                                  +{booking.sampleImages.length - 1}
+                                </button>
                               )}
                             </div>
                           ) : (
@@ -665,6 +878,31 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
               })}
             </tbody>
           </table>
+          </div>
+        </div>
+      )}
+
+      {/* Sample Images Modal */}
+      {sampleImagesModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setSampleImagesModal({ open: false, images: [], bookingId: null })}>
+          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-border px-6 py-4">
+              <h2 className="text-lg font-semibold text-foreground">Sample Images</h2>
+              <button type="button" onClick={() => setSampleImagesModal({ open: false, images: [], bookingId: null })} className="p-1 rounded hover:bg-accent text-muted-foreground">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6 6 18M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto max-h-[calc(80vh-80px)]">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {sampleImagesModal.images.map((image, index) => (
+                  <a key={index} href={image} target="_blank" rel="noreferrer" className="block group">
+                    <img src={image} alt={`Sample ${index + 1}`} className="w-full h-40 object-cover rounded-lg border border-border group-hover:scale-[1.02] transition-transform" />
+                    <p className="text-xs text-muted-foreground text-center mt-1.5">Sample {index + 1}</p>
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -682,7 +920,8 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
       />
 
       {/* Pagination */}
-      <Pagination
+      <div className="mt-4">
+        <Pagination
         page={page}
         totalPages={totalPages}
         pageSize={pageSize}
@@ -692,6 +931,7 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
         pageSizes={PAGE_SIZES}
         itemName="bookings"
       />
+      </div>
 
       {/* Filter Panel */}
       {filterPanelOpen && (

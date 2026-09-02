@@ -1,8 +1,12 @@
 import React, { useMemo, useState, useCallback } from 'react'
 import {
+  ArrowDown,
+  ArrowUp,
   CheckCircle2,
+  ChevronsUpDown,
   Copy,
   Eye,
+  EyeOff,
   Grid2X2,
   List,
   Package,
@@ -56,11 +60,60 @@ const formatPrice = (value) => {
   return Number.isFinite(numeric) ? `₹${numeric.toLocaleString('en-IN')}` : '—'
 }
 
-const StatCard = ({ icon: Icon, iconClass, title, value, detail }) => (
-  <div className="rounded-xl border border-border bg-white p-3 shadow-sm sm:p-4">
+const SortableHeader = ({ title, sortKey, sortConfig, onSort, onHide }) => {
+  const [open, setOpen] = useState(false)
+  const currentSort = sortConfig?.key === sortKey ? sortConfig.direction : null
+
+  const handleSort = (direction) => {
+    onSort(sortKey, direction)
+    setOpen(false)
+  }
+
+  return (
+    <th className="px-4 py-3 relative">
+      <div className="flex items-center gap-1">
+        <span>{title}</span>
+        <button type="button" onClick={() => setOpen(!open)} className="p-0.5 rounded hover:bg-accent">
+          {currentSort === 'asc' ? <ArrowUp size={14} /> : currentSort === 'desc' ? <ArrowDown size={14} /> : <ChevronsUpDown size={14} className="text-muted-foreground" />}
+        </button>
+      </div>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-[99]" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 top-full mt-1 bg-white border border-border rounded-lg shadow-lg py-1 z-[100] min-w-[120px]">
+            <button onClick={() => handleSort('asc')} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left">
+              <ArrowUp size={14} /> Asc
+            </button>
+            <button onClick={() => handleSort('desc')} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left">
+              <ArrowDown size={14} /> Desc
+            </button>
+            {onHide && (
+              <button onClick={() => { onHide(); setOpen(false) }} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left">
+                <EyeOff size={14} /> Hide
+              </button>
+            )}
+          </div>
+        </>
+      )}
+    </th>
+  )
+}
+
+const StatCard = ({ icon: Icon, borderColor, iconColor, cardBg, title, value, detailTop, detailBottom }) => (
+  <div className={`rounded-2xl border ${borderColor} px-4 py-3 ${cardBg}`}>
     <div className="flex items-center gap-3">
-      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${iconClass}`}>{React.createElement(Icon, { size: 20 })}</span>
-      <div><p className="text-xs text-muted-foreground">{title}</p><p className="mt-0.5 text-xl font-bold text-foreground">{value}</p><p className="mt-0.5 text-[11px] text-muted-foreground">{detail}</p></div>
+      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border ${borderColor} ${iconColor}`}>
+        {React.createElement(Icon, { size: 18 })}
+      </span>
+      <div className="min-w-0 flex-1 space-y-0">
+        <p className="text-xs text-muted-foreground">{title}</p>
+        <p className="text-xl font-bold leading-tight text-foreground">{value}</p>
+      </div>
+      <div className="h-8 w-px shrink-0 self-stretch my-auto bg-border" />
+      <div className="shrink-0 text-right leading-tight">
+        <p className="text-xs text-muted-foreground">{detailTop}</p>
+        <p className="text-xs text-muted-foreground">{detailBottom}</p>
+      </div>
     </div>
   </div>
 )
@@ -112,6 +165,17 @@ const PackagesManagePage = ({ packages, isLoading, isError, onRefresh }) => {
   const [menuOpen, setMenuOpen] = useState(null)
   const [activeFilters, setActiveFilters] = useState({})
   const [filterPanelOpen, setFilterPanelOpen] = useState(null)
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: null })
+  const [hiddenColumns, setHiddenColumns] = useState({})
+
+  const handleSort = useCallback((key, direction) => {
+    setSortConfig((prev) => {
+      if (prev.key === key && prev.direction === direction) {
+        return { key: null, direction: null }
+      }
+      return { key, direction }
+    })
+  }, [])
 
   const categories = useMemo(() => [...new Set(packages.map(getCategory))].sort(), [packages])
   const activePackages = useMemo(() => packages.filter(isActive), [packages])
@@ -157,9 +221,20 @@ const PackagesManagePage = ({ packages, isLoading, isError, onRefresh }) => {
     setPage(1)
   }, [])
 
+  const getSortValue = useCallback((pkg, key) => {
+    switch (key) {
+      case 'name': return getTitle(pkg).toLowerCase()
+      case 'category': return getCategory(pkg).toLowerCase()
+      case 'tests': return pkg.testsIncluded?.length || 0
+      case 'price': return Number(pkg.price) || 0
+      case 'status': return isActive(pkg) ? 'active' : 'inactive'
+      default: return ''
+    }
+  }, [])
+
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase()
-    return packages.filter((pkg) => {
+    let result = packages.filter((pkg) => {
       const matchesSearch = !term || `${getTitle(pkg)} ${getCategory(pkg)}`.toLowerCase().includes(term)
       if (!matchesSearch) return false
       if (activeFilters.name?.length && !activeFilters.name.includes(getTitle(pkg))) return false
@@ -170,7 +245,21 @@ const PackagesManagePage = ({ packages, isLoading, isError, onRefresh }) => {
       }
       return true
     })
-  }, [packages, search, activeFilters])
+
+    if (sortConfig.key && sortConfig.direction) {
+      result = [...result].sort((a, b) => {
+        const aVal = getSortValue(a, sortConfig.key)
+        const bVal = getSortValue(b, sortConfig.key)
+        if (typeof aVal === 'number' && typeof bVal === 'number') {
+          return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal
+        }
+        const comparison = String(aVal).localeCompare(String(bVal))
+        return sortConfig.direction === 'asc' ? comparison : -comparison
+      })
+    }
+
+    return result
+  }, [packages, search, activeFilters, sortConfig, getSortValue])
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const visiblePackages = filtered.slice((page - 1) * pageSize, page * pageSize)
 
@@ -207,12 +296,23 @@ const PackagesManagePage = ({ packages, isLoading, isError, onRefresh }) => {
 
   return (
     <section className="mx-auto max-w-[1500px] space-y-4 lg:space-y-5">
-      <div className="flex items-start justify-between gap-4">
+      {/* Mobile Header */}
+      <div className="flex items-center justify-between gap-3 sm:hidden">
+        <h1 className="text-2xl font-bold text-foreground">Packages</h1>
+        <Can resource="packages" action="create">
+          <Button onClick={() => setShowCreate(true)} className="shrink-0">
+            <Plus size={18} className="mr-2" />Add Package
+          </Button>
+        </Can>
+      </div>
+
+      {/* Desktop Header */}
+      <div className="hidden sm:flex items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Packages</h1>
           <p className="mt-1 text-sm text-muted-foreground">Manage and view all health-check packages</p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2">
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} placeholder="Search packages by name..." className="pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary w-64" />
@@ -240,22 +340,100 @@ const PackagesManagePage = ({ packages, isLoading, isError, onRefresh }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard icon={List} iconClass="bg-blue-50 text-primary" title="Total Packages" value={packages.length} detail="All time" />
-        <StatCard icon={CheckCircle2} iconClass="bg-emerald-50 text-emerald-500" title="Active Packages" value={activePackages.length} detail={packages.length ? `${((activePackages.length / packages.length) * 100).toFixed(2)}% of total` : '0% of total'} />
-        <StatCard icon={XCircle} iconClass="bg-orange-50 text-orange-500" title="Inactive Packages" value={packages.length - activePackages.length} detail={packages.length ? `${(((packages.length - activePackages.length) / packages.length) * 100).toFixed(2)}% of total` : '0% of total'} />
-        <StatCard icon={Package} iconClass="bg-violet-50 text-violet-500" title="Categories" value={categories.length} detail="Total categories" />
+      {/* Mobile Search */}
+      <div className="flex sm:hidden items-center gap-2">
+        <div className="relative flex-1">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} placeholder="Search packages by name..." className="w-full pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
+        </div>
+        <FilterButton
+          onClick={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect()
+            setFilterPanelOpen({ top: rect.bottom + 8, left: Math.max(16, rect.right - 680) })
+          }}
+          activeCount={activeFilterCount}
+        />
+        <div className="flex items-center rounded-lg border border-border p-1">
+          <Tooltip title="Grid View" arrow placement="top">
+            <button type="button" aria-label="Grid view" onClick={() => { setView('grid'); setSelectedPackageId(null) }} className={`rounded p-1.5 ${view === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><Grid2X2 size={18} /></button>
+          </Tooltip>
+          <Tooltip title="List View" arrow placement="top">
+            <button type="button" aria-label="List view" onClick={() => setView('list')} className={`rounded p-1.5 ${view === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
+          </Tooltip>
+        </div>
+      </div>
+
+      {/* Stat Cards */}
+      <div className="overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex gap-4 min-w-max">
+          <div className="snap-start min-w-[220px] shrink-0">
+            <StatCard
+              icon={List}
+              borderColor="border-blue-200"
+              iconColor="text-blue-500"
+              cardBg="bg-blue-50"
+              title="Total Packages"
+              value={packages.length}
+              detailTop="All"
+              detailBottom="time"
+            />
+          </div>
+          <div className="snap-start min-w-[220px] shrink-0">
+            <StatCard
+              icon={CheckCircle2}
+              borderColor="border-emerald-200"
+              iconColor="text-emerald-500"
+              cardBg="bg-emerald-50"
+              title="Active Packages"
+              value={activePackages.length}
+              detailTop={packages.length ? `${((activePackages.length / packages.length) * 100).toFixed(2)}%` : '0%'}
+              detailBottom="of total"
+            />
+          </div>
+          <div className="snap-start min-w-[220px] shrink-0">
+            <StatCard
+              icon={XCircle}
+              borderColor="border-orange-200"
+              iconColor="text-orange-500"
+              cardBg="bg-orange-50"
+              title="Inactive Packages"
+              value={packages.length - activePackages.length}
+              detailTop={packages.length ? `${(((packages.length - activePackages.length) / packages.length) * 100).toFixed(2)}%` : '0%'}
+              detailBottom="of total"
+            />
+          </div>
+          <div className="snap-start min-w-[220px] shrink-0">
+            <StatCard
+              icon={Package}
+              borderColor="border-violet-200"
+              iconColor="text-violet-500"
+              cardBg="bg-violet-50"
+              title="Categories"
+              value={categories.length}
+              detailTop="Total"
+              detailBottom="categories"
+            />
+          </div>
+        </div>
+      </div>
+      <div className="flex justify-center gap-1.5 sm:hidden">
+        <span className="w-2 h-2 rounded-full bg-primary"></span>
+        <span className="w-2 h-2 rounded-full bg-border"></span>
+        <span className="w-2 h-2 rounded-full bg-border"></span>
+        <span className="w-2 h-2 rounded-full bg-border"></span>
       </div>
 
       {isLoading ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">Loading packages…</div> : isError ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-destructive">Unable to load packages. Please try again.</div> : visiblePackages.length === 0 ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">No packages match the selected filters.</div> : view === 'grid' ? (
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">{visiblePackages.map((pkg, index) => {
+        <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pb-2">
+        <div className="flex gap-5 min-w-max lg:min-w-0">{visiblePackages.map((pkg, index) => {
+          const cardWidth = 'w-[280px] lg:w-[calc((100%-60px)/4)]'
           const id = getPackageId(pkg, index)
           const catColor = getCategoryColor(getCategory(pkg))
           const testsList = (pkg.testsIncluded || []).slice(0, 4)
           return (
             <article
               key={id}
-              className="flex flex-col rounded-xl border border-border bg-white shadow-sm transition hover:shadow-md overflow-hidden"
+              className={`${cardWidth} shrink-0 flex flex-col rounded-xl border border-border bg-white shadow-sm transition hover:shadow-md overflow-hidden`}
             >
               {/* Image */}
               <div className="relative h-44 bg-gradient-to-br from-blue-50 to-blue-100 overflow-hidden">
@@ -335,18 +513,20 @@ const PackagesManagePage = ({ packages, isLoading, isError, onRefresh }) => {
               </div>
             </article>
           )
-        })}</div>
+        })}
+        </div>
+        </div>
       ) : (
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-          <div className="min-w-0 flex-1 overflow-x-auto rounded-xl border border-border bg-white">
+        <div className="overflow-y-auto max-h-[calc(100vh-250px)] pb-2 pr-1">
+          <div className="rounded-xl border border-border bg-white">
             <table className="w-full min-w-[820px] text-sm">
-              <thead className="bg-accent text-left text-muted-foreground">
+              <thead className="bg-accent text-left text-muted-foreground sticky top-0">
                 <tr>
-                  <th className="px-4 py-3">Package Name</th>
-                  <th className="px-4 py-3">Category</th>
-                  <th className="px-4 py-3">Tests Included</th>
-                  <th className="px-4 py-3">Price (₹)</th>
-                  <th className="px-4 py-3">Status</th>
+                  <SortableHeader title="Package Name" sortKey="name" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, name: true }))} />
+                  <SortableHeader title="Category" sortKey="category" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, category: true }))} />
+                  <SortableHeader title="Tests Included" sortKey="tests" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, tests: true }))} />
+                  <SortableHeader title="Price (₹)" sortKey="price" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, price: true }))} />
+                  <SortableHeader title="Status" sortKey="status" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, status: true }))} />
                   <th className="px-4 py-3">Actions</th>
                 </tr>
               </thead>
@@ -356,11 +536,11 @@ const PackagesManagePage = ({ packages, isLoading, isError, onRefresh }) => {
                   const catColor = getCategoryColor(getCategory(pkg))
                   return (
                     <tr key={id} onClick={() => setSelectedPackageId(id)} className={`cursor-pointer border-t border-border transition hover:bg-accent/40 ${selectedPackageId === id ? 'bg-primary/5' : ''}`}>
-                      <td className="px-4 py-3 font-medium text-foreground">{getTitle(pkg)}</td>
-                      <td className="px-4 py-3"><span className={`rounded-md px-2 py-1 text-xs font-medium ${catColor.bg} ${catColor.text}`}>{getCategory(pkg)}</span></td>
-                      <td className="px-4 py-3">{pkg.testsIncluded?.length || 0} tests</td>
-                      <td className="px-4 py-3">{pkg.price != null ? Number(pkg.price).toLocaleString('en-IN') : '—'}</td>
-                      <td className="px-4 py-3"><span className={`rounded-md px-2 py-1 text-xs ${isActive(pkg) ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>{isActive(pkg) ? 'Active' : 'Inactive'}</span></td>
+                      {!hiddenColumns.name && <td className="px-4 py-3 font-medium text-foreground">{getTitle(pkg)}</td>}
+                      {!hiddenColumns.category && <td className="px-4 py-3"><span className={`rounded-md px-2 py-1 text-xs font-medium ${catColor.bg} ${catColor.text}`}>{getCategory(pkg)}</span></td>}
+                      {!hiddenColumns.tests && <td className="px-4 py-3">{pkg.testsIncluded?.length || 0} tests</td>}
+                      {!hiddenColumns.price && <td className="px-4 py-3">{pkg.price != null ? Number(pkg.price).toLocaleString('en-IN') : '—'}</td>}
+                      {!hiddenColumns.status && <td className="px-4 py-3"><span className={`rounded-md px-2 py-1 text-xs ${isActive(pkg) ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>{isActive(pkg) ? 'Active' : 'Inactive'}</span></td>}
                       <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
                         <div className="relative">
                           <button
@@ -393,16 +573,18 @@ const PackagesManagePage = ({ packages, isLoading, isError, onRefresh }) => {
         <PackageDetailsPanel pkg={selectedPackage} onClose={() => setSelectedPackageId(null)} />
       )}
 
-      <Pagination
-        page={page}
-        totalPages={totalPages}
-        pageSize={pageSize}
-        totalItems={filtered.length}
-        onPageChange={setPage}
-        onPageSizeChange={(size) => { setPageSize(size); setPage(1) }}
-        pageSizes={PAGE_SIZES}
-        itemName="packages"
-      />
+      <div className="mt-4">
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={filtered.length}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => { setPageSize(size); setPage(1) }}
+          pageSizes={PAGE_SIZES}
+          itemName="packages"
+        />
+      </div>
 
       <CreatePackageModal open={showCreate} onClose={() => setShowCreate(false)} onCreated={onRefresh} />
       <CreatePackageModal

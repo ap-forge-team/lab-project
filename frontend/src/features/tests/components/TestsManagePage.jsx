@@ -454,9 +454,9 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
         </div>
       </div>
 
-      <div className="overflow-x-auto snap-x snap-mandatory sm:overflow-visible">
-        <div className="flex gap-4 sm:grid sm:grid-cols-2 xl:grid-cols-4 min-w-max sm:min-w-0">
-          <div className="snap-start min-w-[220px] sm:min-w-0">
+      <div className="overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex gap-4 min-w-max">
+          <div className="snap-start min-w-[220px] shrink-0">
             <StatCard
               icon={List}
               borderColor="border-blue-200"
@@ -468,7 +468,7 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
               detailBottom="time"
             />
           </div>
-          <div className="snap-start min-w-[220px] sm:min-w-0">
+          <div className="snap-start min-w-[220px] shrink-0">
             <StatCard
               icon={CheckCircle2}
               borderColor="border-emerald-200"
@@ -480,7 +480,7 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
               detailBottom="of total"
             />
           </div>
-          <div className="snap-start min-w-[220px] sm:min-w-0">
+          <div className="snap-start min-w-[220px] shrink-0">
             <StatCard
               icon={XCircle}
               borderColor="border-orange-200"
@@ -492,7 +492,7 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
               detailBottom="of total"
             />
           </div>
-          <div className="snap-start min-w-[220px] sm:min-w-0">
+          <div className="snap-start min-w-[220px] shrink-0">
             <StatCard
               icon={FlaskConical}
               borderColor="border-violet-200"
@@ -514,12 +514,15 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
       </div>
 
       {isLoading ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">Loading tests…</div> : isError ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-destructive">Unable to load tests. Please try again.</div> : visibleTests.length === 0 ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">No tests match the selected filters.</div> : view === 'grid' ? (
-        <div className="overflow-y-auto max-h-[calc(100vh-250px)] pb-2 pr-1"><div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">{visibleTests.map((test, index) => {
+        <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pb-2">
+        <div className="flex gap-4 min-w-max lg:min-w-0">{visibleTests.map((test, index) => {
           const Icon = getTestIcon(test)
           const style = getTestIconStyle(test)
           const catColor = getCategoryColor(getCategory(test))
-          return <article key={test._id || test.id || `${getTitle(test)}-${index}`} className="flex min-h-[250px] flex-col rounded-xl border border-border bg-white p-4 shadow-sm transition hover:shadow-md"><div className="flex gap-3"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${style.bg} ${style.text}`}><Icon size={22} /></span><div className="min-w-0"><h2 className="truncate font-semibold text-foreground" title={getTitle(test)}>{getTitle(test)}</h2><p className="mt-0.5 text-xs text-muted-foreground">{test.code || test.testCode || '—'}</p><span className={`mt-1.5 inline-block rounded-md px-2 py-0.5 text-xs font-medium ${catColor.bg} ${catColor.text}`}>{getCategory(test)}</span></div></div><dl className="mt-3.5 space-y-2 text-xs"><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Sample Type</dt><dd className="text-right text-foreground">{getValue(test, ['sampleType', 'sample'])}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Method</dt><dd className="text-right text-foreground">{getValue(test, ['method'])}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Price</dt><dd className="text-right font-medium text-foreground">{formatPrice(getValue(test, ['price'], null))}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">TAT</dt><dd className="text-right text-foreground">{getValue(test, ['reportTime', 'tat', 'turnaroundTime'])}</dd></div></dl><div className="mt-auto flex items-center justify-between border-t border-border pt-3"><span className={`rounded-md px-2 py-1 text-xs font-medium ${isActive(test) ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>{isActive(test) ? 'Active' : 'Inactive'}</span><div className="flex items-center gap-1"><Tooltip title="View" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); setSelectedTestId(getTestId(test, index)) }} className="p-1.5 text-muted-foreground hover:text-foreground rounded transition"><Eye size={15} /></button></Tooltip>{isPatient && <Tooltip title="Book" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); setBookModal({ open: true, test }) }} className="p-1.5 text-primary hover:bg-primary/10 rounded transition"><ShoppingCart size={15} /></button></Tooltip>}<Can resource="tests" action="update"><Tooltip title="Edit" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); handleEdit(test) }} className="p-1.5 text-muted-foreground hover:text-foreground rounded transition"><Pencil size={15} /></button></Tooltip></Can><Can resource="tests" action="create"><Tooltip title="Duplicate" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); handleDuplicate(test) }} className="p-1.5 text-muted-foreground hover:text-foreground rounded transition"><Copy size={15} /></button></Tooltip></Can><Can resource="tests" action="delete"><Tooltip title="Delete" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); handleDelete(test) }} className="p-1.5 text-muted-foreground hover:text-red-500 rounded transition"><Trash2 size={15} /></button></Tooltip></Can></div></div></article>
-        })}</div></div>
+          return <article key={test._id || test.id || `${getTitle(test)}-${index}`} className="w-[280px] lg:w-[calc((100%-48px)/4)] shrink-0 flex min-h-[250px] flex-col rounded-xl border border-border bg-white p-4 shadow-sm transition hover:shadow-md"><div className="flex gap-3"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${style.bg} ${style.text}`}><Icon size={22} /></span><div className="min-w-0"><h2 className="truncate font-semibold text-foreground" title={getTitle(test)}>{getTitle(test)}</h2><p className="mt-0.5 text-xs text-muted-foreground">{test.code || test.testCode || '—'}</p><span className={`mt-1.5 inline-block rounded-md px-2 py-0.5 text-xs font-medium ${catColor.bg} ${catColor.text}`}>{getCategory(test)}</span></div></div><dl className="mt-3.5 space-y-2 text-xs"><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Sample Type</dt><dd className="text-right text-foreground">{getValue(test, ['sampleType', 'sample'])}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Method</dt><dd className="text-right text-foreground">{getValue(test, ['method'])}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Price</dt><dd className="text-right font-medium text-foreground">{formatPrice(getValue(test, ['price'], null))}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">TAT</dt><dd className="text-right text-foreground">{getValue(test, ['reportTime', 'tat', 'turnaroundTime'])}</dd></div></dl><div className="mt-auto flex items-center justify-between border-t border-border pt-3"><span className={`rounded-md px-2 py-1 text-xs font-medium ${isActive(test) ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>{isActive(test) ? 'Active' : 'Inactive'}</span><div className="flex items-center gap-1"><Tooltip title="View" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); setSelectedTestId(getTestId(test, index)) }} className="p-1.5 text-muted-foreground hover:text-foreground rounded transition"><Eye size={15} /></button></Tooltip>{isPatient && <Tooltip title="Book" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); setBookModal({ open: true, test }) }} className="p-1.5 text-primary hover:bg-primary/10 rounded transition"><ShoppingCart size={15} /></button></Tooltip>}<Can resource="tests" action="update"><Tooltip title="Edit" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); handleEdit(test) }} className="p-1.5 text-muted-foreground hover:text-foreground rounded transition"><Pencil size={15} /></button></Tooltip></Can><Can resource="tests" action="create"><Tooltip title="Duplicate" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); handleDuplicate(test) }} className="p-1.5 text-muted-foreground hover:text-foreground rounded transition"><Copy size={15} /></button></Tooltip></Can><Can resource="tests" action="delete"><Tooltip title="Delete" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); handleDelete(test) }} className="p-1.5 text-muted-foreground hover:text-red-500 rounded transition"><Trash2 size={15} /></button></Tooltip></Can></div></div></article>
+        })}
+        </div>
+        </div>
       ) : (
         <div className="overflow-y-auto max-h-[calc(100vh-250px)] pb-2 pr-1">
           <div className="rounded-xl border border-border bg-white">
