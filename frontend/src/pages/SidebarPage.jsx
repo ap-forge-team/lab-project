@@ -109,7 +109,7 @@ const SidebarPage = ({ page: pageProp }) => {
   if (slug === 'bookings') {
     return (
       <DashboardLayout>
-        <BookingsManagePage bookings={items} isLoading={query.isLoading} isError={query.isError} onRefresh={query.refetch} />
+        <BookingsManagePage bookings={items} isLoading={query.isLoading} isError={query.isError} onRefresh={query.refetch} user={user} />
       </DashboardLayout>
     )
   }

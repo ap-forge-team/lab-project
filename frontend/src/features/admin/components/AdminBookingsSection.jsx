@@ -18,11 +18,16 @@ const AdminBookingsSection = ({
   openEditModal,
   filteredBookings,
   tableRef,
+  assistants = [],
+  handleAssignAssistant,
 }) => {
   const [previewReport, setPreviewReport] = useState(null)
   const [view, setView] = useResponsiveView()
 
-  const columns = React.useMemo(() => createAdminBookingsColumns(), [])
+  const columns = React.useMemo(
+    () => createAdminBookingsColumns({ assistants, handleAssignAssistant }),
+    [assistants, handleAssignAssistant]
+  )
 
   const actions = React.useMemo(
     () => [

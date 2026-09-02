@@ -5,8 +5,8 @@ import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
 import { getAllTests } from '@/services/test.service'
 import { getAllPackages } from '@/services/package.service'
-import { getAllLabOwners, getBookingLabOwners, getPaymentSetting, createPaymentSetting, updatePaymentSetting } from '@/services/user.service'
-import { getAllBookings } from '@/services/booking.service'
+import { getAllLabOwners, getBookingLabOwners, getPaymentSetting, createPaymentSetting, updatePaymentSetting, getMyAssistants } from '@/services/user.service'
+import { getAllBookings, assignAssistant } from '@/services/booking.service'
 import { BOOKING_STATUS } from '@/constants/status'
 import AdminStatsGrid from '@/features/admin/components/AdminStatsGrid'
 import AddTestModal from '@/features/tests/components/AddTestModal'
@@ -24,6 +24,7 @@ const AdminDashboard = () => {
   const [allTests, setAllTests] = useState([])
   const [packages, setPackages] = useState([])
   const [labOwners, setLabOwners] = useState([])
+  const [assistants, setAssistants] = useState([])
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState(null)
   const [selectedBooking, setSelectedBooking] = useState(null)
@@ -92,6 +93,31 @@ const AdminDashboard = () => {
   useEffect(() => {
     fetchLabOwners()
   }, [])
+
+  const fetchAssistants = async () => {
+    try {
+      const { data: res } = await getMyAssistants()
+      const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []
+      setAssistants(list)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  useEffect(() => {
+    fetchAssistants()
+  }, [])
+
+  const handleAssignAssistant = async (bookingId, assistantId) => {
+    if (!assistantId) return
+    try {
+      const { data } = await assignAssistant(bookingId, assistantId)
+      toast.success(data?.message || 'Assistant assigned successfully')
+      fetchBookings()
+    } catch (error) {
+      toast.error(error?.response?.data?.message || 'Failed to assign assistant')
+    }
+  }
 
   const fetchDashboardData = async () => {
     try {
@@ -250,6 +276,8 @@ const AdminDashboard = () => {
             openEditModal={openEditModal}
             filteredBookings={filteredBookings}
             tableRef={tableRef}
+            assistants={assistants}
+            handleAssignAssistant={handleAssignAssistant}
           />
     </DashboardShell>
   )

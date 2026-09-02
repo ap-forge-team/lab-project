@@ -145,7 +145,8 @@ export function createLabOwnerBookingsColumns({
         }
         return (
           <select
-            onChange={(e) => handleAssignAssistant(booking._id, e.target.value)}
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => { e.stopPropagation(); handleAssignAssistant(booking._id, e.target.value) }}
             className="text-xs py-1.5 h-8 min-w-[140px] border border-border rounded-lg px-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-foreground bg-card"
           >
             <option value="">Assign</option>
