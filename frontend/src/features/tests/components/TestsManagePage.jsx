@@ -2,11 +2,15 @@ import React, { useMemo, useState, useCallback, useContext } from 'react'
 import { createPortal } from 'react-dom'
 import {
   Activity,
+  ArrowDown,
+  ArrowUp,
   CheckCircle2,
+  ChevronsUpDown,
   Copy,
   Download,
   Droplet,
   Eye,
+  EyeOff,
   FlaskConical,
   Grid2X2,
   HeartPulse,
@@ -112,11 +116,21 @@ const formatPrice = (value) => {
   return Number.isFinite(numeric) ? `₹${numeric.toLocaleString('en-IN')}` : '—'
 }
 
-const StatCard = ({ icon: Icon, iconClass, title, value, detail }) => (
-  <div className="rounded-xl border border-border bg-white p-3 shadow-sm sm:p-4">
+const StatCard = ({ icon: Icon, borderColor, iconColor, cardBg, title, value, detailTop, detailBottom }) => (
+  <div className={`rounded-2xl border ${borderColor} px-4 py-3 ${cardBg}`}>
     <div className="flex items-center gap-3">
-      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${iconClass}`}>{React.createElement(Icon, { size: 20 })}</span>
-      <div><p className="text-xs text-muted-foreground">{title}</p><p className="mt-0.5 text-xl font-bold text-foreground">{value}</p><p className="mt-0.5 text-[11px] text-muted-foreground">{detail}</p></div>
+      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border ${borderColor} ${iconColor}`}>
+        {React.createElement(Icon, { size: 18 })}
+      </span>
+      <div className="min-w-0 flex-1 space-y-0">
+        <p className="text-xs text-muted-foreground">{title}</p>
+        <p className="text-xl font-bold leading-tight text-foreground">{value}</p>
+      </div>
+      <div className="h-8 w-px shrink-0 self-stretch my-auto bg-border" />
+      <div className="shrink-0 text-right leading-tight">
+        <p className="text-xs text-muted-foreground">{detailTop}</p>
+        <p className="text-xs text-muted-foreground">{detailBottom}</p>
+      </div>
     </div>
   </div>
 )
@@ -164,6 +178,45 @@ const TestDetailsPanel = ({ test, style, catColor, onClose }) => {
   )
 }
 
+const SortableHeader = ({ title, sortKey, sortConfig, onSort, onHide }) => {
+  const [open, setOpen] = useState(false)
+  const currentSort = sortConfig?.key === sortKey ? sortConfig.direction : null
+
+  const handleSort = (direction) => {
+    onSort(sortKey, direction)
+    setOpen(false)
+  }
+
+  return (
+    <th className="px-4 py-3 relative">
+      <div className="flex items-center gap-1">
+        <span>{title}</span>
+        <button type="button" onClick={() => setOpen(!open)} className="p-0.5 rounded hover:bg-accent">
+          {currentSort === 'asc' ? <ArrowUp size={14} /> : currentSort === 'desc' ? <ArrowDown size={14} /> : <ChevronsUpDown size={14} className="text-muted-foreground" />}
+        </button>
+      </div>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-[99]" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 top-full mt-1 bg-white border border-border rounded-lg shadow-lg py-1 z-[100] min-w-[120px]">
+            <button onClick={() => handleSort('asc')} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left">
+              <ArrowUp size={14} /> Asc
+            </button>
+            <button onClick={() => handleSort('desc')} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left">
+              <ArrowDown size={14} /> Desc
+            </button>
+            {onHide && (
+              <button onClick={() => { onHide(); setOpen(false) }} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left">
+                <EyeOff size={14} /> Hide
+              </button>
+            )}
+          </div>
+        </>
+      )}
+    </th>
+  )
+}
+
 const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
   const { user } = useContext(AuthContext)
   const isPatient = user?.role === 'patient'
@@ -179,6 +232,17 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
   const [menuOpen, setMenuOpen] = useState(null)
   const [activeFilters, setActiveFilters] = useState({})
   const [filterPanelOpen, setFilterPanelOpen] = useState(null)
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: null })
+  const [hiddenColumns, setHiddenColumns] = useState({})
+
+  const handleSort = useCallback((key, direction) => {
+    setSortConfig((prev) => {
+      if (prev.key === key && prev.direction === direction) {
+        return { key: null, direction: null }
+      }
+      return { key, direction }
+    })
+  }, [])
 
   const categories = useMemo(() => [...new Set(tests.map(getCategory))].sort(), [tests])
   const activeTests = useMemo(() => tests.filter(isActive), [tests])
@@ -231,9 +295,22 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
     setPage(1)
   }, [])
 
+  const getSortValue = useCallback((test, key) => {
+    switch (key) {
+      case 'name': return getTitle(test).toLowerCase()
+      case 'code': return (test.code || test.testCode || '').toLowerCase()
+      case 'category': return getCategory(test).toLowerCase()
+      case 'sampleType': return getValue(test, ['sampleType', 'sample'], '').toLowerCase()
+      case 'price': return Number(getValue(test, ['price'], 0)) || 0
+      case 'tat': return getValue(test, ['reportTime', 'tat', 'turnaroundTime'], '')
+      case 'status': return isActive(test) ? 'active' : 'inactive'
+      default: return ''
+    }
+  }, [])
+
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase()
-    return tests.filter((test) => {
+    let result = tests.filter((test) => {
       const matchesSearch = !term || `${getTitle(test)} ${test.code || ''} ${getCategory(test)}`.toLowerCase().includes(term)
       if (!matchesSearch) return false
       if (activeFilters.name?.length && !activeFilters.name.includes(getTitle(test))) return false
@@ -248,7 +325,21 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
       }
       return true
     })
-  }, [tests, search, activeFilters])
+
+    if (sortConfig.key && sortConfig.direction) {
+      result = [...result].sort((a, b) => {
+        const aVal = getSortValue(a, sortConfig.key)
+        const bVal = getSortValue(b, sortConfig.key)
+        if (typeof aVal === 'number' && typeof bVal === 'number') {
+          return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal
+        }
+        const comparison = String(aVal).localeCompare(String(bVal))
+        return sortConfig.direction === 'asc' ? comparison : -comparison
+      })
+    }
+
+    return result
+  }, [tests, search, activeFilters, sortConfig, getSortValue])
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const visibleTests = filtered.slice((page - 1) * pageSize, page * pageSize)
 
@@ -365,10 +456,54 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
 
       <div className="overflow-x-auto snap-x snap-mandatory sm:overflow-visible">
         <div className="flex gap-4 sm:grid sm:grid-cols-2 xl:grid-cols-4 min-w-max sm:min-w-0">
-          <div className="snap-start min-w-[200px] sm:min-w-0"><StatCard icon={List} iconClass="bg-blue-50 text-primary" title="Total Tests" value={tests.length} detail="All time" /></div>
-          <div className="snap-start min-w-[200px] sm:min-w-0"><StatCard icon={CheckCircle2} iconClass="bg-emerald-50 text-emerald-500" title="Active Tests" value={activeTests.length} detail={tests.length ? `${((activeTests.length / tests.length) * 100).toFixed(2)}% of total` : '0% of total'} /></div>
-          <div className="snap-start min-w-[200px] sm:min-w-0"><StatCard icon={XCircle} iconClass="bg-orange-50 text-orange-500" title="Inactive Tests" value={tests.length - activeTests.length} detail={tests.length ? `${(((tests.length - activeTests.length) / tests.length) * 100).toFixed(2)}% of total` : '0% of total'} /></div>
-          <div className="snap-start min-w-[200px] sm:min-w-0"><StatCard icon={FlaskConical} iconClass="bg-violet-50 text-violet-500" title="Categories" value={categories.length} detail="Total categories" /></div>
+          <div className="snap-start min-w-[220px] sm:min-w-0">
+            <StatCard
+              icon={List}
+              borderColor="border-blue-200"
+              iconColor="text-blue-500"
+              cardBg="bg-blue-50"
+              title="Total Tests"
+              value={tests.length}
+              detailTop="All"
+              detailBottom="time"
+            />
+          </div>
+          <div className="snap-start min-w-[220px] sm:min-w-0">
+            <StatCard
+              icon={CheckCircle2}
+              borderColor="border-emerald-200"
+              iconColor="text-emerald-500"
+              cardBg="bg-emerald-50"
+              title="Active Tests"
+              value={activeTests.length}
+              detailTop={tests.length ? `${((activeTests.length / tests.length) * 100).toFixed(2)}%` : '0%'}
+              detailBottom="of total"
+            />
+          </div>
+          <div className="snap-start min-w-[220px] sm:min-w-0">
+            <StatCard
+              icon={XCircle}
+              borderColor="border-orange-200"
+              iconColor="text-orange-500"
+              cardBg="bg-orange-50"
+              title="Inactive Tests"
+              value={tests.length - activeTests.length}
+              detailTop={tests.length ? `${(((tests.length - activeTests.length) / tests.length) * 100).toFixed(2)}%` : '0%'}
+              detailBottom="of total"
+            />
+          </div>
+          <div className="snap-start min-w-[220px] sm:min-w-0">
+            <StatCard
+              icon={FlaskConical}
+              borderColor="border-violet-200"
+              iconColor="text-violet-500"
+              cardBg="bg-violet-50"
+              title="Categories"
+              value={categories.length}
+              detailTop="Total"
+              detailBottom="categories"
+            />
+          </div>
         </div>
       </div>
       <div className="flex justify-center gap-1.5 sm:hidden">
@@ -379,25 +514,25 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
       </div>
 
       {isLoading ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">Loading tests…</div> : isError ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-destructive">Unable to load tests. Please try again.</div> : visibleTests.length === 0 ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">No tests match the selected filters.</div> : view === 'grid' ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">{visibleTests.map((test, index) => {
+        <div className="overflow-y-auto max-h-[calc(100vh-250px)] pb-2 pr-1"><div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">{visibleTests.map((test, index) => {
           const Icon = getTestIcon(test)
           const style = getTestIconStyle(test)
           const catColor = getCategoryColor(getCategory(test))
           return <article key={test._id || test.id || `${getTitle(test)}-${index}`} className="flex min-h-[250px] flex-col rounded-xl border border-border bg-white p-4 shadow-sm transition hover:shadow-md"><div className="flex gap-3"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${style.bg} ${style.text}`}><Icon size={22} /></span><div className="min-w-0"><h2 className="truncate font-semibold text-foreground" title={getTitle(test)}>{getTitle(test)}</h2><p className="mt-0.5 text-xs text-muted-foreground">{test.code || test.testCode || '—'}</p><span className={`mt-1.5 inline-block rounded-md px-2 py-0.5 text-xs font-medium ${catColor.bg} ${catColor.text}`}>{getCategory(test)}</span></div></div><dl className="mt-3.5 space-y-2 text-xs"><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Sample Type</dt><dd className="text-right text-foreground">{getValue(test, ['sampleType', 'sample'])}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Method</dt><dd className="text-right text-foreground">{getValue(test, ['method'])}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Price</dt><dd className="text-right font-medium text-foreground">{formatPrice(getValue(test, ['price'], null))}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">TAT</dt><dd className="text-right text-foreground">{getValue(test, ['reportTime', 'tat', 'turnaroundTime'])}</dd></div></dl><div className="mt-auto flex items-center justify-between border-t border-border pt-3"><span className={`rounded-md px-2 py-1 text-xs font-medium ${isActive(test) ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>{isActive(test) ? 'Active' : 'Inactive'}</span><div className="flex items-center gap-1"><Tooltip title="View" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); setSelectedTestId(getTestId(test, index)) }} className="p-1.5 text-muted-foreground hover:text-foreground rounded transition"><Eye size={15} /></button></Tooltip>{isPatient && <Tooltip title="Book" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); setBookModal({ open: true, test }) }} className="p-1.5 text-primary hover:bg-primary/10 rounded transition"><ShoppingCart size={15} /></button></Tooltip>}<Can resource="tests" action="update"><Tooltip title="Edit" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); handleEdit(test) }} className="p-1.5 text-muted-foreground hover:text-foreground rounded transition"><Pencil size={15} /></button></Tooltip></Can><Can resource="tests" action="create"><Tooltip title="Duplicate" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); handleDuplicate(test) }} className="p-1.5 text-muted-foreground hover:text-foreground rounded transition"><Copy size={15} /></button></Tooltip></Can><Can resource="tests" action="delete"><Tooltip title="Delete" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); handleDelete(test) }} className="p-1.5 text-muted-foreground hover:text-red-500 rounded transition"><Trash2 size={15} /></button></Tooltip></Can></div></div></article>
-        })}</div>
+        })}</div></div>
       ) : (
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-          <div className="min-w-0 flex-1 overflow-x-auto rounded-xl border border-border bg-white">
+        <div className="overflow-y-auto max-h-[calc(100vh-250px)] pb-2 pr-1">
+          <div className="rounded-xl border border-border bg-white">
             <table className="w-full min-w-[820px] text-sm">
-              <thead className="bg-accent text-left text-muted-foreground">
+              <thead className="bg-accent text-left text-muted-foreground sticky top-0">
                 <tr>
-                  <th className="px-4 py-3">Test Name</th>
-                  <th className="px-4 py-3">Test Code</th>
-                  <th className="px-4 py-3">Category</th>
-                  <th className="px-4 py-3">Sample Type</th>
-                  <th className="px-4 py-3">Price (₹)</th>
-                  <th className="px-4 py-3">TAT</th>
-                  <th className="px-4 py-3">Status</th>
+                  <SortableHeader title="Test Name" sortKey="name" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, name: true }))} />
+                  <SortableHeader title="Test Code" sortKey="code" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, code: true }))} />
+                  <SortableHeader title="Category" sortKey="category" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, category: true }))} />
+                  <SortableHeader title="Sample Type" sortKey="sampleType" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, sampleType: true }))} />
+                  <SortableHeader title="Price (₹)" sortKey="price" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, price: true }))} />
+                  <SortableHeader title="TAT" sortKey="tat" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, tat: true }))} />
+                  <SortableHeader title="Status" sortKey="status" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, status: true }))} />
                   <th className="px-4 py-3">Actions</th>
                 </tr>
               </thead>
@@ -407,13 +542,13 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
                   const catColor = getCategoryColor(getCategory(test))
                   return (
                     <tr key={id} onClick={() => setSelectedTestId(id)} className={`cursor-pointer border-t border-border transition hover:bg-accent/40 ${selectedTestId === id ? 'bg-primary/5' : ''}`}>
-                      <td className="px-4 py-3 font-medium text-foreground">{getTitle(test)}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{test.code || test.testCode || '—'}</td>
-                      <td className="px-4 py-3"><span className={`rounded-md px-2 py-1 text-xs font-medium ${catColor.bg} ${catColor.text}`}>{getCategory(test)}</span></td>
-                      <td className="px-4 py-3">{getValue(test, ['sampleType', 'sample'])}</td>
-                      <td className="px-4 py-3">{getValue(test, ['price'], null) != null ? Number(getValue(test, ['price'], null)).toLocaleString('en-IN') : '—'}</td>
-                      <td className="px-4 py-3">{getValue(test, ['reportTime', 'tat', 'turnaroundTime'])}</td>
-                      <td className="px-4 py-3"><span className={`rounded-md px-2 py-1 text-xs ${isActive(test) ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>{isActive(test) ? 'Active' : 'Inactive'}</span></td>
+                      {!hiddenColumns.name && <td className="px-4 py-3 font-medium text-foreground">{getTitle(test)}</td>}
+                      {!hiddenColumns.code && <td className="px-4 py-3 text-muted-foreground">{test.code || test.testCode || '—'}</td>}
+                      {!hiddenColumns.category && <td className="px-4 py-3"><span className={`rounded-md px-2 py-1 text-xs font-medium ${catColor.bg} ${catColor.text}`}>{getCategory(test)}</span></td>}
+                      {!hiddenColumns.sampleType && <td className="px-4 py-3">{getValue(test, ['sampleType', 'sample'])}</td>}
+                      {!hiddenColumns.price && <td className="px-4 py-3">{getValue(test, ['price'], null) != null ? Number(getValue(test, ['price'], null)).toLocaleString('en-IN') : '—'}</td>}
+                      {!hiddenColumns.tat && <td className="px-4 py-3">{getValue(test, ['reportTime', 'tat', 'turnaroundTime'])}</td>}
+                      {!hiddenColumns.status && <td className="px-4 py-3"><span className={`rounded-md px-2 py-1 text-xs ${isActive(test) ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>{isActive(test) ? 'Active' : 'Inactive'}</span></td>}
                       <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
                         <div className="flex items-center gap-1">
                           {isPatient && (
@@ -457,16 +592,18 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
         <TestDetailsPanel test={selectedTest} style={selectedTestStyle} catColor={selectedTestCatColor} onClose={() => setSelectedTestId(null)} />
       )}
 
-      <Pagination
-        page={page}
-        totalPages={totalPages}
-        pageSize={pageSize}
-        totalItems={filtered.length}
-        onPageChange={setPage}
-        onPageSizeChange={(size) => { setPageSize(size); setPage(1) }}
-        pageSizes={PAGE_SIZES}
-        itemName="tests"
-      />
+      <div className="mt-4">
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={filtered.length}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => { setPageSize(size); setPage(1) }}
+          pageSizes={PAGE_SIZES}
+          itemName="tests"
+        />
+      </div>
 
       <AddTestModal open={showCreate} onClose={() => setShowCreate(false)} onCreated={onRefresh} />
       <AddTestModal
