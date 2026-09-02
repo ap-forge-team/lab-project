@@ -44,8 +44,8 @@ const BookingCardContent = ({ testName, testCity, amount, bookingDate, bookingTi
               onClick={(e) => e.stopPropagation()}
               onChange={(e) => { e.stopPropagation(); onAssignAssistant?.(bookingId, e.target.value) }}
               value={isAssistantMissing ? '' : ''}
-              disabled={bookingStatus !== 'Assigned'}
-              className={`text-xs py-1 min-w-[130px] border rounded-lg px-2 outline-none focus:border-primary focus:ring-1 focus:ring-primary bg-card truncate ${isAssistantMissing ? 'border-amber-300 text-amber-500' : 'border-border text-foreground'} ${bookingStatus !== 'Assigned' ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={bookingStatus !== 'Assigned' && bookingStatus !== 'Pending'}
+              className={`text-xs py-1 min-w-[130px] border rounded-lg px-2 outline-none focus:border-primary focus:ring-1 focus:ring-primary bg-card truncate ${isAssistantMissing ? 'border-amber-300 text-amber-500' : 'border-border text-foreground'} ${bookingStatus !== 'Assigned' && bookingStatus !== 'Pending' ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               <option value="" disabled>{isAssistantMissing ? 'Assign' : assistantName}</option>
               {assistants.map((a) => (
