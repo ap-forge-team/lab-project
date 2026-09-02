@@ -99,9 +99,139 @@ const FilterPanel = ({
     <>
       {/* Backdrop */}
       <div className="fixed inset-0 z-[99]" onClick={onClose} />
-      {/* Dropdown */}
+      
+      {/* Mobile: Bottom Sheet */}
+      <div className="fixed inset-x-0 bottom-0 z-[100] bg-white rounded-t-2xl shadow-[0_-5px_20px_rgba(0,0,0,0.15)] flex flex-col sm:hidden" style={{ borderTop: '1px solid var(--border)', height: '70vh' }}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+          <h3 className="font-semibold text-foreground">{title}</h3>
+          {totalActiveCount > 0 && (
+            <button onClick={clearAll} className="text-xs text-primary hover:underline">Clear all</button>
+          )}
+        </div>
+
+        {/* Active filters chips */}
+        {totalActiveCount > 0 && (
+          <div className="flex flex-wrap gap-2 px-4 py-2 border-b border-border shrink-0">
+            {categories.map((cat) => {
+              const vals = draftFilters[cat.key]
+              if (!vals) return null
+              const arr = Array.isArray(vals) ? vals : [vals]
+              return arr.map((v) => (
+                <span key={`${cat.key}-${v}`} className="flex items-center gap-1 bg-primary/10 text-primary text-xs px-2 py-1 rounded-full">
+                  {getOptionLabel(cat.key, v)}
+                  <button onClick={() => removeFilter(cat.key, v)} className="hover:text-primary/70">
+                    <X size={12} />
+                  </button>
+                </span>
+              ))
+            })}
+          </div>
+        )}
+
+        {/* Two Column: Categories + Options */}
+        <div className="flex flex-1 min-h-0">
+          {/* Left: Categories */}
+          <div className="w-[110px] border-r border-border py-2 overflow-y-auto shrink-0">
+            {categories.map((cat) => {
+              const count = getActiveCount(cat.key)
+              return (
+                <button
+                  key={cat.key}
+                  onClick={() => { setSelectedCategory(cat.key); setCategorySearch('') }}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 text-sm transition ${
+                    selectedCategory === cat.key
+                      ? 'bg-primary/10 text-primary font-medium'
+                      : 'text-foreground hover:bg-accent'
+                  }`}
+                >
+                  <span className="truncate">{cat.label}</span>
+                  {count > 0 && (
+                    <span className="bg-primary text-primary-foreground text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shrink-0">
+                      {count}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Right: Options */}
+          <div className="flex-1 overflow-y-auto p-4">
+            {activeCat?.type === 'search-checkbox' && (
+              <div className="relative mb-3">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder={activeCat.searchPlaceholder || 'Search...'}
+                  value={categorySearch}
+                  onChange={(e) => setCategorySearch(e.target.value)}
+                  className="w-full pl-8 pr-3 py-2 border border-border rounded-lg text-sm outline-none focus:border-primary"
+                />
+              </div>
+            )}
+
+            {activeCat?.type === 'date-range' && (
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1.5 block">From</label>
+                  <input
+                    type="date"
+                    value={draftFilters[activeCat?.key]?.start || ''}
+                    onChange={(e) => setDateRange(activeCat.key, 'start', e.target.value)}
+                    className="w-full border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1.5 block">To</label>
+                  <input
+                    type="date"
+                    value={draftFilters[activeCat?.key]?.end || ''}
+                    onChange={(e) => setDateRange(activeCat.key, 'end', e.target.value)}
+                    className="w-full border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
+                  />
+                </div>
+              </div>
+            )}
+
+            {(activeCat?.type === 'checkbox' || activeCat?.type === 'search-checkbox') && (
+              filteredOptions.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">No options available</p>
+              ) : (
+                <div className="space-y-1">
+                  {filteredOptions.map((opt) => {
+                    const checked = Array.isArray(draftFilters[activeCat?.key]) && draftFilters[activeCat.key].includes(opt.value)
+                    return (
+                      <label
+                        key={opt.value}
+                        onClick={() => toggleOption(activeCat.key, opt.value)}
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-accent cursor-pointer transition"
+                      >
+                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition ${
+                          checked ? 'bg-primary border-primary' : 'border-border'
+                        }`}>
+                          {checked && <Check size={12} className="text-white" />}
+                        </div>
+                        <span className="text-sm text-foreground">{opt.label}</span>
+                      </label>
+                    )
+                  })}
+                </div>
+              )
+            )}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center gap-3 px-4 py-3 border-t border-border shrink-0">
+          <button onClick={onClose} className="flex-1 px-4 py-2.5 text-sm font-medium text-foreground border border-border rounded-lg hover:bg-accent transition">Cancel</button>
+          <button onClick={handleApply} className="flex-1 px-4 py-2.5 text-sm font-semibold bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition">Apply</button>
+        </div>
+      </div>
+
+      {/* Desktop: Dropdown */}
       <div
-        className="fixed bg-white border border-border rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.15)] z-[100] w-[680px] h-[450px] flex flex-col"
+        className="hidden sm:flex fixed bg-white border border-border rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.15)] z-[100] w-[680px] h-[450px] flex-col"
         style={{ top: position.top, left: position.left }}
       >
         {/* Header */}
@@ -141,7 +271,6 @@ const FilterPanel = ({
 
           {/* Middle: Options */}
           <div className="flex-1 overflow-y-auto p-4">
-            {/* Search Checkbox Type */}
             {activeCat?.type === 'search-checkbox' && (
               <div className="relative mb-3">
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -155,7 +284,6 @@ const FilterPanel = ({
               </div>
             )}
 
-            {/* Date Range Type */}
             {activeCat?.type === 'date-range' && (
               <div className="space-y-4">
                 <div>
@@ -179,7 +307,6 @@ const FilterPanel = ({
               </div>
             )}
 
-            {/* Checkbox / Search Checkbox Options */}
             {(activeCat?.type === 'checkbox' || activeCat?.type === 'search-checkbox') && (
               filteredOptions.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">No options available</p>
@@ -217,7 +344,6 @@ const FilterPanel = ({
                   const vals = draftFilters[cat.key]
                   if (!vals) return null
 
-                  // Date range display
                   if (cat.type === 'date-range' && typeof vals === 'object') {
                     if (!vals.start && !vals.end) return null
                     return (
@@ -248,7 +374,6 @@ const FilterPanel = ({
                     )
                   }
 
-                  // Array display (checkbox / search-checkbox)
                   const arr = Array.isArray(vals) ? vals : [vals]
                   if (arr.length === 0) return null
                   return (

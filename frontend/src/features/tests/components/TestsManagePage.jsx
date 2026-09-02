@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useCallback, useContext } from 'react'
+import { createPortal } from 'react-dom'
 import {
   Activity,
   CheckCircle2,
@@ -306,11 +307,8 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
 
   return (
     <section className="mx-auto max-w-[1500px] space-y-4 lg:space-y-5">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Tests</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Manage and view all laboratory tests</p>
-        </div>
+      <div className="flex items-center justify-between gap-3 sm:hidden">
+        <h1 className="text-2xl font-bold text-foreground">Tests</h1>
         {isPatient ? (
           <Button onClick={() => setBookModal({ open: true, test: null })} className="shrink-0">
             <ShoppingCart size={18} className="mr-2" />Book a Test
@@ -324,7 +322,46 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
         )}
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="hidden sm:flex items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Tests</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Manage and view all laboratory tests</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} placeholder="Search tests by name or code..." className="pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary w-64" />
+          </div>
+          <FilterButton
+            onClick={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect()
+              setFilterPanelOpen({ top: rect.bottom + 8, left: Math.max(16, rect.right - 680) })
+            }}
+            activeCount={activeFilterCount}
+          />
+          <div className="flex items-center rounded-lg border border-border p-1">
+            <Tooltip title="Grid View" arrow placement="top">
+              <button type="button" aria-label="Grid view" onClick={() => { setView('grid'); setSelectedTestId(null) }} className={`rounded p-1.5 ${view === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><Grid2X2 size={18} /></button>
+            </Tooltip>
+            <Tooltip title="List View" arrow placement="top">
+              <button type="button" aria-label="List view" onClick={() => setView('list')} className={`rounded p-1.5 ${view === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
+            </Tooltip>
+          </div>
+          {isPatient ? (
+            <Button onClick={() => setBookModal({ open: true, test: null })} className="shrink-0">
+              <ShoppingCart size={18} className="mr-2" />Book a Test
+            </Button>
+          ) : (
+            <Can resource="tests" action="create">
+              <Button onClick={() => setShowCreate(true)} className="shrink-0">
+                <Plus size={18} className="mr-2" />Add Test
+              </Button>
+            </Can>
+          )}
+        </div>
+      </div>
+
+      <div className="flex sm:hidden items-center gap-2">
         <div className="relative flex-1">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} placeholder="Search tests by name or code..." className="w-full pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
@@ -520,7 +557,7 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
         loading={deleteModal.loading}
       />
 
-      {filterPanelOpen && (
+      {filterPanelOpen && createPortal(
         <FilterPanel
           isOpen={true}
           onClose={() => setFilterPanelOpen(null)}
@@ -529,7 +566,8 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
           title="Filters"
           categories={filterCategories}
           activeFilters={activeFilters}
-        />
+        />,
+        document.body
       )}
 
       {menuOpen && (
