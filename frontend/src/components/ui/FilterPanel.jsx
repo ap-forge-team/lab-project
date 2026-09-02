@@ -22,6 +22,13 @@ const FilterPanel = ({
     }
   }, [isOpen, activeFilters, categories])
 
+  useEffect(() => {
+    if (!isOpen) return
+    const handleScroll = () => onClose()
+    window.addEventListener('scroll', handleScroll, true)
+    return () => window.removeEventListener('scroll', handleScroll, true)
+  }, [isOpen, onClose])
+
   const activeCat = categories.find((c) => c.key === selectedCategory)
 
   const filteredOptions = useMemo(() => {
