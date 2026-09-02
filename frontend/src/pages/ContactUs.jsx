@@ -102,41 +102,43 @@ export default function ContactUs() {
     <PublicLayout>
       <div className="bg-white min-h-screen">
         {/* HERO */}
-        <section className="enterprise-container py-10 lg:py-16">
-          <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
-            <div className="w-full lg:w-1/2">
-              <span className="inline-block type-primary-label-l2-medium tracking-wider uppercase text-primary bg-primary/10 border border-primary/20 rounded-full px-3 py-1 mb-5">
-                Contact Us
-              </span>
-              <h1 className="type-primary-heading-h0-mobile md:type-primary-heading-h0 text-foreground leading-tight mb-5">
-                We're Here to <span className="text-primary">Help You</span>
-              </h1>
-              <p className="type-primary-body-b1 text-muted-foreground leading-relaxed mb-7 max-w-lg">
-                Have questions or need assistance? Our support team is ready
-                to help you. Reach out to us through any of the channels
-                below.
-              </p>
-              <div className="flex flex-col gap-3">
-                {['Quick Response', 'Expert Support', 'Patient First Approach'].map(
-                  (item) => (
-                    <div key={item} className="flex items-center gap-2.5">
-                      <CheckCircle size={18} className="text-primary" />
-                      <span className="type-primary-body-b2-medium text-foreground">
-                        {item}
-                      </span>
-                    </div>
-                  )
-                )}
+        <section className="bg-gray-50 pt-0 pb-10 lg:pb-16">
+          <div className="enterprise-container">
+            <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
+              <div className="w-full lg:w-1/2">
+                <span className="inline-block text-xs font-semibold tracking-wider uppercase text-blue-600 bg-blue-50 border border-blue-100 rounded-full px-4 py-1.5 mb-4">
+                  Contact Us
+                </span>
+                <h1 className="font-heading font-bold text-3xl lg:text-4xl text-gray-900 leading-tight mb-4">
+                  We're Here to <span className="text-blue-600">Help You</span>
+                </h1>
+                <p className="text-gray-500 text-base leading-relaxed mb-6 max-w-lg">
+                  Have questions or need assistance? Our support team is ready
+                  to help you. Reach out to us through any of the channels
+                  below.
+                </p>
+                <div className="flex flex-col gap-3">
+                  {['Quick Response', 'Expert Support', 'Patient First Approach'].map(
+                    (item) => (
+                      <div key={item} className="flex items-center gap-2.5">
+                        <CheckCircle size={18} className="text-blue-600" />
+                        <span className="text-sm font-medium text-gray-700">
+                          {item}
+                        </span>
+                      </div>
+                    )
+                  )}
+                </div>
               </div>
-            </div>
 
-            <div className="w-full lg:w-1/2">
-              <div className="rounded-2xl overflow-hidden bg-blue-50">
-                <img
-                  src={contactImg}
-                  alt="Checked Up support team"
-                  className="w-full h-[280px] md:h-[360px] object-cover"
-                />
+              <div className="w-full lg:w-1/2">
+                <div className="rounded-2xl overflow-hidden bg-blue-50">
+                  <img
+                    src={contactImg}
+                    alt="Checked Up support team"
+                    className="w-full h-[280px] md:h-[360px] object-cover"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -147,7 +149,7 @@ export default function ContactUs() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
             {/* Get in Touch Form */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 lg:p-8">
-              <h2 className="type-primary-heading-h1 text-foreground mb-6">
+              <h2 className="font-heading font-bold text-xl text-gray-900 mb-6">
                 Get in Touch
               </h2>
               <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -162,7 +164,7 @@ export default function ContactUs() {
                     placeholder="Full Name"
                     value={formData.name}
                     onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 bg-white text-sm text-foreground placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition"
+                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   />
                 </div>
                 <div className="relative">
@@ -176,7 +178,7 @@ export default function ContactUs() {
                     placeholder="Email Address"
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 bg-white text-sm text-foreground placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition"
+                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   />
                 </div>
                 <div className="relative">
@@ -190,7 +192,7 @@ export default function ContactUs() {
                     placeholder="Phone Number"
                     value={formData.phone}
                     onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 bg-white text-sm text-foreground placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition"
+                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   />
                 </div>
                 <div className="relative">
@@ -198,7 +200,7 @@ export default function ContactUs() {
                     name="subject"
                     value={formData.subject}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-white text-sm text-foreground appearance-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition"
+                    className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-white text-sm text-gray-900 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   >
                     <option value="" disabled>
                       Subject
@@ -220,16 +222,16 @@ export default function ContactUs() {
                   rows={5}
                   value={formData.message}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-white text-sm text-foreground placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition resize-none"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition resize-none"
                 />
                 <button
                   type="submit"
-                  className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white py-3 rounded-lg text-sm font-semibold transition"
+                  className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg text-sm font-semibold transition"
                 >
                   <Send size={16} />
                   Send Message
                 </button>
-                <p className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1.5">
+                <p className="text-xs text-gray-500 text-center flex items-center justify-center gap-1.5">
                   <Shield size={12} />
                   Your information is safe with us. We never share your data.
                 </p>
@@ -238,7 +240,7 @@ export default function ContactUs() {
 
             {/* Other Ways to Contact Us */}
             <div>
-              <h2 className="type-primary-heading-h1 text-foreground mb-6">
+              <h2 className="font-heading font-bold text-xl text-gray-900 mb-6">
                 Other Ways to Contact Us
               </h2>
               <div className="flex flex-col gap-4">
@@ -255,25 +257,25 @@ export default function ContactUs() {
                         <Icon size={20} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="type-primary-heading-h3 text-foreground mb-1">
+                        <h3 className="font-heading font-bold text-sm text-gray-900 mb-1">
                           {method.title}
                         </h3>
-                        <p className="type-primary-body-b3 text-muted-foreground whitespace-pre-line leading-relaxed">
+                        <p className="text-xs text-gray-500 whitespace-pre-line leading-relaxed">
                           {method.desc}
                         </p>
                       </div>
                       <div className="flex-shrink-0 text-right">
                         {method.isLink ? (
-                          <span className="type-primary-body-b2-medium text-primary cursor-pointer hover:underline flex items-center gap-1">
+                          <span className="text-sm font-semibold text-blue-600 cursor-pointer hover:underline flex items-center gap-1">
                             {method.detail} <ArrowRight size={14} />
                           </span>
                         ) : (
-                          <span className="type-primary-body-b2-medium text-primary">
+                          <span className="text-sm font-semibold text-blue-600">
                             {method.detail}
                           </span>
                         )}
                         {method.sub && (
-                          <p className="text-xs text-muted-foreground mt-0.5">
+                          <p className="text-xs text-gray-500 mt-0.5">
                             {method.sub}
                           </p>
                         )}
@@ -287,13 +289,13 @@ export default function ContactUs() {
         </section>
 
         {/* FAQ */}
-        <section className="bg-gray-50 py-14 lg:py-20">
+        <section className="bg-gray-50 py-10 lg:py-14">
           <div className="enterprise-container">
             <div className="text-center mb-10">
-              <h2 className="type-primary-heading-h1 text-foreground mb-2">
+              <h2 className="font-heading font-bold text-2xl text-gray-900 mb-2">
                 Frequently Asked Questions
               </h2>
-              <p className="type-primary-body-b2 text-muted-foreground">
+              <p className="text-sm text-gray-500">
                 Find quick answers to common questions
               </p>
             </div>
@@ -307,19 +309,19 @@ export default function ContactUs() {
                     onClick={() => setOpenFaq(openFaq === index ? null : index)}
                     className="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 transition"
                   >
-                    <span className="type-primary-body-b2-medium text-foreground pr-4">
+                    <span className="text-sm font-medium text-gray-900 pr-4">
                       {faq.q}
                     </span>
                     <ChevronDown
                       size={18}
-                      className={`text-muted-foreground flex-shrink-0 transition-transform ${
+                      className={`text-gray-400 flex-shrink-0 transition-transform ${
                         openFaq === index ? 'rotate-180' : ''
                       }`}
                     />
                   </button>
                   {openFaq === index && (
                     <div className="px-5 pb-5">
-                      <p className="type-primary-body-b3 text-muted-foreground leading-relaxed">
+                      <p className="text-sm text-gray-500 leading-relaxed">
                         {faq.a}
                       </p>
                     </div>
@@ -329,16 +331,16 @@ export default function ContactUs() {
             </div>
 
             {/* STILL HAVE QUESTIONS */}
-            <div className="mt-10 bg-primary/5 rounded-2xl p-6 lg:p-8 flex flex-col sm:flex-row items-center justify-between gap-4 max-w-4xl mx-auto">
+            <div className="mt-10 bg-white border border-gray-100 rounded-2xl p-6 lg:p-8 flex flex-col sm:flex-row items-center justify-between gap-4 max-w-4xl mx-auto">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <Headphones size={22} className="text-primary" />
+                <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+                  <Headphones size={22} className="text-blue-600" />
                 </div>
                 <div>
-                  <h3 className="type-primary-heading-h3 text-foreground">
+                  <h3 className="font-heading font-bold text-sm text-gray-900">
                     Still have questions?
                   </h3>
-                  <p className="type-primary-body-b3 text-muted-foreground">
+                  <p className="text-xs text-gray-500">
                     Our support team is here to help you with anything you
                     need.
                   </p>
@@ -346,7 +348,7 @@ export default function ContactUs() {
               </div>
               <a
                 href="tel:+919876543210"
-                className="inline-flex items-center gap-2 border-2 border-primary text-primary hover:bg-primary hover:text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition flex-shrink-0"
+                className="inline-flex items-center gap-2 border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition flex-shrink-0"
               >
                 <Phone size={16} />
                 Call Us Now

@@ -1,333 +1,262 @@
 import React from 'react'
 import PublicLayout from '@/components/layout/PublicLayout'
-import Button from '@/components/ui/Button'
-// Checked Up — About page
-// Fonts: Plus Jakarta Sans (display) + Inter (body) — load these in index.html:
-// <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-const values = [
+import { useNavigate } from 'react-router-dom'
+import { ROUTES } from '@/constants/routes'
+import { Shield, Clock, Users, Wallet, ClipboardList, Home, FlaskConical, FileText, TestTube, Award, Building2, Star, ChevronRight } from 'lucide-react'
+import microscopeImg from '@/assets/image/about-us-microscope.png'
+import familyImg from '@/assets/image/about-us-family.png'
+import sideImg from '@/assets/image/about-us-sideimage.png'
+
+const whyChoose = [
   {
-    title: 'Clarity over jargon',
-    body: "Every report comes with plain-language explanations, not just numbers on a page. You shouldn't need a medical degree to understand your own bloodwork.",
-    accent: 'blue',
+    icon: Shield,
+    title: 'Accurate & Reliable',
+    desc: 'Advanced technology and strict quality standards ensure 99% accuracy.',
   },
   {
-    title: 'Speed you can plan around',
-    body: "Home sample collection slots, real-time booking, and reports delivered the moment they're ready — usually well inside 24 hours.",
-    accent: 'yellow',
+    icon: Clock,
+    title: 'Timely Reports',
+    desc: 'Quick turnaround time with digital reports delivered right to you.',
   },
   {
-    title: 'Labs held to a standard',
-    body: 'We partner only with NABL-accredited diagnostic labs and audit turnaround times and accuracy on an ongoing basis.',
-    accent: 'green',
+    icon: Users,
+    title: 'Patient First',
+    desc: 'We prioritize your comfort and convenience at every step.',
+  },
+  {
+    icon: Wallet,
+    title: 'Affordable Pricing',
+    desc: 'High quality tests at transparent and competitive prices.',
   },
 ]
+
 const stats = [
-  { value: '40+', label: 'cities served' },
-  { value: '120+', label: 'tests & packages' },
-  { value: '18k+', label: 'reports delivered' },
-  { value: '<24h', label: 'avg. turnaround' },
+  { icon: TestTube, value: '1200+', label: 'Tests Available' },
+  { icon: Users, value: '1M+', label: 'Happy Customers' },
+  { icon: Building2, value: '50+', label: 'Labs Pan India' },
+  { icon: Award, value: '10+', label: 'Years of Excellence' },
 ]
+
 const steps = [
   {
+    icon: ClipboardList,
     n: '01',
-    title: 'Book in minutes',
-    body: 'Pick a test or package, choose a home-collection slot or a partner lab near you.',
+    title: 'Book Your Test',
+    desc: 'Choose a test or package and schedule your appointment.',
   },
   {
+    icon: Home,
     n: '02',
-    title: 'Sample collection',
-    body: 'A trained phlebotomist arrives at your slot, or you walk into a partner lab — your call.',
+    title: 'Sample Collection',
+    desc: 'Our phlebotomists visit your home for safe and hassle-free sample collection.',
   },
   {
+    icon: FlaskConical,
     n: '03',
-    title: 'Get your report',
-    body: 'Secure, encrypted PDF report in your dashboard as soon as the lab signs off, with a plain-language summary attached.',
+    title: 'Lab Testing',
+    desc: 'Samples are tested in NABL accredited labs using advanced technology.',
+  },
+  {
+    icon: FileText,
+    n: '04',
+    title: 'Get Your Reports',
+    desc: 'Receive accurate digital reports quickly via email and SMS.',
   },
 ]
-const accentMap = {
-  blue: { bg: '#EFF6FF', border: '#BFDBFE', text: '#1D4ED8', chip: '#DBEAFE' },
-  yellow: { bg: '#FFFBEB', border: '#FDE68A', text: '#B45309', chip: '#FEF3C7' },
-  green: { bg: '#F0FDF4', border: '#BBF7D0', text: '#15803D', chip: '#DCFCE7' },
-}
-function ValueCard({ title, body, accent }) {
-  const c = accentMap[accent]
-  return (
-    <div
-      style={{
-        background: c.bg,
-        border: `1px solid ${c.border}`,
-        borderRadius: '16px',
-        padding: '28px',
-      }}
-    >
-      <div
-        style={{
-          width: '40px',
-          height: '40px',
-          borderRadius: '10px',
-          background: c.chip,
-          marginBottom: '18px',
-        }}
-      />
-      <h3
-        style={{
-          fontFamily: "'Plus Jakarta Sans', sans-serif",
-          fontWeight: 700,
-          fontSize: '17px',
-          color: '#0F172A',
-          margin: '0 0 8px',
-        }}
-      >
-        {title}
-      </h3>
-      <p
-        style={{
-          fontFamily: "'Inter', sans-serif",
-          fontSize: '14.5px',
-          lineHeight: 1.65,
-          color: '#475569',
-          margin: 0,
-        }}
-      >
-        {body}
-      </p>
-    </div>
-  )
-}
+
 export default function AboutUs() {
+  const navigate = useNavigate()
+
   return (
     <PublicLayout>
-      <div style={{ fontFamily: "'Inter', sans-serif", color: '#0F172A', background: '#FFFFFF' }}>
-        {/* HERO */}
-        <section
-          style={{
-            background: '#1E3A8A',
-            padding: '96px 24px 80px',
-            textAlign: 'center',
-          }}
-        >
-          <span
-            style={{
-              display: 'inline-block',
-              fontFamily: "'Inter', sans-serif",
-              fontSize: '13px',
-              fontWeight: 600,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              color: '#93C5FD',
-              background: 'rgba(147,197,253,0.12)',
-              border: '1px solid rgba(147,197,253,0.3)',
-              borderRadius: '999px',
-              padding: '6px 16px',
-              marginBottom: '24px',
-            }}
-          >
-            About Checked Up
-          </span>
-          <h1
-            style={{
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              fontWeight: 800,
-              fontSize: '42px',
-              lineHeight: 1.2,
-              color: '#FFFFFF',
-              maxWidth: '700px',
-              margin: '0 auto 20px',
-            }}
-          >
-            Diagnostics shouldn't feel like a chore
-          </h1>
-          <p
-            style={{
-              fontSize: '16.5px',
-              lineHeight: 1.7,
-              color: '#CBD5E1',
-              maxWidth: '560px',
-              margin: '0 auto',
-            }}
-          >
-            Checked Up connects you to accredited labs for booking, home sample collection, and
-            reports — all in one place, without the phone calls, paperwork, or waiting rooms.
-          </p>
-          {/* stat row */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              flexWrap: 'wrap',
-              gap: '40px',
-              marginTop: '56px',
-            }}
-          >
-            {stats.map((s) => (
-              <div key={s.label} style={{ textAlign: 'center' }}>
-                <div
-                  style={{
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
-                    fontWeight: 800,
-                    fontSize: '28px',
-                    color: '#FFFFFF',
-                  }}
-                >
-                  {s.value}
-                </div>
-                <div style={{ fontSize: '13px', color: '#94A3B8', marginTop: '4px' }}>
-                  {s.label}
+      <div className="bg-white min-h-screen">
+        {/* Hero Section */}
+        <section className="bg-white border-b border-gray-100 pt-0 pb-6 lg:pb-10">
+          <div className="enterprise-container">
+            <div className="grid lg:grid-cols-2 gap-10 items-center">
+              <div>
+                <span className="inline-block text-xs font-semibold tracking-wider uppercase text-blue-600 bg-blue-50 border border-blue-100 rounded-full px-4 py-1.5 mb-4">
+                  About Us
+                </span>
+                <h1 className="font-heading font-bold text-4xl lg:text-5xl text-gray-900 mb-4 leading-tight">
+                  Your Health, <br />
+                  <span className="text-blue-600">Our Priority</span>
+                </h1>
+                <p className="text-gray-500 text-base lg:text-lg leading-relaxed mb-6 max-w-lg">
+                  At Checked Up, we believe that accurate diagnostics are the first step towards a healthier life. We are committed to providing reliable, timely and affordable lab tests with a patient-first approach.
+                </p>
+                <div className="flex items-center gap-2 text-sm text-gray-700 bg-gray-50 border border-gray-200 px-4 py-2.5 rounded-full w-fit">
+                  <Shield size={16} className="text-blue-600" />
+                  <span>NABL Accredited Laboratories</span>
                 </div>
               </div>
-            ))}
+              <div className="relative hidden lg:flex justify-end">
+                <img
+                  src={microscopeImg}
+                  alt="Lab Microscope"
+                  className="w-full max-w-xl object-contain"
+                />
+              </div>
+            </div>
           </div>
         </section>
-        {/* STORY */}
-        <section style={{ padding: '80px 24px', maxWidth: '980px', margin: '0 auto' }}>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '56px',
-              alignItems: 'center',
-            }}
-          >
-            <div>
-              <span
-                style={{
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  color: '#2563EB',
-                }}
-              >
-                Why we started
-              </span>
-              <h2
-                style={{
-                  fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  fontWeight: 700,
-                  fontSize: '28px',
-                  color: '#0F172A',
-                  margin: '12px 0 16px',
-                  lineHeight: 1.3,
-                }}
-              >
-                Built after one too many lost lab reports
-              </h2>
-              <p
-                style={{ fontSize: '15px', lineHeight: 1.75, color: '#475569', margin: '0 0 14px' }}
-              >
-                We kept running into the same problem: booking a simple blood test meant calling
-                three labs, comparing prices with no clear menu, and then chasing a PDF over
-                WhatsApp days later. Health data that matters was scattered across group chats and
-                paper slips.
-              </p>
-              <p style={{ fontSize: '15px', lineHeight: 1.75, color: '#475569', margin: 0 }}>
-                Checked Up puts booking, collection, payment, and your report history behind one
-                login — backed by labs we vet ourselves, not just the ones that pay for placement.
-              </p>
+
+        {/* Why Choose Us */}
+        <section className="py-10 lg:py-12 bg-white">
+          <div className="enterprise-container">
+            <h2 className="font-heading font-bold text-2xl lg:text-3xl text-gray-900 mb-6">
+              Why Choose Checked Up?
+            </h2>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {whyChoose.map((item) => {
+                const Icon = item.icon
+                return (
+                  <div key={item.title} className="border border-gray-200 rounded-xl p-5 hover:shadow-md transition">
+                    <div className="w-11 h-11 bg-blue-50 rounded-full flex items-center justify-center mb-3">
+                      <Icon size={20} className="text-blue-600" />
+                    </div>
+                    <h3 className="font-heading font-bold text-gray-900 mb-1.5 text-sm">{item.title}</h3>
+                    <p className="text-xs text-gray-500 leading-relaxed">{item.desc}</p>
+                  </div>
+                )
+              })}
             </div>
-            <div
-              style={{
-                background: '#F8FAFC',
-                border: '1px solid #E2E8F0',
-                borderRadius: '20px',
-                padding: '32px',
-              }}
-            >
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                {steps.map((s) => (
-                  <div key={s.n} style={{ display: 'flex', gap: '16px' }}>
-                    <span
-                      style={{
-                        fontFamily: "'Plus Jakarta Sans', sans-serif",
-                        fontWeight: 800,
-                        fontSize: '13px',
-                        color: '#2563EB',
-                        minWidth: '28px',
-                      }}
-                    >
-                      {s.n}
-                    </span>
+          </div>
+        </section>
+
+        {/* Stats */}
+        <section className="py-8 bg-gray-50 border-y border-gray-100">
+          <div className="enterprise-container">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+              {stats.map((stat) => {
+                const Icon = stat.icon
+                return (
+                  <div key={stat.label} className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <Icon size={24} className="text-blue-600" />
+                    </div>
                     <div>
-                      <div
-                        style={{
-                          fontFamily: "'Plus Jakarta Sans', sans-serif",
-                          fontWeight: 700,
-                          fontSize: '14.5px',
-                          color: '#0F172A',
-                          marginBottom: '4px',
-                        }}
-                      >
-                        {s.title}
-                      </div>
-                      <div style={{ fontSize: '13.5px', lineHeight: 1.6, color: '#64748B' }}>
-                        {s.body}
-                      </div>
+                      <div className="font-heading font-bold text-xl text-gray-900">{stat.value}</div>
+                      <div className="text-xs text-gray-500">{stat.label}</div>
                     </div>
                   </div>
-                ))}
+                )
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* How We Work */}
+        <section className="py-10 lg:py-12 bg-white">
+          <div className="enterprise-container">
+            <h2 className="font-heading font-bold text-2xl lg:text-3xl text-gray-900 mb-8">
+              How We Work
+            </h2>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 relative">
+              {steps.map((step, i) => {
+                const Icon = step.icon
+                return (
+                  <div key={step.n} className="relative">
+                    {i < steps.length - 1 && (
+                      <div className="hidden lg:block absolute top-7 left-[calc(50%+32px)] w-[calc(100%-64px)] border-t-2 border-dashed border-blue-200 z-0" />
+                    )}
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center flex-shrink-0 border-4 border-white shadow-sm">
+                          <Icon size={22} className="text-blue-600" />
+                        </div>
+                        <span className="font-heading font-bold text-xl text-blue-600">{step.n}</span>
+                      </div>
+                      <h3 className="font-heading font-bold text-gray-900 mb-1.5 text-sm">{step.title}</h3>
+                      <p className="text-xs text-gray-500 leading-relaxed">{step.desc}</p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* Mission & Vision */}
+        <section className="py-10 lg:py-12 bg-white">
+          <div className="enterprise-container">
+            <div className="bg-gray-50 rounded-2xl overflow-hidden">
+              <div className="grid lg:grid-cols-5 gap-0">
+                <div className="lg:col-span-2 relative h-64 lg:h-auto min-h-[280px]">
+                  <img
+                    src={familyImg}
+                    alt="Happy Family"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="lg:col-span-2 p-6 lg:p-8 flex flex-col justify-center">
+                  <div className="space-y-5">
+                    <div>
+                      <h3 className="font-heading font-bold text-base text-blue-600 mb-1.5">Our Mission</h3>
+                      <p className="text-gray-500 leading-relaxed text-sm">
+                        To make quality diagnostics accessible to every individual by combining technology, transparency and trust.
+                      </p>
+                    </div>
+                    <div>
+                      <h3 className="font-heading font-bold text-base text-blue-600 mb-1.5">Our Vision</h3>
+                      <p className="text-gray-500 leading-relaxed text-sm">
+                        To be India's most trusted healthcare diagnostics brand, empowering people to live healthier lives.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="lg:col-span-1 hidden lg:flex items-center justify-center p-5">
+                  <img
+                    src={sideImg}
+                    alt="Microscope Illustration"
+                    className="w-full max-w-[120px] object-contain opacity-60"
+                  />
+                </div>
               </div>
             </div>
           </div>
         </section>
-        {/* VALUES */}
-        <section style={{ background: '#F8FAFC', padding: '80px 24px' }}>
-          <div style={{ maxWidth: '980px', margin: '0 auto' }}>
-            <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-              <span
-                style={{
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  color: '#2563EB',
-                }}
-              >
-                What we hold ourselves to
-              </span>
-              <h2
-                style={{
-                  fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  fontWeight: 700,
-                  fontSize: '28px',
-                  color: '#0F172A',
-                  margin: '12px 0 0',
-                }}
-              >
-                Three things we don't compromise on
-              </h2>
-            </div>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: '20px',
-              }}
-            >
-              {values.map((v) => (
-                <ValueCard key={v.title} {...v} />
-              ))}
+
+        {/* Trusted By */}
+        <section className="py-10 bg-white border-t border-gray-100">
+          <div className="enterprise-container text-center">
+            <h3 className="font-heading font-bold text-lg text-gray-900 mb-6">Trusted by Thousands</h3>
+            <div className="flex flex-wrap items-center justify-center gap-6 lg:gap-12 opacity-50">
+              <span className="text-lg font-bold text-gray-500">TATA 1mg</span>
+              <span className="text-lg font-bold text-gray-500">practo</span>
+              <span className="text-lg font-bold text-gray-500">PharmEasy</span>
+              <span className="text-lg font-bold text-gray-500">yatra</span>
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold text-gray-500">Google</span>
+                <span className="text-sm text-gray-500">4.8</span>
+                <div className="flex">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} size={12} className="text-yellow-400 fill-yellow-400" />
+                  ))}
+                </div>
+                <span className="text-xs text-gray-400">(12K+ Reviews)</span>
+              </div>
             </div>
           </div>
         </section>
+
         {/* CTA */}
-        <section style={{ padding: '72px 24px', textAlign: 'center' }}>
-          <h2
-            style={{
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              fontWeight: 700,
-              fontSize: '26px',
-              color: '#0F172A',
-              margin: '0 0 12px',
-            }}
-          >
-            Ready to book your first test?
-          </h2>
-          <p style={{ fontSize: '15px', color: '#64748B', margin: '0 0 28px' }}>
-            Home collection is available in 40+ cities, with reports usually ready within a day.
-          </p>
-          <Button onClick={() => {}} className="font-semibold text-sm">
-            Book a test
-          </Button>
+        <section className="py-10 bg-gray-50 border-t border-gray-100">
+          <div className="enterprise-container text-center">
+            <h2 className="font-heading font-bold text-xl text-gray-900 mb-2">
+              Ready to book your first test?
+            </h2>
+            <p className="text-gray-500 mb-6 text-sm">
+              Home collection is available in 50+ cities, with reports usually ready within a day.
+            </p>
+            <button
+              onClick={() => navigate(ROUTES.TESTS)}
+              className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-lg transition text-sm"
+            >
+              Book a Test
+              <ChevronRight size={14} />
+            </button>
+          </div>
         </section>
       </div>
     </PublicLayout>
