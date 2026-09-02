@@ -33,8 +33,10 @@ import FilterButton from '@/components/ui/FilterButton'
 import useAuth from '@/hooks/useAuth'
 import { ROLES } from '@/constants/roles'
 import { BOOKING_STATUS, PAYMENT_STATUS } from '@/constants/status'
-import { updateBookingLab, assignAssistant, markReached } from '@/services/booking.service'
-import { getAllLabOwners, getMyAssistants } from '@/services/user.service'
+import { updateBookingLab, assignAssistant, markReached, uploadSample, uploadPaymentReceipt } from '@/services/booking.service'
+import { getAllLabOwners, getMyAssistants, getPaymentSetting } from '@/services/user.service'
+import LabAssistantSampleModal from '@/features/lab-assistant/components/LabAssistantSampleModal'
+import { BookingCard } from './BookingCard'
 
 const PAGE_SIZE = 12
 const PAGE_SIZES = [12, 24, 48]
@@ -180,6 +182,16 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
   const [savingLab, setSavingLab] = useState(false)
   const [assistants, setAssistants] = useState([])
   const [markingReachedId, setMarkingReachedId] = useState(null)
+  const [showSampleModal, setShowSampleModal] = useState(false)
+  const [selectedBookingForSample, setSelectedBookingForSample] = useState(null)
+  const [sampleImages, setSampleImages] = useState([])
+  const [assistantNotes, setAssistantNotes] = useState('')
+  const [uploadingSample, setUploadingSample] = useState(false)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [paymentBooking, setPaymentBooking] = useState(null)
+  const [paymentReceipt, setPaymentReceipt] = useState(null)
+  const [uploadingPayment, setUploadingPayment] = useState(false)
+  const [paymentSetting, setPaymentSetting] = useState(null)
 
   const completedBookings = useMemo(() => bookings.filter((b) => b.status === 'Completed'), [bookings])
   const inProgressBookings = useMemo(() => bookings.filter((b) => !['Completed', 'Cancelled'].includes(b.status)), [bookings])
@@ -331,6 +343,69 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
     }
   }, [onRefresh])
 
+  const openSampleModal = useCallback((booking) => {
+    setSelectedBookingForSample(booking)
+    setSampleImages([])
+    setAssistantNotes('')
+    setShowSampleModal(true)
+  }, [])
+
+  const handleSampleUpload = useCallback(async () => {
+    if (!selectedBookingForSample || sampleImages.length === 0) return
+    setUploadingSample(true)
+    try {
+      const formData = new FormData()
+      sampleImages.forEach((image) => {
+        formData.append('sampleImages', image)
+      })
+      formData.append('assistantNotes', assistantNotes)
+      const { data } = await uploadSample(selectedBookingForSample._id, formData)
+      toast.success(data?.message || 'Sample uploaded successfully')
+      setShowSampleModal(false)
+      setSelectedBookingForSample(null)
+      setSampleImages([])
+      setAssistantNotes('')
+      if (onRefresh) onRefresh()
+    } catch (error) {
+      toast.error(error?.response?.data?.message || 'Failed to upload sample')
+    } finally {
+      setUploadingSample(false)
+    }
+  }, [selectedBookingForSample, sampleImages, assistantNotes, onRefresh])
+
+  const handlePayment = async (booking) => {
+    setPaymentBooking(booking)
+    try {
+      const { data } = await getPaymentSetting()
+      setPaymentSetting(data.data)
+    } catch {
+      // Payment setting may not be available for lab assistant - continue without QR
+    }
+    setShowPaymentModal(true)
+  }
+
+  const handlePaymentDone = async () => {
+    if (!paymentReceipt) {
+      toast.error('Please upload payment receipt.')
+      return
+    }
+    try {
+      setUploadingPayment(true)
+      const formData = new FormData()
+      formData.append('receipt', paymentReceipt)
+      const res = await uploadPaymentReceipt(paymentBooking._id, formData)
+      toast.success(res.data.message)
+      setShowPaymentModal(false)
+      setPaymentReceipt(null)
+      setPaymentBooking(null)
+      if (onRefresh) onRefresh()
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Upload failed')
+    } finally {
+      setUploadingPayment(false)
+    }
+  }
+
   return (
     <section className="mx-auto max-w-[1500px] space-y-4 lg:space-y-5">
       {/* Header */}
@@ -382,146 +457,25 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {visibleBookings.map((booking, index) => {
             const id = getBookingId(booking, index)
-            const statusStyle = getStatusStyle(booking.status)
-            const paymentStyle = getPaymentStyle(booking.paymentStatus)
-            const testName = booking.test?.title || booking.package?.title || 'N/A'
-            const amount = booking.totalAmount || booking.test?.price || booking.package?.price || 0
             return (
-              <article key={id} className="flex flex-col rounded-xl border border-border bg-white shadow-sm transition hover:shadow-md overflow-hidden">
-                {isLabAssistant ? (
-                  <>
-                    {/* Header with avatar */}
-                    <div className="p-4 pb-0">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <CircleUser className="text-primary" size={20} />
-                        </div>
-                        <div className="min-w-0">
-                          <h3 className="font-semibold text-foreground text-sm truncate" title={booking.patientName}>{booking.patientName}</h3>
-                          <p className="text-xs text-muted-foreground">{booking.phone}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex flex-col flex-1 p-4 pt-3">
-                      <h4 className="font-medium text-foreground text-sm leading-snug" title={testName}>{testName}</h4>
-
-                      <div className="mt-2">
-                        <span className="font-mono text-sm font-bold text-primary">₹{(booking.test?.price || booking.package?.price || 0).toLocaleString('en-IN')}</span>
-                      </div>
-
-                      {/* Details */}
-                      <dl className="mt-3 space-y-1.5 text-xs">
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Calendar size={12} />
-                          <span>{booking.bookingDate}</span>
-                          <span className="text-border">•</span>
-                          <Clock size={12} />
-                          <span>{booking.bookingTime}</span>
-                        </div>
-                        {booking.address && (
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <MapPin size={12} className="text-red-500 shrink-0" />
-                            <span className="truncate">{booking.address}</span>
-                          </div>
-                        )}
-                      </dl>
-
-                      {/* Badges */}
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <AssistantStatusBadge status={booking.status} />
-                        <AssistantStatusBadge status={booking.paymentStatus} />
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    {/* Header with avatar */}
-                    <div className="p-4 pb-0">
-                      <div className="flex items-center gap-3">
-                        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${getAvatarColor(booking.patientName)} text-white font-semibold text-xs`}>
-                          {getInitials(booking.patientName)}
-                        </span>
-                        <div className="min-w-0">
-                          <h3 className="font-semibold text-foreground text-sm truncate" title={booking.patientName}>{booking.patientName}</h3>
-                          <p className="text-xs text-muted-foreground">{booking.phone}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex flex-col flex-1 p-4 pt-3">
-                      <h4 className="font-medium text-foreground text-sm leading-snug" title={testName}>{testName}</h4>
-
-                      <div className="mt-2">
-                        <span className="text-lg font-bold text-foreground">₹{amount.toLocaleString('en-IN')}</span>
-                      </div>
-
-                      {/* Details */}
-                      <dl className="mt-3 space-y-1.5 text-xs">
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Calendar size={12} />
-                          <span>{booking.bookingDate}</span>
-                          <span className="text-border">•</span>
-                          <Clock size={12} />
-                          <span>{booking.bookingTime}</span>
-                        </div>
-                        {booking.labOwner && (
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <MapPin size={12} />
-                            <span className="truncate">{booking.labOwner.name}</span>
-                          </div>
-                        )}
-                      </dl>
-
-                      {/* Badges */}
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-medium ${statusStyle.bg} ${statusStyle.text}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${statusStyle.dot}`}></span>
-                          {booking.status}
-                        </span>
-                        <span className={`rounded-md px-2 py-0.5 text-[11px] font-medium ${paymentStyle.bg} ${paymentStyle.text}`}>
-                          {booking.paymentStatus}
-                        </span>
-                      </div>
-
-                      {/* Footer */}
-                      <div className="mt-auto pt-3 border-t border-border flex items-center justify-between">
-                        <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-                          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/><path d="M5 8l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                          NABL Accredited Labs
-                        </span>
-                        <div className="flex items-center gap-1">
-                          {isAdmin && (
-                            <Tooltip title="Edit Lab" arrow placement="top">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  openEditModal(booking)
-                                }}
-                                disabled={booking.status === BOOKING_STATUS.COMPLETED || booking.status === BOOKING_STATUS.CANCELLED}
-                                className="rounded p-1 text-muted-foreground hover:text-amber-500 hover:bg-amber-50 transition disabled:opacity-40 disabled:cursor-not-allowed"
-                              >
-                                <Pencil size={14} />
-                              </button>
-                            </Tooltip>
-                          )}
-                          <Tooltip title="View" arrow placement="top">
-                            <button type="button" onClick={(e) => { e.stopPropagation(); setSelectedBookingId(id) }} className="rounded p-1 text-muted-foreground hover:text-primary hover:bg-primary/5 transition"><Eye size={14} /></button>
-                          </Tooltip>
-                          {booking.report && (
-                            <Tooltip title="View Report" arrow placement="top">
-                              <button type="button" onClick={(e) => { e.stopPropagation(); handleViewReport(booking) }} className="rounded p-1 text-muted-foreground hover:text-primary hover:bg-primary/5 transition"><Download size={14} /></button>
-                            </Tooltip>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </article>
+              <BookingCard
+                key={id}
+                booking={booking}
+                role={user?.role}
+                cardId={id}
+                onSelect={() => setSelectedBookingId(id)}
+                onEditLab={openEditModal}
+                onViewReport={handleViewReport}
+                onMenuToggle={(e, b, cardId) => {
+                  if (menuOpen?.id === cardId) {
+                    setMenuOpen(null)
+                  } else {
+                    const rect = e.currentTarget.getBoundingClientRect()
+                    setMenuOpen({ id: cardId, booking: b, top: rect.bottom + 4, left: rect.right - 180 })
+                  }
+                }}
+                menuOpen={menuOpen}
+              />
             )
           })}
         </div>
@@ -811,7 +765,7 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
-                    toast.info('Collect Sample - API call needed')
+                    openSampleModal(menuOpen.booking)
                     setMenuOpen(null)
                   }}
                   disabled={menuOpen.booking?.status !== BOOKING_STATUS.REACHED}
@@ -825,7 +779,7 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
-                    toast.info('Collect Payment - API call needed')
+                    handlePayment(menuOpen.booking)
                     setMenuOpen(null)
                   }}
                   disabled={menuOpen.booking?.status !== BOOKING_STATUS.SAMPLE_COLLECTED || menuOpen.booking?.paymentStatus === PAYMENT_STATUS.PAID}
@@ -882,6 +836,109 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
             )}
           </div>
         </>
+      )}
+
+      {/* Sample Upload Modal */}
+      {isLabAssistant && (
+        <LabAssistantSampleModal
+          showSampleModal={showSampleModal}
+          setShowSampleModal={setShowSampleModal}
+          sampleImages={sampleImages}
+          setSampleImages={setSampleImages}
+          assistantNotes={assistantNotes}
+          setAssistantNotes={setAssistantNotes}
+          handleSampleUpload={handleSampleUpload}
+          uploadingSample={uploadingSample}
+        />
+      )}
+
+      {/* Payment Modal */}
+      {isLabAssistant && (
+        <Modal
+          open={showPaymentModal}
+          title="Collect Payment"
+          onClose={() => {
+            setShowPaymentModal(false)
+            setPaymentReceipt(null)
+          }}
+          size="md"
+        >
+          {paymentSetting?.qrImage && (
+            <div className="flex justify-center">
+              <img src={paymentSetting.qrImage} alt="" className="w-64 rounded-2xl border" />
+            </div>
+          )}
+          <div className="mt-6 space-y-2">
+            <p><strong>Amount:</strong> ₹{paymentBooking?.test?.price || paymentBooking?.package?.price}</p>
+          </div>
+          <div className="mt-5">
+            <h3 className="text-lg font-semibold mb-3">Upload Payment Receipt</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="border-2 border-dashed border-blue-300 rounded-2xl p-4 cursor-pointer hover:bg-blue-50 transition">
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  hidden
+                  onChange={(e) => {
+                    if (e.target.files[0]) setPaymentReceipt(e.target.files[0])
+                  }}
+                />
+                <div className="flex flex-col items-center">
+                  <div className="text-3xl">📷</div>
+                  <p className="mt-2 text-sm font-semibold">Capture</p>
+                </div>
+              </label>
+              <label className="border-2 border-dashed border-green-300 rounded-2xl p-4 cursor-pointer hover:bg-green-50 transition">
+                <input
+                  type="file"
+                  accept="image/*,.pdf"
+                  hidden
+                  onChange={(e) => {
+                    if (e.target.files[0]) setPaymentReceipt(e.target.files[0])
+                  }}
+                />
+                <div className="flex flex-col items-center">
+                  <div className="text-3xl">🖼️</div>
+                  <p className="mt-2 text-sm font-semibold">Upload</p>
+                </div>
+              </label>
+            </div>
+            {paymentReceipt && (
+              <div className="mt-4 p-3 rounded-xl bg-blue-50 border">
+                <p className="text-sm font-semibold">{paymentReceipt.name}</p>
+                {paymentReceipt.type.startsWith('image/') && (
+                  <img
+                    src={URL.createObjectURL(paymentReceipt)}
+                    alt=""
+                    className="w-28 h-28 object-cover rounded-lg mt-3 border"
+                  />
+                )}
+              </div>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-3 mt-5">
+            <Button
+              variant="secondary"
+              fullWidth
+              onClick={() => {
+                setShowPaymentModal(false)
+                setPaymentReceipt(null)
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handlePaymentDone}
+              disabled={!paymentReceipt}
+              loading={uploadingPayment}
+              fullWidth
+              variant="primary"
+            >
+              Payment Done
+            </Button>
+          </div>
+        </Modal>
       )}
     </section>
   )

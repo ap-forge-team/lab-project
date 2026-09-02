@@ -78,7 +78,7 @@ const LabAssistantSampleModal = ({
             </div>
             <div className="flex gap-2 overflow-x-auto pb-2">
               {sampleImages.map((image, index) => (
-                <div key={index} className="relative flex-shrink-0">
+                <div key={index} className="relative flex-shrink-0 p-1.5">
                   <img
                     src={URL.createObjectURL(image)}
                     alt=""
@@ -91,9 +91,9 @@ const LabAssistantSampleModal = ({
                     onClick={() => {
                       setSampleImages(sampleImages.filter((_, i) => i !== index))
                     }}
-                    className="absolute -top-1.5 -right-1.5 w-5 h-5 text-[10px]"
+                    className="absolute top-0 right-0 w-4 h-4 rounded-full flex items-center justify-center p-0"
                   >
-                    ✕
+                    <span className="text-[10px] leading-none">✕</span>
                   </Button>
                 </div>
               ))}
