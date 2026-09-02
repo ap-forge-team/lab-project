@@ -1,14 +1,15 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { toast } from 'react-toastify'
-import DashboardLayout from '@/components/layout/DashboardLayout'
+import DashboardShell from '@/features/dashboard/components/DashboardShell'
 import Modal from '@/components/ui/Modal'
+import Button from '@/components/ui/Button'
 import { getAllTests } from '@/services/test.service'
 import { getAllPackages } from '@/services/package.service'
-import { getAllLabOwners, getBookingLabOwners, getPaymentSetting, createPaymentSetting, updatePaymentSetting } from '@/services/user.service'
-import { getAllBookings } from '@/services/booking.service'
+import { getAllLabOwners, getBookingLabOwners, getPaymentSetting, createPaymentSetting, updatePaymentSetting, getMyAssistants } from '@/services/user.service'
+import { getAllBookings, assignAssistant } from '@/services/booking.service'
 import { BOOKING_STATUS } from '@/constants/status'
 import AdminStatsGrid from '@/features/admin/components/AdminStatsGrid'
-import AdminTestsSection from '@/features/admin/components/AdminTestsSection'
+import AddTestModal from '@/features/tests/components/AddTestModal'
 import AdminPackagesSection from '@/features/admin/components/AdminPackagesSection'
 import AdminUsersSection from '@/features/admin/components/AdminUsersSection'
 import AdminBookingsSection from '@/features/admin/components/AdminBookingsSection'
@@ -23,6 +24,7 @@ const AdminDashboard = () => {
   const [allTests, setAllTests] = useState([])
   const [packages, setPackages] = useState([])
   const [labOwners, setLabOwners] = useState([])
+  const [assistants, setAssistants] = useState([])
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState(null)
   const [selectedBooking, setSelectedBooking] = useState(null)
@@ -37,6 +39,7 @@ const AdminDashboard = () => {
   const [payment, setPayment] = useState(null)
   const [qrImage, setQrImage] = useState(null)
   const [showPaymentOverview, setShowPaymentOverview] = useState(false)
+  const [savingPayment, setSavingPayment] = useState(false)
 
   const fetchPayment = async () => {
     try {
@@ -51,6 +54,7 @@ const AdminDashboard = () => {
 
   const handleSubmit = async () => {
     try {
+      setSavingPayment(true)
       const formData = new FormData()
       if (qrImage) {
         formData.append('qrImage', qrImage)
@@ -64,6 +68,8 @@ const AdminDashboard = () => {
       fetchPayment()
     } catch (error) {
       toast.error(error.response?.data?.message || 'Something went wrong')
+    } finally {
+      setSavingPayment(false)
     }
   }
 
@@ -87,6 +93,31 @@ const AdminDashboard = () => {
   useEffect(() => {
     fetchLabOwners()
   }, [])
+
+  const fetchAssistants = async () => {
+    try {
+      const { data: res } = await getMyAssistants()
+      const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []
+      setAssistants(list)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  useEffect(() => {
+    fetchAssistants()
+  }, [])
+
+  const handleAssignAssistant = async (bookingId, assistantId) => {
+    if (!assistantId) return
+    try {
+      const { data } = await assignAssistant(bookingId, assistantId)
+      toast.success(data?.message || 'Assistant assigned successfully')
+      fetchBookings()
+    } catch (error) {
+      toast.error(error?.response?.data?.message || 'Failed to assign assistant')
+    }
+  }
 
   const fetchDashboardData = async () => {
     try {
@@ -147,34 +178,24 @@ const AdminDashboard = () => {
         : bookings
 
   return (
-    <DashboardLayout>
-      <div className="bg-background min-h-screen">
-        <div className="bg-tertiary">
-          <div className="enterprise-container py-8 text-white">
-            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/10 px-3 py-1 rounded-full text-[10px] mb-4">
-              <div className="w-1.5 h-1.5 rounded-full bg-green-400"></div>
-              Admin Management Portal
-            </div>
-            <h1 className="font-serif text-2xl md:text-3xl text-white">Admin Dashboard</h1>
-            <p className="text-white/40 text-xs mt-1 max-w-lg">
-              Manage tests, packages, bookings, lab owners and laboratory operations.
-            </p>
-          </div>
-        </div>
-        <div className="enterprise-container py-6">
-          <AdminStatsGrid
-            bookings={bookings}
-            tests={tests}
-            packages={packages}
-            labOwners={labOwners}
-            activeSection={activeSection}
-            setActiveSection={setActiveSection}
-            scrollToTable={scrollToTable}
-            scrollToLabOwners={scrollToLabOwners}
-            setActivePanel={setActivePanel}
-            openPaymentOverview={() => setShowPaymentOverview(true)}
-          />
-          <AdminTestsSection
+    <DashboardShell
+      badge="Admin Management Portal"
+      title="Admin Dashboard"
+      subtitle="Manage tests, packages, bookings, lab owners and laboratory operations."
+    >
+      <AdminStatsGrid
+        bookings={bookings}
+        tests={tests}
+        packages={packages}
+        labOwners={labOwners}
+        activeSection={activeSection}
+        setActiveSection={setActiveSection}
+        scrollToTable={scrollToTable}
+        scrollToLabOwners={scrollToLabOwners}
+        setActivePanel={setActivePanel}
+        openPaymentOverview={() => setShowPaymentOverview(true)}
+      />
+          <AddTestModal
             open={activePanel === 'test'}
             onClose={() => setActivePanel('')}
             onCreated={fetchDashboardData}
@@ -234,12 +255,13 @@ const AdminDashboard = () => {
                   <img src={payment.qrImage} alt="" className="w-64 rounded-xl border" />
                 </div>
               )}
-              <button
+              <Button
                 type="submit"
-                className="w-full bg-primary hover:bg-primary/90 text-white py-3 rounded-xl font-semibold transition"
+                fullWidth
+                loading={savingPayment}
               >
                 {payment ? 'Update Payment Settings' : 'Save Payment Settings'}
-              </button>
+              </Button>
             </form>
           </Modal>
           <AdminPaymentSection open={showPaymentOverview} onClose={() => setShowPaymentOverview(false)} />
@@ -254,10 +276,10 @@ const AdminDashboard = () => {
             openEditModal={openEditModal}
             filteredBookings={filteredBookings}
             tableRef={tableRef}
+            assistants={assistants}
+            handleAssignAssistant={handleAssignAssistant}
           />
-        </div>
-      </div>
-    </DashboardLayout>
+    </DashboardShell>
   )
 }
 

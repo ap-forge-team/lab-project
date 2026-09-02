@@ -2,21 +2,18 @@ import mongoose from "mongoose";
 
 const paymentSettingSchema = new mongoose.Schema(
   {
-    accountName: {
-      type: String,
-      trim: true,
-    },
-
-    upiId: {
-      type: String,
-      trim: true,
-    },
-
     qrImage: {
       type: String,
       required: true,
     },
-
+    accountName: {
+      type: String,
+      default: "",
+    },
+    upiId: {
+      type: String,
+      default: "",
+    },
     isActive: {
       type: Boolean,
       default: true,
@@ -27,7 +24,4 @@ const paymentSettingSchema = new mongoose.Schema(
   }
 );
 
-export default mongoose.model(
-  "PaymentSetting",
-  paymentSettingSchema
-);
+export default mongoose.model("PaymentSetting", paymentSettingSchema);

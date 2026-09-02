@@ -1,192 +1,157 @@
-import express from 'express'
-
-const router = express.Router()
-
-import protect from '../middleware/authMiddleware.js'
-import upload from '../middleware/uploadMiddleware.js'
-import authorizeRoles from '../middleware/roleMiddleware.js'
-
+import express from "express";
+import protect from "../middleware/authMiddleware.js";
+import upload from "../middleware/uploadMiddleware.js";
+import { authorizePermissions } from "../middleware/roleMiddleware.js";
 import {
-
   createBooking,
-
   getMyBookings,
-
   uploadReport,
-
   getAllBookings,
-
   getLabOwnerBookings,
-
   assignAssistant,
-
   getAssignedBookings,
   markReached,
   uploadSample,
   markPaymentDone,
-   searchAssignedBookings,
-   searchLabOwnerBookings,
-   cancelBooking,
-     updateBookingRequest,
-       updateBookingLab,
-       getAllLabOwners
+  searchAssignedBookings,
+  searchLabOwnerBookings,
+  cancelBooking,
+  updateBookingRequest,
+  updateBookingLab,
+  getAllLabOwners,
+  addTestsToBooking,
+} from "../controllers/bookingController.js";
 
-} from '../controllers/bookingController.js'
+const router = express.Router();
 
 /* -------- PATIENT -------- */
 
 router.post(
-
-  '/',
-
+  "/",
   protect,
-
-  authorizeRoles('patient'),
-
+  authorizePermissions("bookings", "create"),
   createBooking
-)
+);
 
 router.get(
-
-  '/my-bookings',
-
+  "/my-bookings",
   protect,
-
-  authorizeRoles('patient'),
-
+  authorizePermissions("bookings", "read"),
   getMyBookings
-)
+);
+
+router.put(
+  "/cancel/:id",
+  protect,
+  authorizePermissions("bookings", "update"),
+  cancelBooking
+);
+
+router.put(
+  "/manage/:id",
+  protect,
+  authorizePermissions("bookings", "update"),
+  updateBookingRequest
+);
 
 /* -------- ADMIN -------- */
 
 router.get(
-
-  '/all',
-
+  "/all",
   protect,
-
-  authorizeRoles('admin', 'lab_assistant', 'lab_owner'),
-
+  authorizePermissions("bookings", "read"),
   getAllBookings
-)
-
-/* -------- LAB OWNER -------- */
-
-router.get(
-
-  '/lab-owner',
-
-  protect,
-
-  authorizeRoles('lab_owner'),
-
-  getLabOwnerBookings
-)
+);
 
 router.put(
   "/update-booking-lab/:bookingId",
   protect,
-  
-  authorizeRoles('admin'),
+  authorizePermissions("bookings", "update"),
   updateBookingLab
 );
 
 router.get(
   "/lab-owners",
   protect,
-  authorizeRoles('admin'),
+  authorizePermissions("users", "read"),
   getAllLabOwners
 );
 
-router.put(
+/* -------- LAB OWNER -------- */
 
-  '/assign-assistant',
-
+router.get(
+  "/lab-owner",
   protect,
+  authorizePermissions("bookings", "read"),
+  getLabOwnerBookings
+);
 
-  authorizeRoles('lab_owner'),
-
+router.put(
+  "/assign-assistant",
+  protect,
+  authorizePermissions("bookings", "update"),
   assignAssistant
-)
+);
+
+router.put(
+  "/upload-report/:id",
+  protect,
+  authorizePermissions("reports", "create"),
+  upload.single("report"),
+  uploadReport
+);
+
+router.get(
+  "/lab-owner/search",
+  protect,
+  authorizePermissions("bookings", "read"),
+  searchLabOwnerBookings
+);
 
 /* -------- LAB ASSISTANT -------- */
 
 router.get(
-
-  '/assigned',
-
+  "/assigned",
   protect,
-
-  authorizeRoles(
-    'lab_assistant'
-  ),
-
+  authorizePermissions("bookings", "read"),
   getAssignedBookings
-)
+);
 
 router.get(
   "/assigned/search",
   protect,
-  authorizeRoles('lab_assistant'),
+  authorizePermissions("bookings", "read"),
   searchAssignedBookings
 );
-router.get(
-  "/lab-owner/search",
-  protect,
-  authorizeRoles('lab_owner'),
-  searchLabOwnerBookings
-);
+
 router.put(
-
-  '/upload-report/:id',
-
+  "/reached/:id",
   protect,
-
-  authorizeRoles(
-    'lab_owner'
-  ),
-
-  upload.single('report'),
-
-  uploadReport
-)
-router.put(
-  '/reached/:id',
-  protect,
+  authorizePermissions("bookings", "update"),
   markReached
-)
+);
 
 router.put(
-  '/sample/:id',
+  "/add-tests/:id",
   protect,
- upload.array(
-  'sampleImages',
-  10
-),
-  uploadSample
-)
+  authorizePermissions("bookings", "update"),
+  addTestsToBooking
+);
 
+router.put(
+  "/sample/:id",
+  protect,
+  authorizePermissions("bookings", "update"),
+  upload.array("sampleImages", 10),
+  uploadSample
+);
 
 router.put(
   "/payment/:id",
   protect,
+  authorizePermissions("payments", "create"),
   upload.single("receipt"),
   markPaymentDone
 );
 
-router.put(
-  '/cancel/:id',
-  protect,
-  authorizeRoles('patient'),
-  cancelBooking
-)
-
-router.put(
-  '/manage/:id',
-  protect,
-  authorizeRoles(
-    'patient'
-  ),
-  updateBookingRequest
-)
-export default router
+export default router;

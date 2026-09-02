@@ -13,6 +13,25 @@ const bookingSchema = mongoose.Schema(
       ref: 'Test'
     },
 
+    additionalTests: [
+      {
+        test: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Test',
+          required: true
+        },
+        price: {
+          type: Number,
+          required: true
+        }
+      }
+    ],
+
+    totalAmount: {
+      type: Number,
+      default: 0
+    },
+
     package: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Package'
@@ -181,6 +200,94 @@ paymentAmount: {
   type: Number,
   default: 0
 },
+// ==========================
+// Payment Settlement
+// ==========================
+
+// Amount customer actually paid
+amountReceived: {
+  type: Number,
+  default: 0
+},
+
+// Amount payable to lab
+labShare: {
+  type: Number,
+  default: 0
+},
+
+// Platform commission
+systemCommission: {
+  type: Number,
+  default: 0
+},
+
+paymentMethod: {
+  type: String,
+  enum: [
+    "Cash",
+    "UPI",
+    "Card",
+    "Online"
+  ],
+  default: "Cash"
+},
+
+// Settlement with Lab
+
+labPaymentStatus: {
+  type: String,
+  enum: [
+    "Pending",
+    "Sent",
+    "Verified"
+  ],
+  default: "Pending"
+},
+
+labPaidAt: {
+  type: Date,
+  default: null
+},
+labVerifiedAt: Date,
+
+labVerifiedBy: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "User",
+  default: null
+},
+
+bankName:{
+type:String,
+default:""
+},
+
+paymentProof:{
+type:String,
+default:""
+},
+settlementBatchId: {
+    type: String,
+    index: true,
+    default: ""
+},
+
+settlementUTR: {
+    type: String,
+    unique: true,
+    sparse: true,
+    trim: true
+},
+labPaidBy: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "User",
+  default: null
+},
+
+settlementRemark: {
+  type: String,
+  default: ""
+},
 
 reachedAt: {
   type: Date
@@ -240,7 +347,17 @@ cancelledAt: {
 verified: {
   type: Boolean,
   default: true
-}
+},
+commissionType: {
+  type: String,
+  enum: ["Percentage", "Fixed"],
+  default: "Percentage"
+},
+
+commissionValue: {
+  type: Number,
+  default: 0
+},
 
   },
   {
@@ -251,4 +368,3 @@ verified: {
 const Booking = mongoose.model('Booking', bookingSchema)
 
 export default Booking
-

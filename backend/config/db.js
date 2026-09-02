@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
-import dotenv from 'dotenv' 
-dotenv.config()
+import logger from "../Utils/logger.js";
 
 const connectDB = async () => {
   try {
@@ -8,10 +7,9 @@ const connectDB = async () => {
       serverSelectionTimeoutMS: 10000,
     });
 
-    console.log("MongoDB Connected");
+    logger.info("MongoDB Connected");
   } catch (err) {
-    console.error("MongoDB Connection Failed");
-    console.error(err.message);
+    logger.error("MongoDB Connection Failed", { message: err.message });
 
     process.exit(1);
   }

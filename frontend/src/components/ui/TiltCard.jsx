@@ -47,7 +47,7 @@ export default function TiltCard({ children, className = '' }) {
         <div
           className="pointer-events-none absolute inset-0 z-10 mix-blend-overlay rounded-[inherit]"
           style={{
-            background: `radial-gradient(400px circle at ${glowPos.x}px ${glowPos.y}px, rgba(59,139,212,0.15) 0%, transparent 80%)`,
+            background: `radial-gradient(400px circle at ${glowPos.x}px ${glowPos.y}px, rgba(37,99,235,0.15) 0%, transparent 80%)`,
           }}
         />
       )}

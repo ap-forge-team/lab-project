@@ -33,7 +33,10 @@ export const API_ENDPOINTS = {
     CREATE_LAB_ASSISTANT: '/admin/create-lab-assistant',
   },
   USERS: {
+    BASE: '/users',
+    ALL: '/users',
     MY_ASSISTANTS: '/users/my-assistants',
+    BY_ID: (id) => `/users/${id}`,
   },
   PAYMENT: {
     CREATE: '/payment/create',
@@ -45,6 +48,26 @@ export const API_ENDPOINTS = {
   PAYMENT_STATS: {
     LAB_OWNER: '/payment-statistic/lab-owner',
     ADMIN: '/payment-statistic/admin',
+    ADMIN_PAYMENTS: '/payment-statistic/admin/payments',
   },
   BOOKINGS_PAYMENT_RECEIPT: (id) => `/bookings/payment/${id}`,
+  CATEGORIES: {
+    BASE: '/categories',
+    BY_ID: (id) => `/categories/${id}`,
+    TOGGLE_STATUS: (id) => `/categories/${id}/toggle-status`,
+  },
+  SUBCATEGORIES: {
+    BASE: '/subcategories',
+    BY_ID: (id) => `/subcategories/${id}`,
+    TOGGLE_STATUS: (id) => `/subcategories/${id}/toggle-status`,
+  },
+  ROLES: {
+    BASE: '/roles',
+    BY_ID: (id) => `/roles/${id}`,
+    RESOURCES: '/roles/resources',
+  },
+  COMMISSIONS: {
+    BASE: '/commission',
+    HISTORY: '/commission/history',
+  },
 }

@@ -1,9 +1,10 @@
 import React from 'react'
 import PublicLayout from '@/components/layout/PublicLayout'
 import Hero from '@/components/Hero'
+import TestCategories from '@/components/TestCategories'
 import Features from '@/components/Features'
 import PopularTests from '@/components/PopularTests'
-import Packages from '@/components/Packages'
+import PopularPackages from '@/components/PopularPackages'
 import WhyChoose from '@/components/WhyChoose'
 
 const Home = () => {
@@ -11,8 +12,9 @@ const Home = () => {
     <PublicLayout>
       <Hero />
       <Features />
+      <TestCategories />
       <PopularTests />
-      <Packages />
+      <PopularPackages />
       <WhyChoose />
     </PublicLayout>
   )

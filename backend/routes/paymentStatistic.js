@@ -1,27 +1,31 @@
-import express from 'express'
+import express from "express";
 
-const router = express.Router()
+import protect from "../middleware/authMiddleware.js";
+import { authorizePermissions } from "../middleware/roleMiddleware.js";
 
-import protect from '../middleware/authMiddleware.js'
-import authorizeRoles from '../middleware/roleMiddleware.js'
+import { getLabOwnerPaymentStats, getAdminPaymentStats, getAdminPayments } from "../controllers/PaymentStatistic.js";
 
-import {
-  getLabOwnerPaymentStats,
-  getAdminPaymentStats
-} from '../controllers/PaymentStatistic.js'
+const router = express.Router();
 
 router.get(
-  '/lab-owner',
+  "/lab-owner",
   protect,
-  authorizeRoles('lab_owner'),
+  authorizePermissions("payments", "read"),
   getLabOwnerPaymentStats
-)
+);
 
 router.get(
-  '/admin',
+  "/admin",
   protect,
-  authorizeRoles('admin'),
+  authorizePermissions("payments", "read"),
   getAdminPaymentStats
-)
+);
 
-export default router
+router.get(
+  "/admin/payments",
+  protect,
+  authorizePermissions("payments", "read"),
+  getAdminPayments
+);
+
+export default router;

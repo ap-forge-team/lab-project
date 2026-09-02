@@ -1,6 +1,22 @@
 import API from '@/services/api'
 import { API_ENDPOINTS } from '@/constants/api'
 
+export const getAllUsers = () => {
+  return API.get(API_ENDPOINTS.USERS.ALL)
+}
+
+export const getSingleUser = (id) => {
+  return API.get(API_ENDPOINTS.USERS.BY_ID(id))
+}
+
+export const updateUser = (id, data) => {
+  return API.put(API_ENDPOINTS.USERS.BY_ID(id), data)
+}
+
+export const deleteUser = (id) => {
+  return API.delete(API_ENDPOINTS.USERS.BY_ID(id))
+}
+
 export const getAllLabOwners = () => {
   return API.get(API_ENDPOINTS.ADMIN.LAB_OWNERS)
 }

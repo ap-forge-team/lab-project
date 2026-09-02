@@ -1,4 +1,6 @@
 import Booking from '../models/Booking.js'
+import MESSAGES from "../Utils/messages.js";
+import logger from "../Utils/logger.js";
 
 export const verifyReport = async (req, res) => {
 
@@ -12,7 +14,7 @@ export const verifyReport = async (req, res) => {
 
       return res.status(404).json({
         verified: false,
-        message: 'Invalid Report'
+        message: MESSAGES.REPORT.INVALID
       })
     }
 
@@ -26,6 +28,7 @@ export const verifyReport = async (req, res) => {
     })
 
   } catch (error) {
+    logger.error(error);
 
     res.status(500).json({
       message: error.message

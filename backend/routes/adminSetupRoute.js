@@ -1,72 +1,57 @@
-import express from 'express'
+import express from "express";
+import bcrypt from "bcryptjs";
+import User from "../models/User.js";
+import protect from "../middleware/authMiddleware.js";
+import authorizeRoles from "../middleware/roleMiddleware.js";
 
-import bcrypt from 'bcryptjs'
+const router = express.Router();
 
-import User from '../models/User.js'
+router.post("/create-admin", protect, authorizeRoles("admin"), async (req, res) => {
+  try {
+    const { email, password, name, phone } = req.body;
 
-const router = express.Router()
-
-router.get(
-  '/create-admin',
-  async (req, res) => {
-
-    try {
-
-      const adminExists =
-        await User.findOne({
-
-          email: 'admin@gmail.com'
-
-        })
-
-      if (adminExists) {
-
-        return res.json({
-
-          message:
-            'Admin already exists'
-
-        })
-      }
-
-      const hashedPassword =
-        await bcrypt.hash(
-          'admin123',
-          10
-        )
-
-      await User.create({
-
-        name: 'Super Admin',
-
-        email: 'admin@gmail.com',
-
-        phone: '9999999999',
-
-        password:
-          hashedPassword,
-
-        role: 'admin'
-
-      })
-
-      res.json({
-
-        message:
-          'Admin Created'
-
-      })
-
-    } catch (error) {
-
-      res.status(500).json({
-
-        message:
-          error.message
-
-      })
+    if (!email || !password || !name || !phone) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required",
+      });
     }
-  }
-)
 
-export default router
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 6 characters",
+      });
+    }
+
+    const adminExists = await User.findOne({ email });
+    if (adminExists) {
+      return res.status(409).json({
+        success: false,
+        message: "Admin already exists",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await User.create({
+      name,
+      phone,
+      email,
+      password: hashedPassword,
+      role: "admin",
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Admin created successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+});
+
+export default router;

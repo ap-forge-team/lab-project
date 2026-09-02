@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { toast } from 'react-toastify'
 import { Download } from 'lucide-react'
-import DashboardLayout from '@/components/layout/DashboardLayout'
+import DashboardShell from '@/features/dashboard/components/DashboardShell'
 import useAuth from '@/hooks/useAuth'
 import { getMyBookings, manageBooking } from '@/services/booking.service'
 import { useNavigate } from 'react-router-dom'
@@ -35,6 +35,8 @@ const Dashboard = () => {
   const tableRef = useRef(null)
   const navigate = useNavigate()
   const [customReason, setCustomReason] = useState('')
+  const [cancelling, setCancelling] = useState(false)
+  const [rescheduling, setRescheduling] = useState(false)
   const [view, setView] = useResponsiveView()
   const [rescheduleData, setRescheduleData] = useState({
     bookingDate: '',
@@ -96,6 +98,7 @@ const Dashboard = () => {
       return
     }
     try {
+      setCancelling(true)
       await manageBooking(selectedBooking._id, {
         action: 'cancel',
         reason: reason === 'Other' ? customReason : reason,
@@ -105,6 +108,8 @@ const Dashboard = () => {
       setShowManageModal(false)
     } catch (error) {
       toast.error(error?.response?.data?.message || 'Failed To Cancel Booking')
+    } finally {
+      setCancelling(false)
     }
   }
 
@@ -118,6 +123,7 @@ const Dashboard = () => {
       return
     }
     try {
+      setRescheduling(true)
       await manageBooking(selectedBooking._id, {
         action: 'reschedule',
         bookingDate: rescheduleData.bookingDate,
@@ -129,6 +135,8 @@ const Dashboard = () => {
       setShowManageModal(false)
     } catch (error) {
       toast.error(error?.response?.data?.message || 'Failed To Reschedule Booking')
+    } finally {
+      setRescheduling(false)
     }
   }
 
@@ -173,30 +181,17 @@ const Dashboard = () => {
   )
 
   return (
-    <DashboardLayout>
-      <div className="bg-background min-h-screen pb-10">
-        <div className="bg-tertiary">
-          <div className="enterprise-container py-10 text-white">
-            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/10 px-3 py-1 rounded-full text-[10px] mb-4">
-              <div className="w-1.5 h-1.5 rounded-full bg-green-400"></div>
-              Patient Dashboard
-            </div>
-            <h1 className="font-serif text-2xl md:text-3xl text-white">
-              Welcome back, <span className="text-secondary">{user?.name}</span>
-            </h1>
-            <p className="text-white/40 text-sm mt-2">
-              Manage your bookings and download reports
-            </p>
-          </div>
-        </div>
-
-        <div className="enterprise-container py-8">
-          <PatientStatsGrid
-            bookings={bookings}
-            activeSection={activeSection}
-            setActiveSection={setActiveSection}
-            scrollToTable={scrollToTable}
-          />
+    <DashboardShell
+      badge="Patient Dashboard"
+      title="Dashboard"
+      subtitle="Manage your bookings and download reports"
+    >
+      <PatientStatsGrid
+        bookings={bookings}
+        activeSection={activeSection}
+        setActiveSection={setActiveSection}
+        scrollToTable={scrollToTable}
+      />
 
           <div
             ref={tableRef}
@@ -258,7 +253,6 @@ const Dashboard = () => {
               </>
             )}
           </div>
-        </div>
 
         <ManageBookingModal
           showManageModal={showManageModal}
@@ -273,14 +267,15 @@ const Dashboard = () => {
           handleRescheduleChange={handleRescheduleChange}
           handleCancel={handleCancel}
           handleReschedule={handleReschedule}
+          cancelling={cancelling}
+          rescheduling={rescheduling}
         />
         <ReportViewerModal
           isOpen={!!previewReport}
           onClose={() => setPreviewReport(null)}
           reportUrl={previewReport}
         />
-      </div>
-    </DashboardLayout>
+    </DashboardShell>
   )
 }
 

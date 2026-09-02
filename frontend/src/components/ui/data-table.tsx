@@ -53,6 +53,7 @@ interface DataTableProps<TData, TValue> {
   actions?: Action<TData>[]
   actionsHeader?: string
   className?: string
+  rowClassName?: string
 }
 
 export function createActionsColumn<TData>(
@@ -119,6 +120,7 @@ export function DataTable<TData, TValue>({
   actions,
   actionsHeader = "Actions",
   className,
+  rowClassName,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -191,6 +193,7 @@ export function DataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  className={rowClassName}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>

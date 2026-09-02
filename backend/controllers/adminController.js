@@ -1,14 +1,12 @@
 import User from "../models/User.js";
 
 import bcrypt from "bcryptjs";
+import logger from "../Utils/logger.js";
+import MESSAGES from "../Utils/messages.js";
+
 
 export const createLabAssistant = async (req, res) => {
   try {
-    if (req.user.role !== "lab_owner") {
-      return res.status(403).json({
-        message: "Only Lab Owners Can Create Assistants",
-      });
-    }
     const {
       name,
       email,
@@ -17,39 +15,48 @@ export const createLabAssistant = async (req, res) => {
       documents,
     } = req.body;
 
+    // Validation
+
     if (!name || !email || !password || !phone) {
       return res.status(400).json({
-        message: "All Fields Are Required",
+        message: MESSAGES.USER.ALL_FIELDS_REQUIRED,
       });
     }
 
     if (password.length < 6) {
       return res.status(400).json({
-        message: "Password Must Be At Least 6 Characters",
+        message: MESSAGES.USER.PASSWORD_MIN_6,
       });
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({
-        message: "Invalid Email Format",
+        message: MESSAGES.USER.INVALID_EMAIL_FORMAT,
       });
     }
 
     const userExists = await User.findOne({ email });
-
     if (userExists) {
       return res.status(409).json({
         success: false,
-        message: "User already exists"
+        message: MESSAGES.USER.ALREADY_EXISTS
       });
     }
 
+    const phoneExists = await User.findOne({ phone });
+    if (phoneExists) {
+      return res.status(409).json({
+        success: false,
+        message: MESSAGES.USER.PHONE_EXISTS
+      });
+    }
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(
       password,
       salt,
     );
+
 
     const user = await User.create({
       name,
@@ -60,125 +67,126 @@ export const createLabAssistant = async (req, res) => {
       role: "lab_assistant",
       labOwner: req.user._id,
     });
+
+    const { password: _, ...userWithoutPassword } = user.toObject();
+
     res.status(201).json({
       success: true,
-      message: "Lab Assistant Created Successfully",
-      user
+      message: MESSAGES.ADMIN.LAB_ASSISTANT_CREATED,
+      user: userWithoutPassword,
     });
   } catch (error) {
-    console.log(error);
+    logger.error("Create Lab Assistant error", { message: error.message, stack: error.stack });
     res.status(500).json({
-      message: "Server Error",
+      message: MESSAGES.SERVER_ERROR,
     });
   }
 };
 
+/* -----------------------------------------
+   CREATE LAB OWNER
+------------------------------------------ */
 export const createLabOwner = async (req, res) => {
   try {
-    if (req.user.role !== "admin") {
-      return res.status(403).json({
-        message: "Only Admin Can Create Lab Owners",
-      });
-    }
-    const {
-      name,
-      email,
-      phone,
-      password,
-      servicePincodes,
-      labAddress,
-      latitude,
-      longitude
-    } = req.body
-
+   const {
+  name,
+  email,
+  phone,
+  password,
+  servicePincodes,
+  labAddress,
+  latitude,
+  longitude
+} = req.body
+    // Validation
     if (!name || !email || !password || !phone || !labAddress ||
-      !latitude ||
-      !longitude) {
+  !latitude ||
+  !longitude) {
       return res.status(400).json({
-        message: "All Fields Are Required",
+        message: MESSAGES.USER.ALL_FIELDS_REQUIRED,
       });
     }
-
+    // Password Length
     if (password.length < 6) {
       return res.status(400).json({
-        message: "Password Must Be At Least 6 Characters",
+        message: MESSAGES.USER.PASSWORD_MIN_6,
       });
     }
-
+    // Email Validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({
-        message: "Invalid Email Format",
+        message: MESSAGES.USER.INVALID_EMAIL_FORMAT,
       });
     }
-
+    // Existing User
     const userExists = await User.findOne({
       email,
     });
     if (userExists) {
       return res.status(400).json({
-        message: "User Already Exists",
+        message: MESSAGES.USER.ALREADY_EXISTS_CAP,
       });
     }
-
     const phoneExists = await User.findOne({
       phone,
     });
     if (phoneExists) {
       return res.status(400).json({
-        message: "Phone Number Already Exists",
+        message: MESSAGES.USER.PHONE_EXISTS_CAP,
       });
     }
 
+    // Hash Password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(
       password,
       salt,
     );
-
+    // Create Lab Owner
     const user = await User.create({
       name,
       email,
       phone,
       password: hashedPassword,
-      role: 'lab_owner',
+      role: "lab_owner",
       labAddress,
       latitude,
       longitude,
-    })
+    });
+
+    const { password: _, ...userWithoutPassword } = user.toObject();
 
     res.status(201).json({
-      message: "Lab Owner Created Successfully",
-      user,
+      success: true,
+      message: MESSAGES.ADMIN.LAB_OWNER_CREATED,
+      user: userWithoutPassword,
     });
   } catch (error) {
-    console.log(error);
+    logger.error("Create Lab Owner error", { message: error.message, stack: error.stack });
     res.status(500).json({
-      message: "Server Error",
+      message: MESSAGES.SERVER_ERROR,
     });
   }
 };
 
 export const getLabOwners =
-  async (req, res) => {
+async (req, res) => {
 
-    try {
+  try {
 
-      const labOwners =
-        await User.find({
+    const labOwners = await User.find({ role: "lab_owner" }).select("-password");
 
-          role: 'lab_owner'
-        })
+    res.status(200).json({
+      success: true,
+      labOwners,
+    });
 
-      res.status(200).json(
-        labOwners
-      )
+  } catch (error) {
 
-    } catch (error) {
-
-      res.status(500).json({
-        message:
-          error.message
-      })
-    }
+    res.status(500).json({
+      message:
+        error.message
+    })
   }
+}

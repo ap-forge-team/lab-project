@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import DashboardLayout from '@/components/layout/DashboardLayout'
+import DashboardShell from '@/features/dashboard/components/DashboardShell'
 import { toast } from 'react-toastify'
 import {
   getLabOwnerBookings,
@@ -26,6 +26,7 @@ import ReportViewerModal from '@/components/Dashboard/ReportViewerModal'
 import { Search } from 'lucide-react'
 import { BOOKING_STATUS, PAYMENT_STATUS } from '@/constants/status'
 import useFormErrors from '@/hooks/useFormErrors'
+import Can from '@/components/Can'
 
 const LabOwnerDashboard = () => {
   const tableRef = useRef(null)
@@ -201,47 +202,38 @@ const LabOwnerDashboard = () => {
         ? bookings.filter((item) => item.status === BOOKING_STATUS.COMPLETED)
         : bookings
   return (
-    <DashboardLayout>
-      <div className="bg-background min-h-screen">
-        <div className="bg-tertiary">
-          <div className="enterprise-container py-8 text-white">
-            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/10 px-3 py-1 rounded-full text-[10px] mb-4">
-              <div className="w-1.5 h-1.5 rounded-full bg-green-400"></div>
-              Laboratory Management Portal
-            </div>
-            <h1 className="font-serif text-2xl md:text-3xl text-white">Lab Owner Dashboard</h1>
-            <p className="text-white/40 text-xs mt-1 max-w-lg">
-              Manage bookings, assign assistants, and monitor laboratory operations.
-            </p>
-          </div>
-        </div>
-        <div className="enterprise-container py-6">
-          <LabOwnerStatsGrid
-            bookings={bookings}
-            assistants={assistants}
-            activeSection={activeSection}
-            setActiveSection={setActiveSection}
-            setSelectedAssistant={setSelectedAssistant}
-            scrollToTable={scrollToTable}
-            openPaymentOverview={() => setShowPaymentOverview(true)}
-          />
-          <LabOwnerAssistantsSection
-            assistants={assistants}
-            bookings={bookings}
-            activeSection={activeSection}
-            selectedAssistant={selectedAssistant}
-            setSelectedAssistant={setSelectedAssistant}
-            showAssistantForm={showAssistantForm}
-            setShowAssistantForm={setShowAssistantForm}
-            scrollToTable={scrollToTable}
-          />
-          <Modal
-            open={showAssistantForm}
-            onClose={() => setShowAssistantForm(false)}
-            title="Create Assistant"
-            subtitle="Add new laboratory assistant"
-            size="lg"
-          >
+    <DashboardShell
+      badge="Laboratory Management Portal"
+      title="Lab Owner Dashboard"
+      subtitle="Manage bookings, assign assistants, and monitor laboratory operations."
+    >
+      <LabOwnerStatsGrid
+        bookings={bookings}
+        assistants={assistants}
+        activeSection={activeSection}
+        setActiveSection={setActiveSection}
+        setSelectedAssistant={setSelectedAssistant}
+        scrollToTable={scrollToTable}
+        openPaymentOverview={() => setShowPaymentOverview(true)}
+      />
+      <LabOwnerAssistantsSection
+        assistants={assistants}
+        bookings={bookings}
+        activeSection={activeSection}
+        selectedAssistant={selectedAssistant}
+        setSelectedAssistant={setSelectedAssistant}
+        showAssistantForm={showAssistantForm}
+        setShowAssistantForm={setShowAssistantForm}
+        scrollToTable={scrollToTable}
+      />
+          <Can resource="lab_assistants" action="create">
+            <Modal
+              open={showAssistantForm}
+              onClose={() => setShowAssistantForm(false)}
+              title="Create Assistant"
+              subtitle="Add new laboratory assistant"
+              size="lg"
+            >
             <form onSubmit={handleCreateAssistant} className="space-y-6">
               <Input
                 label="Full Name"
@@ -296,6 +288,7 @@ const LabOwnerDashboard = () => {
               </Button>
             </form>
           </Modal>
+          </Can>
           <LabOwnerPaymentSection open={showPaymentOverview} onClose={() => setShowPaymentOverview(false)} />
           <div ref={tableRef} className="bg-white rounded-[35px] shadow-sm mt-10 p-5 md:p-8">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
@@ -324,13 +317,15 @@ const LabOwnerDashboard = () => {
                   <div className="bg-primary/10 px-4 py-2.5 rounded-lg text-xs font-semibold text-primary whitespace-nowrap flex items-center h-11">
                     Total: {filteredBookings.length}
                   </div>
-                  <Button
-                    onClick={() => setShowAssistantForm(true)}
-                    className="flex items-center justify-center gap-2"
-                  >
-                    <UserPlus />
-                    Create Assistant
-                  </Button>
+                  <Can resource="lab_assistants" action="create">
+                    <Button
+                      onClick={() => setShowAssistantForm(true)}
+                      className="flex items-center justify-center gap-2"
+                    >
+                      <UserPlus />
+                      Create Assistant
+                    </Button>
+                  </Can>
                 </div>
               </div>
               {loading ? (
@@ -371,14 +366,12 @@ const LabOwnerDashboard = () => {
                 </>
               )}
             </div>
-        </div>
-      </div>
       <ReportViewerModal
         isOpen={!!previewReport}
         onClose={() => setPreviewReport(null)}
         reportUrl={previewReport}
       />
-    </DashboardLayout>
+    </DashboardShell>
   )
 }
 export default LabOwnerDashboard

@@ -1,4 +1,6 @@
 import PaymentSetting from "../models/paymentSetting.js";
+import MESSAGES from "../Utils/messages.js";
+import logger from "../Utils/logger.js";
 
 export const createPaymentSetting = async (
   req,
@@ -17,7 +19,7 @@ export const createPaymentSetting = async (
         success: false,
 
         message:
-          "Payment setting already exists. Please update it."
+          MESSAGES.PAYMENT.SETTING_EXISTS
 
       });
 
@@ -42,13 +44,15 @@ export const createPaymentSetting = async (
       success: true,
 
       message:
-        "Payment setting created successfully.",
+        MESSAGES.PAYMENT.SETTING_CREATED,
 
       data: payment
 
     });
 
   } catch (error) {
+
+    logger.error("Create payment setting error", { message: error.message });
 
     res.status(500).json({
 
@@ -88,6 +92,8 @@ async (
 
   } catch (error) {
 
+    logger.error("Get payment setting error", { message: error.message });
+
     res.status(500).json({
 
       success: false,
@@ -124,7 +130,7 @@ async (
         success: false,
 
         message:
-          "Payment setting not found."
+          MESSAGES.PAYMENT.SETTING_NOT_FOUND
 
       });
 
@@ -150,13 +156,15 @@ async (
       success: true,
 
       message:
-        "Payment setting updated successfully.",
+        MESSAGES.PAYMENT.SETTING_UPDATED,
 
       data: payment
 
     });
 
   } catch (error) {
+
+    logger.error("Update payment setting error", { message: error.message });
 
     res.status(500).json({
 
@@ -194,7 +202,7 @@ async (
         success: false,
 
         message:
-          "Payment setting not found."
+          MESSAGES.PAYMENT.SETTING_NOT_FOUND
 
       });
 
@@ -209,11 +217,13 @@ async (
       success: true,
 
       message:
-        "Payment setting deleted."
+        MESSAGES.PAYMENT.SETTING_DELETED
 
     });
 
   } catch (error) {
+
+    logger.error("Delete payment setting error", { message: error.message });
 
     res.status(500).json({
 

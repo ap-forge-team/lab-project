@@ -1,47 +1,37 @@
 import React from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { X, Download } from 'lucide-react'
+import { Download } from 'lucide-react'
+import Modal from '@/components/ui/Modal'
 
-export default function ReportViewerModal({ isOpen, onClose, reportUrl }) {
+const isImage = (url) => /\.(jpg|jpeg|png)$/i.test(url || '')
+
+export default function ReportViewerModal({ isOpen, onClose, reportUrl, title = 'Test Report' }) {
+  if (!isOpen || !reportUrl) return null
+
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6">
-          <motion.div 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
-            exit={{ opacity: 0 }} 
-            onClick={onClose} 
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
-          />
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95, y: 20 }} 
-            animate={{ opacity: 1, scale: 1, y: 0 }} 
-            exit={{ opacity: 0, scale: 0.95, y: 20 }} 
-            className="relative bg-white rounded-xl shadow-2xl w-full max-w-4xl h-[85vh] overflow-hidden flex flex-col"
-          >
-            <div className="flex items-center justify-between px-5 py-3.5 bg-tertiary">
-              <h3 className="text-white font-serif text-lg tracking-wide">Test Report</h3>
-              <div className="flex items-center gap-3">
-                <a href={reportUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 text-xs text-white/70 hover:text-white transition">
-                  <Download size={14} /> Download PDF
-                </a>
-                <div className="w-px h-4 bg-white/20" />
-                <button onClick={onClose} className="text-white/60 hover:text-white transition">
-                  <X size={20} />
-                </button>
-              </div>
-            </div>
-            <div className="flex-1 bg-primary/10 p-2 sm:p-4">
-              <iframe 
-                src={reportUrl} 
-                className="w-full h-full rounded-lg shadow-inner bg-white" 
-                title="PDF Report" 
-              />
-            </div>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
+    <Modal
+      open={isOpen}
+      onClose={onClose}
+      title={title}
+      size="xl"
+      headerActions={
+        <a
+          href={reportUrl}
+          download
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+        >
+          <Download size={14} /> Download PDF
+        </a>
+      }
+    >
+      <div className="border border-border rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center" style={{ minHeight: '60vh' }}>
+        {isImage(reportUrl) ? (
+          <img src={reportUrl} alt="Report" className="max-w-full max-h-full object-contain" />
+        ) : (
+          <iframe src={reportUrl} className="w-full h-full rounded-lg shadow-inner bg-white" title="PDF Report" style={{ height: '70vh' }} />
+        )}
+      </div>
+    </Modal>
   )
 }
