@@ -1,10 +1,9 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Building2, Plus, Search, ChevronRight, Eye, Pencil, Trash2, X, MoreVertical, MapPin, Mail, Phone, Calendar, Shield } from 'lucide-react'
+import { ArrowDown, ArrowUp, Building2, Plus, Search, ChevronRight, Eye, EyeOff, Pencil, Trash2, X, MoreVertical, MapPin, Mail, Phone, Calendar, Shield, Users, MapPinned, ChevronsUpDown, Copy } from 'lucide-react'
 import { toast } from 'react-toastify'
-import { DataTable } from '@/components/ui/data-table'
-import { labOwnerManageColumns } from '@/features/admin/columns/lab-owners-manage.columns'
 import Button from '@/components/ui/Button'
+import Pagination from '@/components/ui/Pagination'
 import Input from '@/components/ui/Input'
 import ConfirmModal from '@/components/ui/ConfirmModal'
 import FilterPanel from '@/components/ui/FilterPanel'
@@ -14,19 +13,63 @@ import { Spinner } from '@/components/ui/Loader'
 import Can from '@/components/Can'
 import { createLabOwner, updateUser, deleteUser } from '@/services/user.service'
 
-const StatCard = ({ icon: Icon, iconBg, iconColor, label, value, change, changeType }) => (
-  <div className="bg-white border border-border rounded-xl p-5 flex items-center gap-4">
-    <div className={`w-12 h-12 rounded-xl ${iconBg} flex items-center justify-center shrink-0`}>
-      <Icon size={22} className={iconColor} />
-    </div>
-    <div className="flex-1 min-w-0">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-2xl font-bold text-foreground mt-0.5">{value}</p>
-      {change !== undefined && (
-        <p className={`text-[10px] mt-1 font-medium ${changeType === 'up' ? 'text-green-600' : 'text-red-500'}`}>
-          {changeType === 'up' ? '↑' : '↓'} {change} from last month
-        </p>
+const PAGE_SIZE = 10
+const PAGE_SIZES = [10, 25, 50]
+
+const SortableHeader = ({ title, sortKey, sortConfig, onSort, onHide }) => {
+  const [open, setOpen] = useState(false)
+  const currentSort = sortConfig?.key === sortKey ? sortConfig.direction : null
+
+  const handleSort = (direction) => {
+    onSort(sortKey, direction)
+    setOpen(false)
+  }
+
+  return (
+    <th className="px-4 py-3 relative">
+      <div className="flex items-center gap-1">
+        <span>{title}</span>
+        <button type="button" onClick={() => setOpen(!open)} className="p-0.5 rounded hover:bg-accent">
+          {currentSort === 'asc' ? <ArrowUp size={14} /> : currentSort === 'desc' ? <ArrowDown size={14} /> : <ChevronsUpDown size={14} className="text-muted-foreground" />}
+        </button>
+      </div>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-[99]" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 top-full mt-1 bg-white border border-border rounded-lg shadow-lg py-1 z-[100] min-w-[120px]">
+            <button onClick={() => handleSort('asc')} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left">
+              <ArrowUp size={14} /> Asc
+            </button>
+            <button onClick={() => handleSort('desc')} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left">
+              <ArrowDown size={14} /> Desc
+            </button>
+            {onHide && (
+              <button onClick={() => { onHide(); setOpen(false) }} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left">
+                <EyeOff size={14} /> Hide
+              </button>
+            )}
+          </div>
+        </>
       )}
+    </th>
+  )
+}
+
+const StatCard = ({ icon: Icon, borderColor, iconColor, cardBg, title, value, detailTop, detailBottom }) => (
+  <div className={`rounded-2xl border ${borderColor} px-4 py-3 ${cardBg}`}>
+    <div className="flex items-center gap-3">
+      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border ${borderColor} ${iconColor}`}>
+        {React.createElement(Icon, { size: 18 })}
+      </span>
+      <div className="min-w-0 flex-1 space-y-0">
+        <p className="text-xs text-muted-foreground">{title}</p>
+        <p className="text-xl font-bold leading-tight text-foreground">{value}</p>
+      </div>
+      <div className="h-8 w-px shrink-0 self-stretch my-auto bg-border" />
+      <div className="shrink-0 text-right leading-tight">
+        <p className="text-xs text-muted-foreground">{detailTop}</p>
+        <p className="text-xs text-muted-foreground">{detailBottom}</p>
+      </div>
     </div>
   </div>
 )
@@ -37,6 +80,30 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
   const [activeFilters, setActiveFilters] = useState({})
   const [filterPanelOpen, setFilterPanelOpen] = useState(null)
   const [menuOpen, setMenuOpen] = useState(null)
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: null })
+  const [hiddenColumns, setHiddenColumns] = useState({})
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(PAGE_SIZE)
+
+  const handleSort = useCallback((key, direction) => {
+    setSortConfig((prev) => {
+      if (prev.key === key && prev.direction === direction) {
+        return { key: null, direction: null }
+      }
+      return { key, direction }
+    })
+  }, [])
+
+  const getSortValue = useCallback((owner, key) => {
+    switch (key) {
+      case 'name': return (owner.name || '').toLowerCase()
+      case 'contact': return (owner.email || '').toLowerCase()
+      case 'location': return (owner.labAddress || '').toLowerCase()
+      case 'serviceAreas': return owner.servicePincodes?.length || 0
+      case 'status': return owner.role === 'inactive' ? 'inactive' : 'active'
+      default: return ''
+    }
+  }, [])
 
   // Modals
   const [showAddModal, setShowAddModal] = useState(false)
@@ -164,8 +231,21 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
         return activeFilters.status.includes(isActive ? 'active' : 'inactive')
       })
     }
+
+    if (sortConfig.key && sortConfig.direction) {
+      result = [...result].sort((a, b) => {
+        const aVal = getSortValue(a, sortConfig.key)
+        const bVal = getSortValue(b, sortConfig.key)
+        if (typeof aVal === 'number' && typeof bVal === 'number') {
+          return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal
+        }
+        const comparison = String(aVal).localeCompare(String(bVal))
+        return sortConfig.direction === 'asc' ? comparison : -comparison
+      })
+    }
+
     return result
-  }, [labOwners, search, activeFilters])
+  }, [labOwners, search, activeFilters, sortConfig, getSortValue])
 
   const stats = useMemo(() => {
     const list = labOwners || []
@@ -177,35 +257,8 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
     }
   }, [labOwners])
 
-  const columnsWithActions = useMemo(() => {
-    return [...labOwnerManageColumns, {
-      id: 'actions',
-      header: 'Actions',
-      enableSorting: false,
-      enableHiding: false,
-      cell: ({ row }) => {
-        const owner = row.original
-        return (
-          <div className="relative">
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                if (menuOpen?.id === owner._id) {
-                  setMenuOpen(null)
-                } else {
-                  const rect = e.currentTarget.getBoundingClientRect()
-                  setMenuOpen({ id: owner._id, owner, top: rect.bottom + 4, left: rect.right - 130 })
-                }
-              }}
-              className="p-1.5 text-muted-foreground hover:text-foreground rounded transition"
-            >
-              <MoreVertical size={16} />
-            </button>
-          </div>
-        )
-      },
-    }]
-  }, [menuOpen])
+  const totalPages = Math.max(1, Math.ceil(filteredOwners.length / pageSize))
+  const visibleOwners = filteredOwners.slice((page - 1) * pageSize, page * pageSize)
 
   const openMenu = menuOpen && typeof menuOpen === 'object' ? menuOpen : null
 
@@ -346,13 +399,23 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
         </>
       )}
 
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+      {/* Mobile Header */}
+      <div className="flex items-center justify-between gap-3 sm:hidden">
+        <h1 className="text-2xl font-bold text-foreground">Lab Owners</h1>
+        <Can resource="lab_owners" action="create">
+          <Button size="sm" onClick={() => setShowAddModal(true)}>
+            <Plus size={16} />
+          </Button>
+        </Can>
+      </div>
+
+      {/* Desktop Header */}
+      <div className="hidden sm:flex items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Lab Owners</h1>
           <p className="mt-1 text-sm text-muted-foreground">Manage laboratory owners, their locations and service availability.</p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2">
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input type="text" placeholder="Search lab owner, email or phone..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary w-64" />
@@ -373,30 +436,201 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={Building2} iconBg="bg-blue-100" iconColor="text-blue-600" label="Total Lab Owners" value={stats.total} change="12.5%" changeType="up" />
-        <StatCard icon={Shield} iconBg="bg-green-100" iconColor="text-green-600" label="Active Labs" value={stats.active} change="8.3%" changeType="up" />
-        <StatCard icon={Shield} iconBg="bg-amber-100" iconColor="text-amber-600" label="Inactive Labs" value={stats.inactive} change="3.1%" changeType="down" />
-        <StatCard icon={MapPin} iconBg="bg-purple-100" iconColor="text-purple-600" label="Total Locations" value={stats.locations} change="5.6%" changeType="up" />
+      {/* Mobile Search */}
+      <div className="flex sm:hidden items-center gap-2">
+        <div className="relative flex-1">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input type="text" placeholder="Search lab owner, email or phone..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
+        </div>
+        <FilterButton
+          onClick={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect()
+            setFilterPanelOpen({ top: rect.bottom + 8, left: Math.max(16, rect.right - 680) })
+          }}
+          activeCount={activeFilterCount}
+        />
+      </div>
+
+      {/* Stat Cards */}
+      <div className="overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex gap-4 min-w-max">
+          <div className="snap-start min-w-[220px] shrink-0">
+            <StatCard
+              icon={Building2}
+              borderColor="border-blue-200"
+              iconColor="text-blue-500"
+              cardBg="bg-blue-50"
+              title="Total Lab Owners"
+              value={stats.total}
+              detailTop="All"
+              detailBottom="owners"
+            />
+          </div>
+          <div className="snap-start min-w-[220px] shrink-0">
+            <StatCard
+              icon={Users}
+              borderColor="border-emerald-200"
+              iconColor="text-emerald-500"
+              cardBg="bg-emerald-50"
+              title="Active Labs"
+              value={stats.active}
+              detailTop="Currently"
+              detailBottom="active"
+            />
+          </div>
+          <div className="snap-start min-w-[220px] shrink-0">
+            <StatCard
+              icon={Shield}
+              borderColor="border-amber-200"
+              iconColor="text-amber-500"
+              cardBg="bg-amber-50"
+              title="Inactive Labs"
+              value={stats.inactive}
+              detailTop="Currently"
+              detailBottom="inactive"
+            />
+          </div>
+          <div className="snap-start min-w-[220px] shrink-0">
+            <StatCard
+              icon={MapPinned}
+              borderColor="border-purple-200"
+              iconColor="text-purple-500"
+              cardBg="bg-purple-50"
+              title="Total Locations"
+              value={stats.locations}
+              detailTop="Unique"
+              detailBottom="locations"
+            />
+          </div>
+        </div>
+      </div>
+      <div className="flex justify-center gap-1.5 sm:hidden">
+        <span className="w-2 h-2 rounded-full bg-primary"></span>
+        <span className="w-2 h-2 rounded-full bg-border"></span>
+        <span className="w-2 h-2 rounded-full bg-border"></span>
+        <span className="w-2 h-2 rounded-full bg-border"></span>
       </div>
 
       {/* Lab Owners Table */}
-      <div className="bg-white border border-border rounded-xl">
-        {isLoading ? (
-          <div className="p-12 flex justify-center"><Spinner /></div>
-        ) : isError ? (
-          <p className="p-8 text-center text-sm text-destructive">Unable to load lab owners. Please try again.</p>
-        ) : filteredOwners.length === 0 ? (
-          <p className="p-12 text-center text-sm text-muted-foreground">No lab owners found.</p>
-        ) : (
-          <DataTable columns={columnsWithActions} data={filteredOwners} enablePagination={true} enableSorting={true} pageSize={10} rowClassName="hover:bg-blue-50/50" />
-        )}
-      </div>
-
-      {!isLoading && filteredOwners.length > 0 && (
-        <p className="text-xs text-muted-foreground">Showing 1 to {Math.min(10, filteredOwners.length)} of {filteredOwners.length} lab owners</p>
+      {isLoading ? (
+        <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">Loading lab owners…</div>
+      ) : isError ? (
+        <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-destructive">Unable to load lab owners. Please try again.</div>
+      ) : filteredOwners.length === 0 ? (
+        <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">No lab owners found.</div>
+      ) : (
+        <div className="overflow-y-auto max-h-[calc(100vh-250px)] pb-2 pr-1">
+          <div className="rounded-xl border border-border bg-white">
+            <table className="w-full min-w-[900px] text-sm">
+              <thead className="bg-accent text-left text-muted-foreground sticky top-0">
+                <tr>
+                  <SortableHeader title="Lab Owner" sortKey="name" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, name: true }))} />
+                  <SortableHeader title="Contact" sortKey="contact" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, contact: true }))} />
+                  <SortableHeader title="Lab Location" sortKey="location" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, location: true }))} />
+                  <SortableHeader title="Service Areas" sortKey="serviceAreas" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, serviceAreas: true }))} />
+                  <SortableHeader title="Status" sortKey="status" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, status: true }))} />
+                  <th className="px-4 py-3 font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visibleOwners.map((owner) => {
+                  const isActive = owner.role !== 'inactive'
+                  const initials = owner.name ? owner.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2) : 'LO'
+                  const avatarColors = ['bg-blue-500', 'bg-emerald-500', 'bg-violet-500', 'bg-rose-500', 'bg-amber-500', 'bg-cyan-500', 'bg-indigo-500', 'bg-pink-500']
+                  let hash = 0
+                  for (let i = 0; i < (owner.name || '').length; i++) hash = (hash * 31 + (owner.name || '').charCodeAt(i)) >>> 0
+                  const avatarColor = avatarColors[hash % avatarColors.length]
+                  return (
+                    <tr key={owner._id} onClick={() => handleView(owner)} className="cursor-pointer border-t border-border transition hover:bg-accent/40">
+                      {!hiddenColumns.name && (
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${avatarColor} text-white font-semibold text-xs`}>
+                              {initials}
+                            </span>
+                            <div>
+                              <p className="font-medium text-foreground">{owner.name}</p>
+                              <p className="text-xs text-muted-foreground">ID: {owner._id.slice(-6)}</p>
+                            </div>
+                          </div>
+                        </td>
+                      )}
+                      {!hiddenColumns.contact && (
+                        <td className="px-4 py-3">
+                          <div>
+                            <p className="text-sm text-foreground">{owner.email}</p>
+                            <p className="text-xs text-muted-foreground">{owner.phone || '—'}</p>
+                          </div>
+                        </td>
+                      )}
+                      {!hiddenColumns.location && (
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1.5 max-w-[200px]">
+                            <MapPin size={14} className="text-muted-foreground shrink-0" />
+                            <span className="text-xs text-muted-foreground truncate">{owner.labAddress || '—'}</span>
+                          </div>
+                        </td>
+                      )}
+                      {!hiddenColumns.serviceAreas && (
+                        <td className="px-4 py-3">
+                          {owner.servicePincodes?.length > 0 ? (
+                            <span className="inline-flex items-center gap-1.5 bg-primary/10 text-primary px-2.5 py-1 rounded-full text-[10px] font-semibold">
+                              {owner.servicePincodes.length} Area{owner.servicePincodes.length !== 1 ? 's' : ''}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </td>
+                      )}
+                      {!hiddenColumns.status && (
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium ${isActive ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
+                            {isActive ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                      )}
+                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (menuOpen?.id === owner._id) {
+                                setMenuOpen(null)
+                              } else {
+                                const rect = e.currentTarget.getBoundingClientRect()
+                                setMenuOpen({ id: owner._id, owner, top: rect.bottom + 4, left: rect.right - 130 })
+                              }
+                            }}
+                            className="p-1.5 text-muted-foreground hover:text-foreground rounded transition"
+                          >
+                            <MoreVertical size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
+
+      {/* Pagination */}
+      <div className="mt-4">
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={filteredOwners.length}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => { setPageSize(size); setPage(1) }}
+          pageSizes={PAGE_SIZES}
+          itemName="lab owners"
+        />
+      </div>
 
       {/* Add Lab Owner Modal */}
       {showAddModal && (

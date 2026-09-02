@@ -655,13 +655,12 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
       ) : visibleBookings.length === 0 ? (
         <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">No bookings match the selected filters.</div>
       ) : view === 'grid' ? (
-        <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pb-2">
-          <div className="flex gap-5 min-w-max lg:min-w-0">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {visibleBookings.map((booking, index) => {
             const id = getBookingId(booking, index)
             return (
-              <div key={id} className="w-[280px] lg:w-[calc((100%-60px)/4)] shrink-0">
               <BookingCard
+                key={id}
                 booking={booking}
                 role={user?.role}
                 cardId={id}
@@ -680,10 +679,8 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
                 }}
                 menuOpen={menuOpen}
               />
-              </div>
             )
           })}
-          </div>
         </div>
       ) : (
         /* List View */

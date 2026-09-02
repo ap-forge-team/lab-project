@@ -1,11 +1,15 @@
 import React, { useMemo, useState, useCallback, useEffect } from 'react'
 import {
+  ArrowDown,
+  ArrowUp,
   Calendar,
   CheckCircle2,
+  ChevronsUpDown,
   Clock,
   CreditCard,
   Download,
   Eye,
+  EyeOff,
   Grid2X2,
   List,
   MoreVertical,
@@ -79,16 +83,59 @@ const formatTime = (dateStr) => {
   return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
 }
 
-const StatCard = ({ icon: Icon, iconClass, title, value, detail, trend }) => (
-  <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
+const SortableHeader = ({ title, sortKey, sortConfig, onSort, onHide }) => {
+  const [open, setOpen] = useState(false)
+  const currentSort = sortConfig?.key === sortKey ? sortConfig.direction : null
+
+  const handleSort = (direction) => {
+    onSort(sortKey, direction)
+    setOpen(false)
+  }
+
+  return (
+    <th className="px-4 py-3 relative">
+      <div className="flex items-center gap-1">
+        <span>{title}</span>
+        <button type="button" onClick={() => setOpen(!open)} className="p-0.5 rounded hover:bg-accent">
+          {currentSort === 'asc' ? <ArrowUp size={14} /> : currentSort === 'desc' ? <ArrowDown size={14} /> : <ChevronsUpDown size={14} className="text-muted-foreground" />}
+        </button>
+      </div>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-[99]" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 top-full mt-1 bg-white border border-border rounded-lg shadow-lg py-1 z-[100] min-w-[120px]">
+            <button onClick={() => handleSort('asc')} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left">
+              <ArrowUp size={14} /> Asc
+            </button>
+            <button onClick={() => handleSort('desc')} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left">
+              <ArrowDown size={14} /> Desc
+            </button>
+            {onHide && (
+              <button onClick={() => { onHide(); setOpen(false) }} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left">
+                <EyeOff size={14} /> Hide
+              </button>
+            )}
+          </div>
+        </>
+      )}
+    </th>
+  )
+}
+
+const StatCard = ({ icon: Icon, borderColor, iconColor, cardBg, title, value, detailTop, detailBottom }) => (
+  <div className={`rounded-2xl border ${borderColor} px-4 py-3 ${cardBg}`}>
     <div className="flex items-center gap-3">
-      <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${iconClass}`}>
-        {React.createElement(Icon, { size: 22 })}
+      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border ${borderColor} ${iconColor}`}>
+        {React.createElement(Icon, { size: 18 })}
       </span>
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1 space-y-0">
         <p className="text-xs text-muted-foreground">{title}</p>
-        <p className="mt-0.5 text-xl font-bold text-foreground">{value}</p>
-        {detail && <p className={`mt-0.5 text-[11px] ${trend === 'up' ? 'text-emerald-600' : trend === 'down' ? 'text-red-500' : 'text-muted-foreground'}`}>{detail}</p>}
+        <p className="text-xl font-bold leading-tight text-foreground">{value}</p>
+      </div>
+      <div className="h-8 w-px shrink-0 self-stretch my-auto bg-border" />
+      <div className="shrink-0 text-right leading-tight">
+        <p className="text-xs text-muted-foreground">{detailTop}</p>
+        <p className="text-xs text-muted-foreground">{detailBottom}</p>
       </div>
     </div>
   </div>
@@ -148,9 +195,33 @@ const PaymentsManagePage = ({ payments, isLoading, isError, onRefresh }) => {
   const [filterPanelOpen, setFilterPanelOpen] = useState(null)
   const [menuOpen, setMenuOpen] = useState(null)
   const [showPaymentSettings, setShowPaymentSettings] = useState(false)
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: null })
+  const [hiddenColumns, setHiddenColumns] = useState({})
   const [payment, setPayment] = useState(null)
   const [qrImage, setQrImage] = useState(null)
   const [savingPayment, setSavingPayment] = useState(false)
+
+  const handleSort = useCallback((key, direction) => {
+    setSortConfig((prev) => {
+      if (prev.key === key && prev.direction === direction) {
+        return { key: null, direction: null }
+      }
+      return { key, direction }
+    })
+  }, [])
+
+  const getSortValue = useCallback((payment, key) => {
+    const amount = payment.totalAmount || payment.paymentAmount || payment.test?.price || payment.package?.price || 0
+    switch (key) {
+      case 'customer': return (payment.patientName || '').toLowerCase()
+      case 'transaction': return (payment.transactionId || '').toLowerCase()
+      case 'amount': return amount
+      case 'method': return (payment.paymentMethod || '').toLowerCase()
+      case 'status': return (payment.paymentStatus || '').toLowerCase()
+      case 'date': return payment.paidAt || payment.createdAt || ''
+      default: return ''
+    }
+  }, [])
 
   const fetchPayment = useCallback(async () => {
     try {
@@ -237,14 +308,28 @@ const PaymentsManagePage = ({ payments, isLoading, isError, onRefresh }) => {
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase()
-    return payments.filter((payment) => {
+    let result = payments.filter((payment) => {
       const matchesSearch = !term || `${payment.patientName || ''} ${payment.phone || ''} ${payment.transactionId || ''} ${payment.test?.title || ''} ${payment.package?.title || ''}`.toLowerCase().includes(term)
       if (!matchesSearch) return false
       if (activeFilters.status?.length && !activeFilters.status.includes(payment.paymentStatus)) return false
       if (activeFilters.paymentMethod?.length && !activeFilters.paymentMethod.includes(payment.paymentMethod)) return false
       return true
     })
-  }, [payments, search, activeFilters])
+
+    if (sortConfig.key && sortConfig.direction) {
+      result = [...result].sort((a, b) => {
+        const aVal = getSortValue(a, sortConfig.key)
+        const bVal = getSortValue(b, sortConfig.key)
+        if (typeof aVal === 'number' && typeof bVal === 'number') {
+          return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal
+        }
+        const comparison = String(aVal).localeCompare(String(bVal))
+        return sortConfig.direction === 'asc' ? comparison : -comparison
+      })
+    }
+
+    return result
+  }, [payments, search, activeFilters, sortConfig, getSortValue])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const visiblePayments = filtered.slice((page - 1) * pageSize, page * pageSize)
@@ -254,13 +339,18 @@ const PaymentsManagePage = ({ payments, isLoading, isError, onRefresh }) => {
 
   return (
     <section className="mx-auto max-w-[1500px] space-y-4 lg:space-y-5">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+      {/* Mobile Header */}
+      <div className="flex items-center justify-between gap-3 sm:hidden">
+        <h1 className="text-2xl font-bold text-foreground">Payments</h1>
+      </div>
+
+      {/* Desktop Header */}
+      <div className="hidden sm:flex items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Payments</h1>
           <p className="mt-1 text-sm text-muted-foreground">Track and manage all payments and transactions</p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2">
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} placeholder="Search by transaction ID, booking ID, customer..." className="pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary w-72" />
@@ -289,13 +379,100 @@ const PaymentsManagePage = ({ payments, isLoading, isError, onRefresh }) => {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <StatCard icon={CreditCard} iconClass="bg-blue-50 text-primary" title="Total Payments" value={formatCurrency(stats.totalAmount)} detail={`${stats.total} transactions`} trend="up" />
-        <StatCard icon={CheckCircle2} iconClass="bg-emerald-50 text-emerald-500" title="Successful Payments" value={formatCurrency(stats.successfulAmount)} detail={`${stats.successful} transactions`} trend="up" />
-        <StatCard icon={Clock} iconClass="bg-amber-50 text-amber-500" title="Pending Payments" value={formatCurrency(stats.pendingAmount)} detail={`${stats.pending} transactions`} trend="up" />
-        <StatCard icon={XCircle} iconClass="bg-red-50 text-red-500" title="Failed Payments" value={formatCurrency(stats.failedAmount)} detail={`${stats.failed} transactions`} trend="down" />
-        <StatCard icon={RefreshCw} iconClass="bg-purple-50 text-purple-500" title="Refunds Issued" value={formatCurrency(stats.refundedAmount)} detail={`${stats.refunded} transactions`} trend="up" />
+      {/* Mobile Search */}
+      <div className="flex sm:hidden items-center gap-2">
+        <div className="relative flex-1">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} placeholder="Search by transaction ID, booking ID, customer..." className="w-full pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
+        </div>
+        <FilterButton
+          onClick={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect()
+            setFilterPanelOpen({ top: rect.bottom + 8, left: Math.max(16, rect.right - 680) })
+          }}
+          activeCount={activeFilterCount}
+        />
+        <div className="flex items-center rounded-lg border border-border p-1">
+          <Tooltip title="Table View" arrow placement="top">
+            <button type="button" aria-label="Table view" onClick={() => setView('table')} className={`rounded p-1.5 ${view === 'table' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
+          </Tooltip>
+          <Tooltip title="Grid View" arrow placement="top">
+            <button type="button" aria-label="Grid view" onClick={() => setView('grid')} className={`rounded p-1.5 ${view === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><Grid2X2 size={18} /></button>
+          </Tooltip>
+        </div>
+      </div>
+
+      {/* Stat Cards */}
+      <div className="overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex gap-4 min-w-max">
+          <div className="snap-start min-w-[220px] shrink-0">
+            <StatCard
+              icon={CreditCard}
+              borderColor="border-blue-200"
+              iconColor="text-blue-500"
+              cardBg="bg-blue-50"
+              title="Total Payments"
+              value={formatCurrency(stats.totalAmount)}
+              detailTop={`${stats.total} total`}
+              detailBottom="transactions"
+            />
+          </div>
+          <div className="snap-start min-w-[220px] shrink-0">
+            <StatCard
+              icon={CheckCircle2}
+              borderColor="border-emerald-200"
+              iconColor="text-emerald-500"
+              cardBg="bg-emerald-50"
+              title="Successful"
+              value={formatCurrency(stats.successfulAmount)}
+              detailTop={`${stats.successful} paid`}
+              detailBottom="transactions"
+            />
+          </div>
+          <div className="snap-start min-w-[220px] shrink-0">
+            <StatCard
+              icon={Clock}
+              borderColor="border-amber-200"
+              iconColor="text-amber-500"
+              cardBg="bg-amber-50"
+              title="Pending"
+              value={formatCurrency(stats.pendingAmount)}
+              detailTop={`${stats.pending} pending`}
+              detailBottom="transactions"
+            />
+          </div>
+          <div className="snap-start min-w-[220px] shrink-0">
+            <StatCard
+              icon={XCircle}
+              borderColor="border-red-200"
+              iconColor="text-red-500"
+              cardBg="bg-red-50"
+              title="Failed"
+              value={formatCurrency(stats.failedAmount)}
+              detailTop={`${stats.failed} failed`}
+              detailBottom="transactions"
+            />
+          </div>
+          <div className="snap-start min-w-[220px] shrink-0">
+            <StatCard
+              icon={RefreshCw}
+              borderColor="border-purple-200"
+              iconColor="text-purple-500"
+              cardBg="bg-purple-50"
+              title="Refunds"
+              value={formatCurrency(stats.refundedAmount)}
+              detailTop={`${stats.refunded} refunded`}
+              detailBottom="transactions"
+            />
+          </div>
+        </div>
+      </div>
+      <div className="flex justify-center gap-1.5 sm:hidden">
+        <span className="w-2 h-2 rounded-full bg-primary"></span>
+        <span className="w-2 h-2 rounded-full bg-border"></span>
+        <span className="w-2 h-2 rounded-full bg-border"></span>
+        <span className="w-2 h-2 rounded-full bg-border"></span>
+        <span className="w-2 h-2 rounded-full bg-border"></span>
       </div>
 
       {/* Content */}
@@ -374,17 +551,18 @@ const PaymentsManagePage = ({ payments, isLoading, isError, onRefresh }) => {
         </div>
       ) : (
         /* Table View */
-        <div className="overflow-x-auto rounded-xl border border-border bg-white">
+        <div className="overflow-y-auto max-h-[calc(100vh-250px)] pb-2 pr-1">
+          <div className="rounded-xl border border-border bg-white">
           <table className="w-full min-w-[1000px] text-sm">
-            <thead className="bg-accent text-left text-muted-foreground">
+            <thead className="bg-accent text-left text-muted-foreground sticky top-0">
               <tr>
-                <th className="px-4 py-3 font-semibold">Transaction ID</th>
-                <th className="px-4 py-3 font-semibold">Booking ID</th>
-                <th className="px-4 py-3 font-semibold">Customer</th>
-                <th className="px-4 py-3 font-semibold">Amount</th>
-                <th className="px-4 py-3 font-semibold">Payment Method</th>
-                <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-4 py-3 font-semibold">Payment Date</th>
+                <SortableHeader title="Transaction ID" sortKey="transaction" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, transaction: true }))} />
+                <SortableHeader title="Booking ID" sortKey="booking" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, booking: true }))} />
+                <SortableHeader title="Customer" sortKey="customer" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, customer: true }))} />
+                <SortableHeader title="Amount" sortKey="amount" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, amount: true }))} />
+                <SortableHeader title="Payment Method" sortKey="method" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, method: true }))} />
+                <SortableHeader title="Status" sortKey="status" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, status: true }))} />
+                <SortableHeader title="Payment Date" sortKey="date" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, date: true }))} />
                 <th className="px-4 py-3 font-semibold">Actions</th>
               </tr>
             </thead>
@@ -396,12 +574,17 @@ const PaymentsManagePage = ({ payments, isLoading, isError, onRefresh }) => {
                 const amount = payment.totalAmount || payment.paymentAmount || payment.test?.price || payment.package?.price || 0
                 return (
                   <tr key={id} onClick={() => setSelectedPaymentId(id)} className="cursor-pointer border-t border-border transition hover:bg-accent/40">
+                    {!hiddenColumns.transaction && (
                     <td className="px-4 py-3">
                       <span className="font-medium text-primary">{payment.transactionId || '—'}</span>
                     </td>
+                    )}
+                    {!hiddenColumns.booking && (
                     <td className="px-4 py-3">
                       <span className="font-medium text-primary">{payment._id ? `BKD-${String(payment._id).slice(-6).toUpperCase()}` : '—'}</span>
                     </td>
+                    )}
+                    {!hiddenColumns.customer && (
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
                         <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${getAvatarColor(payment.patientName)} text-white font-semibold text-[10px]`}>
@@ -413,7 +596,11 @@ const PaymentsManagePage = ({ payments, isLoading, isError, onRefresh }) => {
                         </div>
                       </div>
                     </td>
+                    )}
+                    {!hiddenColumns.amount && (
                     <td className="px-4 py-3 font-medium text-foreground">{formatCurrency(amount)}</td>
+                    )}
+                    {!hiddenColumns.method && (
                     <td className="px-4 py-3">
                       <span className="inline-flex items-center gap-1.5 text-sm text-foreground">
                         <span className={`flex h-6 w-6 items-center justify-center rounded ${methodStyle.bg}`}>
@@ -422,16 +609,21 @@ const PaymentsManagePage = ({ payments, isLoading, isError, onRefresh }) => {
                         {methodStyle.label}
                       </span>
                     </td>
+                    )}
+                    {!hiddenColumns.status && (
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium ${statusStyle.bg} ${statusStyle.text}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${statusStyle.dot}`}></span>
                         {payment.paymentStatus === 'Paid' ? 'Success' : payment.paymentStatus}
                       </span>
                     </td>
+                    )}
+                    {!hiddenColumns.date && (
                     <td className="px-4 py-3">
                       <span className="text-foreground">{formatDate(payment.paidAt || payment.createdAt)}</span>
                       {(payment.paidAt || payment.createdAt) && <><br /><span className="text-xs text-muted-foreground">{formatTime(payment.paidAt || payment.createdAt)}</span></>}
                     </td>
+                    )}
                     <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                       <div className="relative flex items-center gap-1">
                         <Tooltip title="View" arrow placement="top">
@@ -456,20 +648,23 @@ const PaymentsManagePage = ({ payments, isLoading, isError, onRefresh }) => {
               })}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
       {/* Pagination */}
-      <Pagination
-        page={page}
-        totalPages={totalPages}
-        pageSize={pageSize}
-        totalItems={filtered.length}
-        onPageChange={setPage}
-        onPageSizeChange={(size) => { setPageSize(size); setPage(1) }}
-        pageSizes={PAGE_SIZES}
-        itemName="payments"
-      />
+      <div className="mt-4">
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={filtered.length}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => { setPageSize(size); setPage(1) }}
+          pageSizes={PAGE_SIZES}
+          itemName="payments"
+        />
+      </div>
 
       {/* Details Modal */}
       {selectedPayment && (
