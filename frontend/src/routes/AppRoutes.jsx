@@ -10,6 +10,7 @@ import PageTransition from '@/components/layout/PageTransition'
 const Home = lazy(() => import('@/pages/Home'))
 const Login = lazy(() => import('@/pages/Login'))
 const Signup = lazy(() => import('@/pages/Signup'))
+const Dashboard = lazy(() => import('@/pages/Dashboard'))
 const Booking = lazy(() => import('@/pages/Booking'))
 const PackagesPage = lazy(() => import('@/pages/PackagesPage'))
 const TestsPage = lazy(() => import('@/pages/TestsPage'))
@@ -112,7 +113,11 @@ const AppRoutes = () => {
         />
         <Route
           path={ROUTES.DASHBOARD}
-          element={<PageTransition><Navigate to={ROUTES.BOOKING} replace /></PageTransition>}
+          element={
+            <ProtectedRoute roles={[ROLES.PATIENT]}>
+              <PageTransition><Dashboard /></PageTransition>
+            </ProtectedRoute>
+          }
         />
         <Route path={ROUTES.FORGOT_PASSWORD} element={<PageTransition><ForgotPassword /></PageTransition>} />
         <Route path={ROUTES.VERIFY_OTP} element={<PageTransition><VerifyOtp /></PageTransition>} />

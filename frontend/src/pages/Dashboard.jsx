@@ -183,7 +183,7 @@ const Dashboard = () => {
   return (
     <DashboardShell
       badge="Patient Dashboard"
-      title={`Welcome back, ${user?.name}`}
+      title="Dashboard"
       subtitle="Manage your bookings and download reports"
     >
       <PatientStatsGrid

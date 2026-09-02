@@ -46,10 +46,10 @@ export const sidebarMenuByRole = {
     { label: 'Bookings', icon: Calendar, route: '/lab-assistant/bookings', permission: { resource: 'bookings', action: 'read' } },
   ],
   patient: [
-    { label: 'Dashboard', icon: LayoutDashboard, route: '/booking' },
-    { label: 'Tests', icon: TestTube, route: '/patient/tests', permission: { resource: 'tests', action: 'read' } },
+    { label: 'Dashboard', icon: LayoutDashboard, route: '/dashboard' },
+    { label: 'Tests', icon: TestTube, route: '/booking/tests', permission: { resource: 'tests', action: 'read' } },
     { label: 'My Bookings', icon: Calendar, route: '/booking/history', permission: { resource: 'bookings', action: 'read' } },
     { label: 'Upload Prescription', icon: Upload, route: '/upload-prescription', permission: { resource: 'bookings', action: 'create' } },
-    { label: 'Reports', icon: FileText, route: '/patient/reports', permission: { resource: 'reports', action: 'read' } },
+    { label: 'Reports', icon: FileText, route: '/booking/reports', permission: { resource: 'reports', action: 'read' } },
   ],
 }

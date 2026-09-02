@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from 'react'
+import React, { useMemo, useState, useCallback, useContext } from 'react'
 import {
   Activity,
   CheckCircle2,
@@ -17,6 +17,7 @@ import {
   RefreshCw,
   Search,
   Shield,
+  ShoppingCart,
   Syringe,
   TestTube2,
   MoreVertical,
@@ -35,6 +36,8 @@ import ConfirmModal from '@/components/ui/ConfirmModal'
 import FilterPanel from '@/components/ui/FilterPanel'
 import FilterButton from '@/components/ui/FilterButton'
 import AddTestModal from './AddTestModal'
+import BookTestModal from '@/features/booking/components/BookTestModal'
+import { AuthContext } from '@/context/AuthContext'
 import { deleteTest } from '@/services/test.service'
 import { getIconById } from '@/components/icons/MedicalIcons'
 
@@ -162,11 +165,14 @@ const TestDetailsPanel = ({ test, style, catColor, onClose }) => {
 }
 
 const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
+  const { user } = useContext(AuthContext)
+  const isPatient = user?.role === 'patient'
   const [search, setSearch] = useState('')
   const [view, setView] = useState('grid')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(PAGE_SIZE)
   const [showCreate, setShowCreate] = useState(false)
+  const [bookModal, setBookModal] = useState({ open: false, test: null })
   const [selectedTestId, setSelectedTestId] = useState(null)
   const [editModal, setEditModal] = useState({ open: false, test: null, mode: 'create' })
   const [deleteModal, setDeleteModal] = useState({ open: false, test: null, loading: false })
@@ -309,11 +315,17 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
               <button type="button" aria-label="List view" onClick={() => setView('list')} className={`rounded p-1.5 ${view === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
             </Tooltip>
           </div>
-          <Can resource="tests" action="create">
-            <Button onClick={() => setShowCreate(true)}>
-              <Plus size={18} className="mr-2" />Add Test
+          {isPatient ? (
+            <Button onClick={() => setBookModal({ open: true, test: null })}>
+              <ShoppingCart size={18} className="mr-2" />Book a Test
             </Button>
-          </Can>
+          ) : (
+            <Can resource="tests" action="create">
+              <Button onClick={() => setShowCreate(true)}>
+                <Plus size={18} className="mr-2" />Add Test
+              </Button>
+            </Can>
+          )}
         </div>
       </div>
 
@@ -329,7 +341,7 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
           const Icon = getTestIcon(test)
           const style = getTestIconStyle(test)
           const catColor = getCategoryColor(getCategory(test))
-          return <article key={test._id || test.id || `${getTitle(test)}-${index}`} className="flex min-h-[250px] flex-col rounded-xl border border-border bg-white p-4 shadow-sm transition hover:shadow-md"><div className="flex gap-3"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${style.bg} ${style.text}`}><Icon size={22} /></span><div className="min-w-0"><h2 className="truncate font-semibold text-foreground" title={getTitle(test)}>{getTitle(test)}</h2><p className="mt-0.5 text-xs text-muted-foreground">{test.code || test.testCode || '—'}</p><span className={`mt-1.5 inline-block rounded-md px-2 py-0.5 text-xs font-medium ${catColor.bg} ${catColor.text}`}>{getCategory(test)}</span></div></div><dl className="mt-3.5 space-y-2 text-xs"><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Sample Type</dt><dd className="text-right text-foreground">{getValue(test, ['sampleType', 'sample'])}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Method</dt><dd className="text-right text-foreground">{getValue(test, ['method'])}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Price</dt><dd className="text-right font-medium text-foreground">{formatPrice(getValue(test, ['price'], null))}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">TAT</dt><dd className="text-right text-foreground">{getValue(test, ['reportTime', 'tat', 'turnaroundTime'])}</dd></div></dl><div className="mt-auto flex items-center justify-between border-t border-border pt-3"><span className={`rounded-md px-2 py-1 text-xs font-medium ${isActive(test) ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>{isActive(test) ? 'Active' : 'Inactive'}</span><div className="flex items-center gap-1"><Tooltip title="View" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); setSelectedTestId(getTestId(test, index)) }} className="p-1.5 text-muted-foreground hover:text-foreground rounded transition"><Eye size={15} /></button></Tooltip><Can resource="tests" action="update"><Tooltip title="Edit" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); handleEdit(test) }} className="p-1.5 text-muted-foreground hover:text-foreground rounded transition"><Pencil size={15} /></button></Tooltip></Can><Can resource="tests" action="create"><Tooltip title="Duplicate" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); handleDuplicate(test) }} className="p-1.5 text-muted-foreground hover:text-foreground rounded transition"><Copy size={15} /></button></Tooltip></Can><Can resource="tests" action="delete"><Tooltip title="Delete" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); handleDelete(test) }} className="p-1.5 text-muted-foreground hover:text-red-500 rounded transition"><Trash2 size={15} /></button></Tooltip></Can></div></div></article>
+          return <article key={test._id || test.id || `${getTitle(test)}-${index}`} className="flex min-h-[250px] flex-col rounded-xl border border-border bg-white p-4 shadow-sm transition hover:shadow-md"><div className="flex gap-3"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${style.bg} ${style.text}`}><Icon size={22} /></span><div className="min-w-0"><h2 className="truncate font-semibold text-foreground" title={getTitle(test)}>{getTitle(test)}</h2><p className="mt-0.5 text-xs text-muted-foreground">{test.code || test.testCode || '—'}</p><span className={`mt-1.5 inline-block rounded-md px-2 py-0.5 text-xs font-medium ${catColor.bg} ${catColor.text}`}>{getCategory(test)}</span></div></div><dl className="mt-3.5 space-y-2 text-xs"><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Sample Type</dt><dd className="text-right text-foreground">{getValue(test, ['sampleType', 'sample'])}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Method</dt><dd className="text-right text-foreground">{getValue(test, ['method'])}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Price</dt><dd className="text-right font-medium text-foreground">{formatPrice(getValue(test, ['price'], null))}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">TAT</dt><dd className="text-right text-foreground">{getValue(test, ['reportTime', 'tat', 'turnaroundTime'])}</dd></div></dl><div className="mt-auto flex items-center justify-between border-t border-border pt-3"><span className={`rounded-md px-2 py-1 text-xs font-medium ${isActive(test) ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>{isActive(test) ? 'Active' : 'Inactive'}</span><div className="flex items-center gap-1"><Tooltip title="View" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); setSelectedTestId(getTestId(test, index)) }} className="p-1.5 text-muted-foreground hover:text-foreground rounded transition"><Eye size={15} /></button></Tooltip>{isPatient && <Tooltip title="Book" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); setBookModal({ open: true, test }) }} className="p-1.5 text-primary hover:bg-primary/10 rounded transition"><ShoppingCart size={15} /></button></Tooltip>}<Can resource="tests" action="update"><Tooltip title="Edit" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); handleEdit(test) }} className="p-1.5 text-muted-foreground hover:text-foreground rounded transition"><Pencil size={15} /></button></Tooltip></Can><Can resource="tests" action="create"><Tooltip title="Duplicate" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); handleDuplicate(test) }} className="p-1.5 text-muted-foreground hover:text-foreground rounded transition"><Copy size={15} /></button></Tooltip></Can><Can resource="tests" action="delete"><Tooltip title="Delete" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); handleDelete(test) }} className="p-1.5 text-muted-foreground hover:text-red-500 rounded transition"><Trash2 size={15} /></button></Tooltip></Can></div></div></article>
         })}</div>
       ) : (
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
@@ -361,7 +373,18 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
                       <td className="px-4 py-3">{getValue(test, ['reportTime', 'tat', 'turnaroundTime'])}</td>
                       <td className="px-4 py-3"><span className={`rounded-md px-2 py-1 text-xs ${isActive(test) ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>{isActive(test) ? 'Active' : 'Inactive'}</span></td>
                       <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
-                        <div className="relative">
+                        <div className="flex items-center gap-1">
+                          {isPatient && (
+                            <Tooltip title="Book" arrow placement="top">
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); setBookModal({ open: true, test }) }}
+                                className="p-1.5 text-primary hover:bg-primary/10 rounded transition"
+                              >
+                                <ShoppingCart size={15} />
+                              </button>
+                            </Tooltip>
+                          )}
                           <button
                             type="button"
                             onClick={(e) => {
@@ -403,6 +426,12 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
         testId={editModal.test?._id || editModal.test?.id}
         mode={editModal.mode}
       />
+      <BookTestModal
+        open={bookModal.open}
+        onClose={() => setBookModal({ open: false, test: null })}
+        preselectedTest={bookModal.test}
+        onBooked={onRefresh}
+      />
       <ConfirmModal
         isOpen={deleteModal.open}
         onClose={() => setDeleteModal({ open: false, test: null, loading: false })}
@@ -435,6 +464,11 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
             <button onClick={(e) => { e.stopPropagation(); setSelectedTestId(menuOpen.id); setMenuOpen(null) }} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left">
               <Eye size={14} /> View
             </button>
+            {isPatient && (
+              <button onClick={(e) => { e.stopPropagation(); setBookModal({ open: true, test: menuOpen.test }); setMenuOpen(null) }} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left">
+                <ShoppingCart size={14} /> Book
+              </button>
+            )}
             <Can resource="tests" action="update">
               <button onClick={(e) => { e.stopPropagation(); handleEdit(menuOpen.test); setMenuOpen(null) }} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left">
                 <Pencil size={14} /> Edit

@@ -42,23 +42,24 @@ const AdminStatusBadge = ({ status, type = 'status' }) => {
 
 const BookingCardBadges = ({ status, paymentStatus, variant = 'default', actionButton }) => {
   return (
-    <div className="px-4 pb-4 pt-3 flex flex-wrap items-center gap-2">
-      {variant === 'assistant' ? (
-        <>
+    <div className="px-4 pb-4 pt-3 space-y-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Status:</span>
+        {variant === 'assistant' ? (
           <AssistantStatusBadge status={status} />
-          <AssistantStatusBadge status={paymentStatus} />
-        </>
-      ) : (
-        <>
+        ) : (
           <AdminStatusBadge status={status} type="status" />
+        )}
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-[10px] text-muted-foreground font-medium w-14 shrink-0">Payment:</span>
+        {variant === 'assistant' ? (
+          <AssistantStatusBadge status={paymentStatus} />
+        ) : (
           <AdminStatusBadge status={paymentStatus} type="payment" />
-        </>
-      )}
-      {actionButton && (
-        <div className="ml-auto">
-          {actionButton}
-        </div>
-      )}
+        )}
+        {actionButton && <div className="ml-auto">{actionButton}</div>}
+      </div>
     </div>
   )
 }
