@@ -13,6 +13,8 @@ const BookingCard = ({
   onEditLab,
   onViewReport,
   onMenuToggle,
+  onAssignAssistant,
+  assistants,
   cardId,
 }) => {
   const isLabAssistant = role === ROLES.LAB_ASSISTANT
@@ -27,7 +29,8 @@ const BookingCard = ({
       : (booking.labOwner?.name || 'No Lab Assigned')
   const detailType = isLabAssistant ? 'address' : 'lab'
   const isDetailMissing = !isLabAssistant && !isLabOwner && !booking.labOwner?.name
-  const assistantName = isLabOwner ? booking.assignedLabAssistant?.name : null
+  const assistantName = isLabOwner ? (booking.assignedLabAssistant?.name || 'No Assistant Assigned') : null
+  const isAssistantMissing = isLabOwner && !booking.assignedLabAssistant?.name
 
   const threeDotButton = (isLabAssistant || isLabOwner) ? (
     <button
@@ -63,6 +66,10 @@ const BookingCard = ({
         detailType={detailType}
         isDetailMissing={isDetailMissing}
         assistantName={assistantName}
+        isAssistantMissing={isAssistantMissing}
+        assistants={isLabOwner ? assistants : null}
+        onAssignAssistant={onAssignAssistant}
+        bookingId={booking._id}
       />
 
       <BookingCardBadges

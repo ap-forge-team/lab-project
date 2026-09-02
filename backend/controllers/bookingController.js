@@ -210,7 +210,6 @@ export const uploadReport = async (req, res) => {
     }
     booking.report = req.file.path;
     booking.status = "Completed";
-    booking.assignedLabAssistant = req.user._id;
     await booking.save();
 
     res.status(200).json({
@@ -254,24 +253,8 @@ export const getLabOwnerBookings = async (req, res) => {
       .populate("test")
       .populate("package")
       .populate("user")
-      .populate("assignedLabAssistant", "name email");
-
-    bookings.sort((a, b) => {
-      const aCompleted = a.status === "Completed";
-      const bCompleted = b.status === "Completed";
-
-      if (!aCompleted && bCompleted) return -1;
-      if (aCompleted && !bCompleted) return 1;
-
-      const aDate = new Date(a.bookingDate);
-      const bDate = new Date(b.bookingDate);
-
-      if (aDate.getTime() !== bDate.getTime()) {
-        return aDate - bDate;
-      }
-
-      return (a.bookingTime || "").localeCompare(b.bookingTime || "");
-    });
+      .populate("assignedLabAssistant", "name email")
+      .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -342,33 +325,8 @@ export const getAssignedBookings = async (req, res) => {
     })
       .populate("test", "title price")
       .populate("package", "title price")
-      .populate("user");
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    bookings.sort((a, b) => {
-      const aDate = new Date(a.bookingDate);
-      const bDate = new Date(b.bookingDate);
-
-      const aCompleted = a.status === "Completed";
-      const bCompleted = b.status === "Completed";
-
-      if (!aCompleted && bCompleted) return -1;
-      if (aCompleted && !bCompleted) return 1;
-
-      const aToday = aDate.getTime() === today.getTime();
-      const bToday = bDate.getTime() === today.getTime();
-
-      if (aToday && !bToday) return -1;
-      if (!aToday && bToday) return 1;
-
-      if (aDate.getTime() !== bDate.getTime()) {
-        return aDate - bDate;
-      }
-
-      return (a.bookingTime || "").localeCompare(b.bookingTime || "");
-    });
+      .populate("user")
+      .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,

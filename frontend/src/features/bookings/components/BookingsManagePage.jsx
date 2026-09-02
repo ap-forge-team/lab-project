@@ -487,6 +487,8 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
                 onSelect={() => setSelectedBookingId(id)}
                 onEditLab={openEditModal}
                 onViewReport={handleViewReport}
+                onAssignAssistant={handleAssignAssistant}
+                assistants={assistants}
                 onMenuToggle={(e, b, cardId) => {
                   if (menuOpen?.id === cardId) {
                     setMenuOpen(null)
