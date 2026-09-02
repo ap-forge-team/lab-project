@@ -3,8 +3,6 @@ import { createPortal } from 'react-dom'
 import {
   Activity,
   CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
   Copy,
   Download,
   Droplet,
@@ -36,6 +34,7 @@ import Modal from '@/components/ui/Modal'
 import ConfirmModal from '@/components/ui/ConfirmModal'
 import FilterPanel from '@/components/ui/FilterPanel'
 import FilterButton from '@/components/ui/FilterButton'
+import Pagination from '@/components/ui/Pagination'
 import AddTestModal from './AddTestModal'
 import BookTestModal from '@/features/booking/components/BookTestModal'
 import { AuthContext } from '@/context/AuthContext'
@@ -253,25 +252,6 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const visibleTests = filtered.slice((page - 1) * pageSize, page * pageSize)
 
-  const getPageNumbers = () => {
-    if (totalPages <= 7) {
-      return Array.from({ length: totalPages }, (_, i) => i + 1)
-    }
-    const pages = []
-    const showAround = 1
-    pages.push(1)
-    const start = Math.max(2, page - showAround)
-    const end = Math.min(totalPages - 1, page + showAround)
-    if (start > 2) pages.push('ellipsis-start')
-    for (let i = start; i <= end; i++) {
-      pages.push(i)
-    }
-    if (end < totalPages - 1) pages.push('ellipsis-end')
-    if (totalPages > 1) pages.push(totalPages)
-    return pages
-  }
-  const pageNumbers = getPageNumbers()
-
   const handleEdit = useCallback((test) => {
     setEditModal({ open: true, test, mode: 'edit' })
   }, [])
@@ -477,60 +457,16 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
         <TestDetailsPanel test={selectedTest} style={selectedTestStyle} catColor={selectedTestCatColor} onClose={() => setSelectedTestId(null)} />
       )}
 
-      {filtered.length > 0 && (
-        <div className="flex flex-col gap-3 pb-2 text-sm text-muted-foreground">
-          <div className="flex items-center justify-between sm:hidden">
-            <p className="shrink-0">Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, filtered.length)} of {filtered.length} tests</p>
-            <select aria-label="Tests per page" value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value)); setPage(1) }} className="rounded-lg border border-border bg-white px-3 py-2 text-sm text-foreground outline-none focus:border-primary">
-              {PAGE_SIZES.map((size) => <option key={size} value={size}>{size} per page</option>)}
-            </select>
-          </div>
-          <div className="hidden items-center justify-between sm:flex">
-            <p className="shrink-0">Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, filtered.length)} of {filtered.length} tests</p>
-            <div className="flex items-center gap-2">
-              <button type="button" aria-label="Previous page" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page === 1} className="rounded-lg border border-border p-2 transition hover:bg-accent disabled:opacity-40"><ChevronLeft size={17} /></button>
-              {pageNumbers.map((item, index) => {
-                if (typeof item === 'string' && item.startsWith('ellipsis')) {
-                  return <span key={item} className="px-1">…</span>
-                }
-                return (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={() => setPage(item)}
-                    className={`flex h-9 min-w-9 items-center justify-center rounded-lg px-3 font-medium transition ${page === item ? 'bg-primary text-white' : 'hover:bg-accent text-foreground'}`}
-                  >
-                    {item}
-                  </button>
-                )
-              })}
-              <button type="button" aria-label="Next page" onClick={() => setPage((current) => Math.min(totalPages, current + 1))} disabled={page === totalPages} className="rounded-lg border border-border p-2 transition hover:bg-accent disabled:opacity-40"><ChevronRight size={17} /></button>
-            </div>
-            <select aria-label="Tests per page" value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value)); setPage(1) }} className="rounded-lg border border-border bg-white px-3 py-2 text-sm text-foreground outline-none focus:border-primary">
-              {PAGE_SIZES.map((size) => <option key={size} value={size}>{size} per page</option>)}
-            </select>
-          </div>
-          <div className="flex items-center justify-center gap-2 sm:hidden">
-            <button type="button" aria-label="Previous page" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page === 1} className="rounded-lg border border-border p-2 transition hover:bg-accent disabled:opacity-40"><ChevronLeft size={17} /></button>
-            {pageNumbers.map((item, index) => {
-              if (typeof item === 'string' && item.startsWith('ellipsis')) {
-                return <span key={item} className="px-1">…</span>
-              }
-              return (
-                <button
-                  key={item}
-                  type="button"
-                  onClick={() => setPage(item)}
-                  className={`flex h-9 min-w-9 items-center justify-center rounded-lg px-3 font-medium transition ${page === item ? 'bg-primary text-white' : 'hover:bg-accent text-foreground'}`}
-                >
-                  {item}
-                </button>
-              )
-            })}
-            <button type="button" aria-label="Next page" onClick={() => setPage((current) => Math.min(totalPages, current + 1))} disabled={page === totalPages} className="rounded-lg border border-border p-2 transition hover:bg-accent disabled:opacity-40"><ChevronRight size={17} /></button>
-          </div>
-        </div>
-      )}
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        totalItems={filtered.length}
+        onPageChange={setPage}
+        onPageSizeChange={(size) => { setPageSize(size); setPage(1) }}
+        pageSizes={PAGE_SIZES}
+        itemName="tests"
+      />
 
       <AddTestModal open={showCreate} onClose={() => setShowCreate(false)} onCreated={onRefresh} />
       <AddTestModal

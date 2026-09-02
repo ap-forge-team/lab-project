@@ -2,8 +2,6 @@ import React, { useMemo, useState, useCallback, useEffect } from 'react'
 import {
   Calendar,
   CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
   Clock,
   CreditCard,
   Download,
@@ -25,6 +23,7 @@ import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
 import FilterPanel from '@/components/ui/FilterPanel'
 import FilterButton from '@/components/ui/FilterButton'
+import Pagination from '@/components/ui/Pagination'
 import { getPaymentSetting, createPaymentSetting, updatePaymentSetting } from '@/services/user.service'
 
 const PAGE_SIZE = 10
@@ -249,9 +248,6 @@ const PaymentsManagePage = ({ payments, isLoading, isError, onRefresh }) => {
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const visiblePayments = filtered.slice((page - 1) * pageSize, page * pageSize)
-  const pageNumbers = totalPages <= 5
-    ? Array.from({ length: totalPages }, (_, index) => index + 1)
-    : [1, 2, 3, 'ellipsis', totalPages]
 
   const getPaymentId = (p, index) => p._id || p.id || `${p.transactionId}-${index}`
   const selectedPayment = visiblePayments.find((p, index) => getPaymentId(p, index) === selectedPaymentId) || null
@@ -464,19 +460,16 @@ const PaymentsManagePage = ({ payments, isLoading, isError, onRefresh }) => {
       )}
 
       {/* Pagination */}
-      {filtered.length > 0 && (
-        <div className="flex flex-col gap-3 pb-2 text-sm text-muted-foreground lg:flex-row lg:items-center lg:justify-between">
-          <p>Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, filtered.length)} of {filtered.length} payments</p>
-          <div className="flex flex-wrap items-center gap-2">
-            <button type="button" aria-label="Previous page" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page === 1} className="rounded-lg border border-border p-2 transition hover:bg-accent disabled:opacity-40"><ChevronLeft size={17} /></button>
-            {pageNumbers.map((item, index) => item === 'ellipsis' ? <span key={`ellipsis-${index}`} className="px-1">…</span> : <button key={item} type="button" onClick={() => setPage(item)} className={`flex h-9 min-w-9 items-center justify-center rounded-lg px-3 font-medium transition ${page === item ? 'bg-primary text-white' : 'hover:bg-accent text-foreground'}`}>{item}</button>)}
-            <button type="button" aria-label="Next page" onClick={() => setPage((current) => Math.min(totalPages, current + 1))} disabled={page === totalPages} className="rounded-lg border border-border p-2 transition hover:bg-accent disabled:opacity-40"><ChevronRight size={17} /></button>
-            <select aria-label="Payments per page" value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value)); setPage(1) }} className="ml-1 rounded-lg border border-border bg-white px-3 py-2 text-sm text-foreground outline-none focus:border-primary">
-              {PAGE_SIZES.map((size) => <option key={size} value={size}>{size} per page</option>)}
-            </select>
-          </div>
-        </div>
-      )}
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        totalItems={filtered.length}
+        onPageChange={setPage}
+        onPageSizeChange={(size) => { setPageSize(size); setPage(1) }}
+        pageSizes={PAGE_SIZES}
+        itemName="payments"
+      />
 
       {/* Details Modal */}
       {selectedPayment && (

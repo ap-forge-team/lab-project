@@ -1,8 +1,6 @@
 import React, { useMemo, useState, useCallback } from 'react'
 import {
   CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
   Copy,
   Eye,
   Grid2X2,
@@ -23,6 +21,7 @@ import Modal from '@/components/ui/Modal'
 import ConfirmModal from '@/components/ui/ConfirmModal'
 import FilterPanel from '@/components/ui/FilterPanel'
 import FilterButton from '@/components/ui/FilterButton'
+import Pagination from '@/components/ui/Pagination'
 import CreatePackageModal from './CreatePackageModal'
 import { deletePackage } from '@/services/package.service'
 
@@ -174,9 +173,6 @@ const PackagesManagePage = ({ packages, isLoading, isError, onRefresh }) => {
   }, [packages, search, activeFilters])
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const visiblePackages = filtered.slice((page - 1) * pageSize, page * pageSize)
-  const pageNumbers = totalPages <= 5
-    ? Array.from({ length: totalPages }, (_, index) => index + 1)
-    : [1, 2, 3, 'ellipsis', totalPages]
 
   const handleEdit = useCallback((pkg) => {
     setEditModal({ open: true, pkg, mode: 'edit' })
@@ -397,7 +393,16 @@ const PackagesManagePage = ({ packages, isLoading, isError, onRefresh }) => {
         <PackageDetailsPanel pkg={selectedPackage} onClose={() => setSelectedPackageId(null)} />
       )}
 
-      {filtered.length > 0 && <div className="flex flex-col gap-3 pb-2 text-sm text-muted-foreground lg:flex-row lg:items-center lg:justify-between"><p>Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, filtered.length)} of {filtered.length} packages</p><div className="flex flex-wrap items-center gap-2"><button type="button" aria-label="Previous page" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page === 1} className="rounded-lg border border-border p-2 transition hover:bg-accent disabled:opacity-40"><ChevronLeft size={17} /></button>{pageNumbers.map((item, index) => item === 'ellipsis' ? <span key={`ellipsis-${index}`} className="px-1">…</span> : <button key={item} type="button" onClick={() => setPage(item)} className={`flex h-9 min-w-9 items-center justify-center rounded-lg px-3 font-medium transition ${page === item ? 'bg-primary text-white' : 'hover:bg-accent text-foreground'}`}>{item}</button>)}<button type="button" aria-label="Next page" onClick={() => setPage((current) => Math.min(totalPages, current + 1))} disabled={page === totalPages} className="rounded-lg border border-border p-2 transition hover:bg-accent disabled:opacity-40"><ChevronRight size={17} /></button><select aria-label="Packages per page" value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value)); setPage(1) }} className="ml-1 rounded-lg border border-border bg-white px-3 py-2 text-sm text-foreground outline-none focus:border-primary">{PAGE_SIZES.map((size) => <option key={size} value={size}>{size} per page</option>)}</select></div></div>}
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        totalItems={filtered.length}
+        onPageChange={setPage}
+        onPageSizeChange={(size) => { setPageSize(size); setPage(1) }}
+        pageSizes={PAGE_SIZES}
+        itemName="packages"
+      />
 
       <CreatePackageModal open={showCreate} onClose={() => setShowCreate(false)} onCreated={onRefresh} />
       <CreatePackageModal
