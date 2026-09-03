@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useMemo, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Building2, Plus, Search, ChevronRight, Eye, Pencil, Trash2, X, MoreVertical, MapPin, Mail, Phone, Calendar, Shield } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { DataTable } from '@/components/ui/data-table'
@@ -33,6 +33,7 @@ const StatCard = ({ icon: Icon, iconBg, iconColor, label, value, change, changeT
 
 const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [search, setSearch] = useState('')
   const [activeFilters, setActiveFilters] = useState({})
   const [filterPanelOpen, setFilterPanelOpen] = useState(null)
@@ -53,6 +54,14 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
   const emptyForm = { name: '', email: '', phone: '', password: '', servicePincodes: '', labAddress: '', latitude: '', longitude: '' }
   const [form, setForm] = useState(emptyForm)
   const [errors, setErrors] = useState({})
+
+  useEffect(() => {
+    if (searchParams.get('modal') === 'add-lab-owner') {
+      setShowAddModal(true)
+      searchParams.delete('modal')
+      setSearchParams(searchParams, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
 
   // Unique locations from data
   const locations = useMemo(() => {

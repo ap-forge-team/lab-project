@@ -60,3 +60,7 @@ export const updatePaymentSetting = (formData) => {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
 }
+
+export const getAdminDashboardStats = (params = {}) => {
+  return API.get(API_ENDPOINTS.ADMIN.DASHBOARD_STATS, { params })
+}

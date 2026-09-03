@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from 'react'
+import React, { useMemo, useState, useCallback, useEffect } from 'react'
 import {
   CheckCircle2,
   ChevronLeft,
@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import Tooltip from '@mui/material/Tooltip'
 import { toast } from 'react-toastify'
+import { useSearchParams } from 'react-router-dom'
 import Can from '@/components/Can'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
@@ -102,6 +103,7 @@ const PackageDetailsPanel = ({ pkg, onClose }) => {
 }
 
 const PackagesManagePage = ({ packages, isLoading, isError, onRefresh }) => {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [search, setSearch] = useState('')
   const [view, setView] = useState('grid')
   const [page, setPage] = useState(1)
@@ -113,6 +115,14 @@ const PackagesManagePage = ({ packages, isLoading, isError, onRefresh }) => {
   const [menuOpen, setMenuOpen] = useState(null)
   const [activeFilters, setActiveFilters] = useState({})
   const [filterPanelOpen, setFilterPanelOpen] = useState(null)
+
+  useEffect(() => {
+    if (searchParams.get('modal') === 'create-package') {
+      setShowCreate(true)
+      searchParams.delete('modal')
+      setSearchParams(searchParams, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
 
   const categories = useMemo(() => [...new Set(packages.map(getCategory))].sort(), [packages])
   const activePackages = useMemo(() => packages.filter(isActive), [packages])

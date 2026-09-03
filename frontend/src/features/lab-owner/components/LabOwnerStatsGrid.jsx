@@ -1,77 +1,68 @@
 import React from 'react'
-import { ClipboardList, Clock, CircleCheckBig, Users, Banknote } from 'lucide-react'
-import { DashboardStatsCard } from '@/components/Dashboard'
-import { BOOKING_STATUS } from '@/constants/status'
+import { CalendarCheck, FlaskConical, TestTube, IndianRupee, Clock } from 'lucide-react'
+import { formatCurrency } from '@/utils/formatCurrency'
 
-const LabOwnerStatsGrid = ({
-  bookings,
-  assistants,
-  activeSection,
-  setActiveSection,
-  setSelectedAssistant,
-  scrollToTable,
-  openPaymentOverview,
-}) => {
+const statConfig = [
+  {
+    key: 'totalBookings',
+    title: 'Total Bookings',
+    icon: CalendarCheck,
+    iconClass: 'bg-blue-50 text-blue-600',
+  },
+  {
+    key: 'samplesCollected',
+    title: 'Samples Collected',
+    icon: FlaskConical,
+    iconClass: 'bg-emerald-50 text-emerald-600',
+  },
+  {
+    key: 'testsCompleted',
+    title: 'Tests Completed',
+    icon: TestTube,
+    iconClass: 'bg-blue-50 text-blue-600',
+  },
+  {
+    key: 'totalRevenue',
+    title: 'Total Revenue',
+    icon: IndianRupee,
+    iconClass: 'bg-amber-50 text-amber-600',
+    isCurrency: true,
+  },
+  {
+    key: 'pendingReports',
+    title: 'Pending Reports',
+    icon: Clock,
+    iconClass: 'bg-rose-50 text-rose-600',
+  },
+]
+
+const LabOwnerStatsGrid = ({ stats }) => {
+  if (!stats) return null
+
   return (
-    <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
-      <DashboardStatsCard
-        title="Total Bookings"
-        value={bookings.length}
-        icon={<ClipboardList />}
-        color="blue"
-        bgColor="bg-blue-100 text-blue-600"
-        active={activeSection === 'all'}
-        onClick={() => {
-          setSelectedAssistant(null)
-          setActiveSection('all')
-          scrollToTable()
-        }}
-      />
-      <DashboardStatsCard
-        title="Pending"
-        value={bookings.filter((item) => item.status === BOOKING_STATUS.PENDING).length}
-        icon={<Clock />}
-        color="yellow"
-        bgColor="bg-yellow-100 text-yellow-600"
-        active={activeSection === 'pending'}
-        onClick={() => {
-          setSelectedAssistant(null)
-          setActiveSection('pending')
-          scrollToTable()
-        }}
-      />
-      <DashboardStatsCard
-        title="Completed"
-        value={bookings.filter((item) => item.status === BOOKING_STATUS.COMPLETED).length}
-        icon={<CircleCheckBig />}
-        color="green"
-        bgColor="bg-green-100 text-green-600"
-        active={activeSection === 'completed'}
-        onClick={() => {
-          setSelectedAssistant(null)
-          setActiveSection('completed')
-          scrollToTable()
-        }}
-      />
-      <DashboardStatsCard
-        title="Assistants"
-        value={assistants.length}
-        icon={<Users />}
-        color="purple"
-        bgColor="bg-purple-100 text-purple-600"
-        active={activeSection === 'assistants'}
-        onClick={() => {
-          setActiveSection('assistants')
-        }}
-      />
-      <DashboardStatsCard
-        title="Payments"
-        value={bookings.filter((item) => item.paymentStatus === 'Paid').length}
-        icon={<Banknote />}
-        color="green"
-        bgColor="bg-green-100 text-green-600"
-        onClick={openPaymentOverview}
-      />
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
+      {statConfig.map((s) => {
+        const Icon = s.icon
+        const value = stats[s.key] ?? 0
+        return (
+          <div
+            key={s.key}
+            className="rounded-xl border border-border bg-white p-3 shadow-sm sm:p-4"
+          >
+            <div className="flex items-center gap-3">
+              <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${s.iconClass}`}>
+                <Icon size={20} />
+              </span>
+              <div>
+                <p className="text-xs text-muted-foreground">{s.title}</p>
+                <p className="mt-0.5 text-xl font-bold text-foreground">
+                  {s.isCurrency ? formatCurrency(value) : value.toLocaleString('en-IN')}
+                </p>
+              </div>
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }
