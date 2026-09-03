@@ -20,6 +20,7 @@ import UsersManagePage from '@/features/admin/components/UsersManagePage'
 import LabOwnersManagePage from '@/features/admin/components/LabOwnersManagePage'
 import AssistantsManagePage from '@/features/lab-owner/components/AssistantsManagePage'
 import SettlementDashboard from '@/features/settlements/components/SettlementDashboard'
+import ReportsManagePage from '@/features/reports/components/ReportsManagePage'
 
 const sources = {
   tests: getAllTests,
@@ -153,6 +154,14 @@ const SidebarPage = ({ page: pageProp }) => {
     return (
       <DashboardLayout>
         <AssistantsManagePage assistants={items} isLoading={query.isLoading} isError={query.isError} onRefresh={query.refetch} />
+      </DashboardLayout>
+    )
+  }
+
+  if (slug === 'reports') {
+    return (
+      <DashboardLayout>
+        <ReportsManagePage bookings={items} isLoading={query.isLoading} isError={query.isError} />
       </DashboardLayout>
     )
   }
