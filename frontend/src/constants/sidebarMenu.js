@@ -12,6 +12,7 @@ import {
   ClipboardList,
   Upload,
   UserCog,
+  Landmark,
 } from 'lucide-react'
 
 export const sidebarMenuByRole = {
@@ -21,6 +22,7 @@ export const sidebarMenuByRole = {
     { label: 'Packages', icon: Package, route: '/admin/packages', permission: { resource: 'packages', action: 'read' } },
     { label: 'Bookings', icon: Calendar, route: '/admin/bookings', permission: { resource: 'bookings', action: 'read' } },
     { label: 'Payments', icon: CreditCard, route: '/admin/payments', permission: { resource: 'payments', action: 'read' } },
+    { label: 'Settlements', icon: Landmark, route: '/admin/settlements', permission: { resource: 'settlements', action: 'read' } },
     { label: 'Lab Owners', icon: Building2, route: '/admin/lab-owners', permission: { resource: 'lab_owners', action: 'read' } },
     { label: 'Reports', icon: FileText, route: '/admin/reports', permission: { resource: 'reports', action: 'read' } },
     { label: 'Offers', icon: Tag, route: '/admin/offers', permission: { resource: 'offers', action: 'read' } },
@@ -36,6 +38,7 @@ export const sidebarMenuByRole = {
     { label: 'Upload Reports', icon: Upload, route: '/lab-owner/upload-reports', permission: { resource: 'bookings', action: 'update' } },
     { label: 'Lab Profile', icon: UserCog, route: '/lab-owner/lab-profile', permission: { resource: 'lab_owners', action: 'read' } },
     { label: 'Payments', icon: CreditCard, route: '/lab-owner/payments', permission: { resource: 'payments', action: 'read' } },
+    { label: 'Settlements', icon: Landmark, route: '/lab-owner/settlements', permission: { resource: 'settlements', action: 'read' } },
     { label: 'Reports', icon: FileText, route: '/lab-owner/reports', permission: { resource: 'reports', action: 'read' } },
   ],
   lab_assistant: [

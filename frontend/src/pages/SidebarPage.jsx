@@ -19,6 +19,7 @@ import PaymentsManagePage from '@/features/payments/components/PaymentsManagePag
 import UsersManagePage from '@/features/admin/components/UsersManagePage'
 import LabOwnersManagePage from '@/features/admin/components/LabOwnersManagePage'
 import AssistantsManagePage from '@/features/lab-owner/components/AssistantsManagePage'
+import SettlementDashboard from '@/features/settlements/components/SettlementDashboard'
 
 const sources = {
   tests: getAllTests,
@@ -62,6 +63,16 @@ const SidebarPage = ({ page: pageProp }) => {
   const slug = pageProp || routeSlug
   const [search, setSearch] = useState('')
   const config = getSidebarPage(user?.role, slug)
+
+  // Handle settlements page separately (not in sidebarPages config)
+  if (slug === 'settlements') {
+    return (
+      <DashboardLayout>
+        <SettlementDashboard />
+      </DashboardLayout>
+    )
+  }
+
   const permissionKnown = user?.permissions !== undefined
   const allowed = !permissionKnown || !config?.permission || user.permissions?.[config.permission.resource]?.[config.permission.action] === true
   const query = useQuery({
