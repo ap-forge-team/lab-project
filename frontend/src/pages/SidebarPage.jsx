@@ -20,6 +20,7 @@ import UsersManagePage from '@/features/admin/components/UsersManagePage'
 import LabOwnersManagePage from '@/features/admin/components/LabOwnersManagePage'
 import AssistantsManagePage from '@/features/lab-owner/components/AssistantsManagePage'
 import SettlementDashboard from '@/features/settlements/components/SettlementDashboard'
+import ReportsManagePage from '@/features/reports/components/ReportsManagePage'
 
 const sources = {
   tests: getAllTests,
@@ -64,7 +65,7 @@ const SidebarPage = ({ page: pageProp }) => {
   const [search, setSearch] = useState('')
   const config = getSidebarPage(user?.role, slug)
 
-  // Handle settlements page separately (not in sidebarPages config)
+  // Handle settlements page separately (uses custom SettlementDashboard component)
   if (slug === 'settlements') {
     return (
       <DashboardLayout>
@@ -153,6 +154,14 @@ const SidebarPage = ({ page: pageProp }) => {
     return (
       <DashboardLayout>
         <AssistantsManagePage assistants={items} isLoading={query.isLoading} isError={query.isError} onRefresh={query.refetch} />
+      </DashboardLayout>
+    )
+  }
+
+  if (slug === 'reports') {
+    return (
+      <DashboardLayout>
+        <ReportsManagePage bookings={items} isLoading={query.isLoading} isError={query.isError} />
       </DashboardLayout>
     )
   }

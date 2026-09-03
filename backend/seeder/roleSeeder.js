@@ -47,6 +47,8 @@ const defaultRoles = [
     description: "Lab assistant who collects samples and handles field work",
     isSystem: true,
     permissions: {
+      tests: { create: false, read: true, update: false, delete: false },
+      packages: { create: false, read: true, update: false, delete: false },
       bookings: { create: false, read: true, update: true, delete: false },
       payments: { create: true, read: false, update: false, delete: false },
       reports: { create: false, read: false, update: false, delete: false },
