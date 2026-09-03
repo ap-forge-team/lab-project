@@ -35,6 +35,7 @@ export const sidebarPagesByRole = {
   lab_owner: {
     assistants: page('Assistants', 'Manage lab assistants and their assignments.', Users, { resource: 'lab_assistants', action: 'read' }, 'myAssistants'),
     tests: page('Tests', 'Browse tests available for your laboratory.', TestTube, { resource: 'tests', action: 'read' }, 'tests'),
+    packages: page('Packages', 'Browse health-check packages available for your laboratory.', Package, { resource: 'packages', action: 'read' }, 'packages'),
     bookings: page('Bookings', 'Manage bookings assigned to your laboratory.', Calendar, { resource: 'bookings', action: 'read' }, 'labOwnerBookings'),
     'sample-pickups': page('Sample Pickups', 'Track sample collection for your bookings.', ClipboardList, { resource: 'bookings', action: 'read' }, 'labOwnerBookings'),
     'upload-reports': page('Upload Reports', 'Select a booking to upload its laboratory report.', Upload, { resource: 'bookings', action: 'update' }, 'labOwnerBookings'),
@@ -44,13 +45,15 @@ export const sidebarPagesByRole = {
   },
   lab_assistant: {
     tests: page('Tests', 'Browse the laboratory tests available.', TestTube, { resource: 'tests', action: 'read' }, 'tests'),
+    packages: page('Packages', 'Browse the health-check packages available.', Package, { resource: 'packages', action: 'read' }, 'packages'),
     'sample-pickups': page('Sample Pickups', 'Process assigned sample pickups.', ClipboardList, { resource: 'bookings', action: 'read' }, 'assignedBookings'),
     'upload-reports': page('Upload Reports', 'Upload reports for assigned bookings.', Upload, { resource: 'bookings', action: 'update' }, 'assignedBookings'),
     bookings: page('Bookings', 'View bookings assigned to you.', Calendar, { resource: 'bookings', action: 'read' }, 'assignedBookings'),
   },
   patient: {
     tests: page('Tests', 'Browse the laboratory tests available.', TestTube, { resource: 'tests', action: 'read' }, 'tests'),
-    history: page('My Bookings', 'Review your upcoming and previous bookings.', Calendar, { resource: 'bookings', action: 'read' }, 'myBookings'),
+    packages: page('Packages', 'Browse the health-check packages available.', Package, { resource: 'packages', action: 'read' }, 'packages'),
+    bookings: page('My Bookings', 'Review your upcoming and previous bookings.', Calendar, { resource: 'bookings', action: 'read' }, 'myBookings'),
     'upload-prescription': page('Upload Prescription', 'Attach a prescription to a booking.', Upload, { resource: 'bookings', action: 'create' }, 'myBookings'),
     reports: page('Reports', 'View reports for your completed bookings.', FileText, { resource: 'reports', action: 'read' }, 'myBookings', 'No reports are ready yet.'),
   },

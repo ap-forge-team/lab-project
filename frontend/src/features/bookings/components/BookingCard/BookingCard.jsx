@@ -12,6 +12,7 @@ const BookingCard = ({
   onSelect,
   onEditLab,
   onViewReport,
+  onManageBooking,
   onMenuToggle,
   onAssignAssistant,
   assistants,
@@ -19,16 +20,19 @@ const BookingCard = ({
 }) => {
   const isLabAssistant = role === ROLES.LAB_ASSISTANT
   const isLabOwner = role === ROLES.LAB_OWNER
+  const isPatient = role === ROLES.PATIENT
   const testName = booking.test?.title || booking.package?.title || 'N/A'
   const testCity = booking.test?.city || booking.package?.city
   const amount = booking.test?.price || booking.package?.price || booking.totalAmount || 0
-  const detail = isLabAssistant
-    ? booking.address
-    : isLabOwner
-      ? null
-      : (booking.labOwner?.name || 'No Lab Assigned')
-  const detailType = isLabAssistant ? 'address' : 'lab'
-  const isDetailMissing = !isLabAssistant && !isLabOwner && !booking.labOwner?.name
+  const detail = isPatient
+    ? (booking.labOwner?.name || 'Lab Pending')
+    : isLabAssistant
+      ? booking.address
+      : isLabOwner
+        ? null
+        : (booking.labOwner?.name || 'No Lab Assigned')
+  const detailType = isPatient ? 'lab' : isLabAssistant ? 'address' : 'lab'
+  const isDetailMissing = !isPatient && !isLabAssistant && !isLabOwner && !booking.labOwner?.name
   const assistantName = isLabOwner ? (booking.assignedLabAssistant?.name || 'No Assistant Assigned') : null
   const isAssistantMissing = isLabOwner && !booking.assignedLabAssistant?.name
 
@@ -86,6 +90,7 @@ const BookingCard = ({
           role={role}
           onEditLab={onEditLab}
           onViewReport={onViewReport}
+          onManageBooking={onManageBooking}
         />
       )}
     </article>

@@ -25,6 +25,8 @@ import {
   Microscope,
   Banknote,
   FileUp,
+  Settings,
+  CalendarDays,
 } from 'lucide-react'
 import Tooltip from '@mui/material/Tooltip'
 import { toast } from 'react-toastify'
@@ -37,10 +39,11 @@ import Pagination from '@/components/ui/Pagination'
 import useAuth from '@/hooks/useAuth'
 import { ROLES } from '@/constants/roles'
 import { BOOKING_STATUS, PAYMENT_STATUS } from '@/constants/status'
-import { updateBookingLab, assignAssistant, markReached, uploadSample, uploadPaymentReceipt, uploadReport } from '@/services/booking.service'
+import { updateBookingLab, assignAssistant, markReached, uploadSample, uploadPaymentReceipt, uploadReport, manageBooking } from '@/services/booking.service'
 import { getAllLabOwners, getMyAssistants, getPaymentSetting } from '@/services/user.service'
 import LabAssistantSampleModal from '@/features/lab-assistant/components/LabAssistantSampleModal'
 import ReportViewerModal from '@/components/Dashboard/ReportViewerModal'
+import ManageBookingModal from '@/features/patient/components/ManageBookingModal'
 import { BookingCard } from './BookingCard'
 
 const PAGE_SIZE = 12
@@ -222,6 +225,7 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
   const isAdmin = user?.role === ROLES.ADMIN
   const isLabAssistant = user?.role === ROLES.LAB_ASSISTANT
   const isLabOwner = user?.role === ROLES.LAB_OWNER
+  const isPatient = user?.role === ROLES.PATIENT
   const [search, setSearch] = useState('')
   const [view, setView] = useState('grid')
   const [page, setPage] = useState(1)
@@ -261,10 +265,21 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
   const [paymentSetting, setPaymentSetting] = useState(null)
   const [reportModalBooking, setReportModalBooking] = useState(null)
 
+  // Patient manage booking state
+  const [showManageModal, setShowManageModal] = useState(false)
+  const [manageBookingData, setManageBookingData] = useState(null)
+  const [manageAction, setManageAction] = useState('')
+  const [manageReason, setManageReason] = useState('')
+  const [manageCustomReason, setManageCustomReason] = useState('')
+  const [rescheduleData, setRescheduleData] = useState({ bookingDate: '', bookingTime: '' })
+  const [cancelling, setCancelling] = useState(false)
+  const [rescheduling, setRescheduling] = useState(false)
+
   const completedBookings = useMemo(() => bookings.filter((b) => b.status === 'Completed'), [bookings])
   const inProgressBookings = useMemo(() => bookings.filter((b) => !['Completed', 'Cancelled'].includes(b.status)), [bookings])
   const sampleCollectedBookings = useMemo(() => bookings.filter((b) => b.status === 'Sample Collected'), [bookings])
   const cancelledBookings = useMemo(() => bookings.filter((b) => b.status === 'Cancelled'), [bookings])
+  const upcomingBookings = useMemo(() => bookings.filter((b) => ['Pending', 'Assigned', 'Reached', 'Sample Collected', 'Processing', 'Report Ready'].includes(b.status)), [bookings])
 
   const filterCategories = useMemo(() => {
     const patientOptions = [...new Set(bookings.map((b) => b.patientName).filter(Boolean))].map((n) => ({ value: n, label: n }))
@@ -515,6 +530,59 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
     }
   }
 
+  const openManageModal = useCallback((booking) => {
+    setManageBookingData(booking)
+    setManageAction('')
+    setManageReason('')
+    setManageCustomReason('')
+    setRescheduleData({ bookingDate: '', bookingTime: '' })
+    setShowManageModal(true)
+  }, [])
+
+  const handleRescheduleChange = useCallback((e) => {
+    const { name, value } = e.target
+    setRescheduleData((prev) => ({ ...prev, [name]: value }))
+  }, [])
+
+  const handleCancelBooking = useCallback(async () => {
+    if (!manageBookingData) return
+    const reasonText = manageReason === 'Other' ? manageCustomReason : manageReason
+    if (!reasonText) return
+    try {
+      setCancelling(true)
+      await manageBooking(manageBookingData._id, { action: 'cancel', reason: reasonText })
+      toast.success('Booking cancelled successfully')
+      setShowManageModal(false)
+      setManageBookingData(null)
+      if (onRefresh) onRefresh()
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to cancel booking')
+    } finally {
+      setCancelling(false)
+    }
+  }, [manageBookingData, manageReason, manageCustomReason, onRefresh])
+
+  const handleRescheduleBooking = useCallback(async () => {
+    if (!manageBookingData || !rescheduleData.bookingDate || !rescheduleData.bookingTime) return
+    try {
+      setRescheduling(true)
+      await manageBooking(manageBookingData._id, {
+        action: 'reschedule',
+        newDate: rescheduleData.bookingDate,
+        newTime: rescheduleData.bookingTime,
+        reason: manageReason,
+      })
+      toast.success('Booking rescheduled successfully')
+      setShowManageModal(false)
+      setManageBookingData(null)
+      if (onRefresh) onRefresh()
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to reschedule booking')
+    } finally {
+      setRescheduling(false)
+    }
+  }, [manageBookingData, rescheduleData, manageReason, onRefresh])
+
   return (
     <section className="mx-auto max-w-[1500px] space-y-4 lg:space-y-5">
       {/* Mobile Header */}
@@ -577,67 +645,121 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
       {/* Stat Cards */}
       <div className="overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div className="flex gap-4 min-w-max">
-          <div className="snap-start min-w-[220px] shrink-0">
-            <StatCard
-              icon={Calendar}
-              borderColor="border-blue-200"
-              iconColor="text-blue-500"
-              cardBg="bg-blue-50"
-              title="Total Bookings"
-              value={bookings.length}
-              detailTop="All"
-              detailBottom="time"
-            />
-          </div>
-          <div className="snap-start min-w-[220px] shrink-0">
-            <StatCard
-              icon={CheckCircle2}
-              borderColor="border-emerald-200"
-              iconColor="text-emerald-500"
-              cardBg="bg-emerald-50"
-              title="Completed"
-              value={completedBookings.length}
-              detailTop={bookings.length ? `${((completedBookings.length / bookings.length) * 100).toFixed(1)}%` : '0%'}
-              detailBottom="of total"
-            />
-          </div>
-          <div className="snap-start min-w-[220px] shrink-0">
-            <StatCard
-              icon={Clock}
-              borderColor="border-amber-200"
-              iconColor="text-amber-500"
-              cardBg="bg-amber-50"
-              title="In Progress"
-              value={inProgressBookings.length}
-              detailTop={bookings.length ? `${((inProgressBookings.length / bookings.length) * 100).toFixed(1)}%` : '0%'}
-              detailBottom="of total"
-            />
-          </div>
-          <div className="snap-start min-w-[220px] shrink-0">
-            <StatCard
-              icon={FlaskConical}
-              borderColor="border-purple-200"
-              iconColor="text-purple-500"
-              cardBg="bg-purple-50"
-              title="Sample Collected"
-              value={sampleCollectedBookings.length}
-              detailTop={bookings.length ? `${((sampleCollectedBookings.length / bookings.length) * 100).toFixed(1)}%` : '0%'}
-              detailBottom="of total"
-            />
-          </div>
-          <div className="snap-start min-w-[220px] shrink-0">
-            <StatCard
-              icon={XCircle}
-              borderColor="border-red-200"
-              iconColor="text-red-500"
-              cardBg="bg-red-50"
-              title="Cancelled"
-              value={cancelledBookings.length}
-              detailTop={bookings.length ? `${((cancelledBookings.length / bookings.length) * 100).toFixed(1)}%` : '0%'}
-              detailBottom="of total"
-            />
-          </div>
-        </div>
+          {isPatient ? (
+            <>
+              <div className="snap-start min-w-[220px] shrink-0">
+                <StatCard
+                  icon={Calendar}
+                  borderColor="border-blue-200"
+                  iconColor="text-blue-500"
+                  cardBg="bg-blue-50"
+                  title="Total Bookings"
+                  value={bookings.length}
+                  detailTop="All"
+                  detailBottom="time"
+                />
+              </div>
+              <div className="snap-start min-w-[220px] shrink-0">
+                <StatCard
+                  icon={CheckCircle2}
+                  borderColor="border-emerald-200"
+                  iconColor="text-emerald-500"
+                  cardBg="bg-emerald-50"
+                  title="Completed"
+                  value={completedBookings.length}
+                  detailTop={bookings.length ? `${((completedBookings.length / bookings.length) * 100).toFixed(1)}%` : '0%'}
+                  detailBottom="of total"
+                />
+              </div>
+              <div className="snap-start min-w-[220px] shrink-0">
+                <StatCard
+                  icon={Clock}
+                  borderColor="border-amber-200"
+                  iconColor="text-amber-500"
+                  cardBg="bg-amber-50"
+                  title="Upcoming"
+                  value={upcomingBookings.length}
+                  detailTop={bookings.length ? `${((upcomingBookings.length / bookings.length) * 100).toFixed(1)}%` : '0%'}
+                  detailBottom="of total"
+                />
+              </div>
+              <div className="snap-start min-w-[220px] shrink-0">
+                <StatCard
+                  icon={XCircle}
+                  borderColor="border-red-200"
+                  iconColor="text-red-500"
+                  cardBg="bg-red-50"
+                  title="Cancelled"
+                  value={cancelledBookings.length}
+                  detailTop={bookings.length ? `${((cancelledBookings.length / bookings.length) * 100).toFixed(1)}%` : '0%'}
+                  detailBottom="of total"
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="snap-start min-w-[220px] shrink-0">
+                <StatCard
+                  icon={Calendar}
+                  borderColor="border-blue-200"
+                  iconColor="text-blue-500"
+                  cardBg="bg-blue-50"
+                  title="Total Bookings"
+                  value={bookings.length}
+                  detailTop="All"
+                  detailBottom="time"
+                />
+              </div>
+              <div className="snap-start min-w-[220px] shrink-0">
+                <StatCard
+                  icon={CheckCircle2}
+                  borderColor="border-emerald-200"
+                  iconColor="text-emerald-500"
+                  cardBg="bg-emerald-50"
+                  title="Completed"
+                  value={completedBookings.length}
+                  detailTop={bookings.length ? `${((completedBookings.length / bookings.length) * 100).toFixed(1)}%` : '0%'}
+                  detailBottom="of total"
+                />
+              </div>
+              <div className="snap-start min-w-[220px] shrink-0">
+                <StatCard
+                  icon={Clock}
+                  borderColor="border-amber-200"
+                  iconColor="text-amber-500"
+                  cardBg="bg-amber-50"
+                  title="In Progress"
+                  value={inProgressBookings.length}
+                  detailTop={bookings.length ? `${((inProgressBookings.length / bookings.length) * 100).toFixed(1)}%` : '0%'}
+                  detailBottom="of total"
+                />
+              </div>
+              <div className="snap-start min-w-[220px] shrink-0">
+                <StatCard
+                  icon={FlaskConical}
+                  borderColor="border-purple-200"
+                  iconColor="text-purple-500"
+                  cardBg="bg-purple-50"
+                  title="Sample Collected"
+                  value={sampleCollectedBookings.length}
+                  detailTop={bookings.length ? `${((sampleCollectedBookings.length / bookings.length) * 100).toFixed(1)}%` : '0%'}
+                  detailBottom="of total"
+                />
+              </div>
+              <div className="snap-start min-w-[220px] shrink-0">
+                <StatCard
+                  icon={XCircle}
+                  borderColor="border-red-200"
+                  iconColor="text-red-500"
+                  cardBg="bg-red-50"
+                  title="Cancelled"
+                  value={cancelledBookings.length}
+                  detailTop={bookings.length ? `${((cancelledBookings.length / bookings.length) * 100).toFixed(1)}%` : '0%'}
+                  detailBottom="of total"
+                />
+              </div>
+            </>
+          )}
       </div>
       <div className="flex justify-center gap-1.5 sm:hidden">
         <span className="w-2 h-2 rounded-full bg-primary"></span>
@@ -667,6 +789,7 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
                 onSelect={() => setSelectedBookingId(id)}
                 onEditLab={openEditModal}
                 onViewReport={handleViewReport}
+                onManageBooking={openManageModal}
                 onAssignAssistant={handleAssignAssistant}
                 assistants={assistants}
                 onMenuToggle={(e, b, cardId) => {
@@ -689,8 +812,13 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
           <table className="w-full min-w-[900px] text-sm">
             <thead className="bg-accent text-left text-muted-foreground sticky top-0">
               <tr>
-                <SortableHeader title="Patient" sortKey="patient" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, patient: true }))} />
-                {isLabAssistant ? (
+                <SortableHeader title={isPatient ? 'Test / Package' : 'Patient'} sortKey={isPatient ? 'test' : 'patient'} sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, [isPatient ? 'test' : 'patient']: true }))} />
+                {isPatient ? (
+                  <>
+                    <SortableHeader title="Date" sortKey="date" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, date: true }))} />
+                    <th className="px-4 py-3">Time</th>
+                  </>
+                ) : isLabAssistant ? (
                   <>
                     <SortableHeader title="Test" sortKey="test" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, test: true }))} />
                     <SortableHeader title="Date" sortKey="date" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, date: true }))} />
@@ -706,7 +834,7 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
                 )}
                 <SortableHeader title="Status" sortKey="status" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, status: true }))} />
                 <SortableHeader title="Payment" sortKey="payment" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, payment: true }))} />
-                {!isLabAssistant && <th className="px-4 py-3">Samples</th>}
+                {!isLabAssistant && !isPatient && <th className="px-4 py-3">Samples</th>}
                 <th className="px-4 py-3">Actions</th>
               </tr>
             </thead>
@@ -718,7 +846,45 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
                 const amount = booking.totalAmount || booking.test?.price || booking.package?.price || 0
                 return (
                   <tr key={id} onClick={() => setSelectedBookingId(id)} className="cursor-pointer border-t border-border transition hover:bg-accent/40">
-                    {isLabAssistant ? (
+                    {isPatient ? (
+                      <>
+                        {!hiddenColumns.test && (
+                        <td className="px-4 py-3">
+                          <div>
+                            <p className="text-sm font-medium text-foreground">
+                              {booking.test?.title || booking.package?.title || 'N/A'}
+                            </p>
+                            <p className="font-mono text-xs font-bold text-primary mt-0.5">
+                              ₹{(booking.test?.price || booking.package?.price || 0).toLocaleString('en-IN')}
+                            </p>
+                          </div>
+                        </td>
+                        )}
+                        {!hiddenColumns.date && (
+                        <td className="px-4 py-3">
+                          <span className="text-sm text-foreground">{booking.bookingDate}</span>
+                        </td>
+                        )}
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Clock size={10} />
+                            <span>{booking.bookingTime}</span>
+                          </div>
+                        </td>
+                        {!hiddenColumns.status && (
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-medium ${statusStyle.bg} ${statusStyle.text}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${statusStyle.dot}`}></span>{booking.status}
+                          </span>
+                        </td>
+                        )}
+                        {!hiddenColumns.payment && (
+                        <td className="px-4 py-3">
+                          <span className={`rounded-md px-2 py-0.5 text-[11px] font-medium ${paymentStyle.bg} ${paymentStyle.text}`}>{booking.paymentStatus}</span>
+                        </td>
+                        )}
+                      </>
+                    ) : isLabAssistant ? (
                       <>
                         {!hiddenColumns.patient && (
                         <td className="px-4 py-3">
@@ -1131,7 +1297,40 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
                     </button>
                   </>
                 )}
-                {!isAdmin && !isLabOwner && (
+                {isPatient && (
+                  <>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleViewReport(menuOpen.booking)
+                        setMenuOpen(null)
+                      }}
+                      disabled={!menuOpen.booking?.report}
+                      className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <span className="inline-flex items-center justify-center size-6 rounded-md bg-gray-100 text-gray-600">
+                        <Download size={14} />
+                      </span>
+                      View Report
+                    </button>
+                    {menuOpen.booking?.status !== BOOKING_STATUS.COMPLETED && menuOpen.booking?.status !== BOOKING_STATUS.CANCELLED && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          openManageModal(menuOpen.booking)
+                          setMenuOpen(null)
+                        }}
+                        className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left"
+                      >
+                        <span className="inline-flex items-center justify-center size-6 rounded-md bg-amber-100 text-amber-600">
+                          <Settings size={14} />
+                        </span>
+                        Manage Booking
+                      </button>
+                    )}
+                  </>
+                )}
+                {!isAdmin && !isLabOwner && !isPatient && (
                   <button onClick={(e) => { e.stopPropagation(); setSelectedBookingId(menuOpen.id); setMenuOpen(null) }} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left">
                     <Eye size={14} /> View
                   </button>
@@ -1243,6 +1442,26 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
             </Button>
           </div>
         </Modal>
+      )}
+
+      {/* Patient Manage Booking Modal */}
+      {isPatient && (
+        <ManageBookingModal
+          showManageModal={showManageModal}
+          setShowManageModal={setShowManageModal}
+          action={manageAction}
+          setAction={setManageAction}
+          reason={manageReason}
+          setReason={setManageReason}
+          customReason={manageCustomReason}
+          setCustomReason={setManageCustomReason}
+          rescheduleData={rescheduleData}
+          handleRescheduleChange={handleRescheduleChange}
+          handleCancel={handleCancelBooking}
+          handleReschedule={handleRescheduleBooking}
+          cancelling={cancelling}
+          rescheduling={rescheduling}
+        />
       )}
     </section>
   )
