@@ -15,47 +15,187 @@ import {
   Landmark,
 } from 'lucide-react'
 
-export const sidebarMenuByRole = {
-  admin: [
-    { label: 'Dashboard', icon: LayoutDashboard, route: '/admin' },
-    { label: 'Tests', icon: TestTube, route: '/admin/tests', permission: { resource: 'tests', action: 'read' } },
-    { label: 'Packages', icon: Package, route: '/admin/packages', permission: { resource: 'packages', action: 'read' } },
-    { label: 'Bookings', icon: Calendar, route: '/admin/bookings', permission: { resource: 'bookings', action: 'read' } },
-    { label: 'Payments', icon: CreditCard, route: '/admin/payments', permission: { resource: 'payments', action: 'read' } },
-    { label: 'Settlements', icon: Landmark, route: '/admin/settlements', permission: { resource: 'settlements', action: 'read' } },
-    { label: 'Lab Owners', icon: Building2, route: '/admin/lab-owners', permission: { resource: 'lab_owners', action: 'read' } },
-    { label: 'Reports', icon: FileText, route: '/admin/reports', permission: { resource: 'reports', action: 'read' } },
-    { label: 'Offers', icon: Tag, route: '/admin/offers', permission: { resource: 'offers', action: 'read' } },
-    { label: 'Users', icon: Users, route: '/admin/users', permission: { resource: 'users', action: 'read' } },
-    { label: 'Settings', icon: Settings, route: '/admin/settings', permission: { resource: 'roles', action: 'read' } },
-  ],
-  lab_owner: [
-    { label: 'Dashboard', icon: LayoutDashboard, route: '/lab-owner' },
-    { label: 'Assistants', icon: Users, route: '/lab-owner/assistants', permission: { resource: 'lab_assistants', action: 'read' } },
-    { label: 'Tests', icon: TestTube, route: '/lab-owner/tests', permission: { resource: 'tests', action: 'read' } },
-    { label: 'Packages', icon: Package, route: '/lab-owner/packages', permission: { resource: 'packages', action: 'read' } },
-    { label: 'Bookings', icon: Calendar, route: '/lab-owner/bookings', permission: { resource: 'bookings', action: 'read' } },
-    { label: 'Sample Pickups', icon: ClipboardList, route: '/lab-owner/sample-pickups', permission: { resource: 'bookings', action: 'read' } },
-    { label: 'Upload Reports', icon: Upload, route: '/lab-owner/upload-reports', permission: { resource: 'bookings', action: 'update' } },
-    { label: 'Lab Profile', icon: UserCog, route: '/lab-owner/lab-profile', permission: { resource: 'lab_owners', action: 'read' } },
-    { label: 'Payments', icon: CreditCard, route: '/lab-owner/payments', permission: { resource: 'payments', action: 'read' } },
-    { label: 'Settlements', icon: Landmark, route: '/lab-owner/settlements', permission: { resource: 'settlements', action: 'read' } },
-    { label: 'Reports', icon: FileText, route: '/lab-owner/reports', permission: { resource: 'reports', action: 'read' } },
-  ],
-  lab_assistant: [
-    { label: 'Dashboard', icon: LayoutDashboard, route: '/lab-assistant' },
-    { label: 'Tests', icon: TestTube, route: '/lab-assistant/tests', permission: { resource: 'tests', action: 'read' } },
-    { label: 'Packages', icon: Package, route: '/lab-assistant/packages', permission: { resource: 'packages', action: 'read' } },
-    { label: 'Sample Pickups', icon: ClipboardList, route: '/lab-assistant/sample-pickups', permission: { resource: 'bookings', action: 'read' } },
-    { label: 'Upload Reports', icon: Upload, route: '/lab-assistant/upload-reports', permission: { resource: 'bookings', action: 'update' } },
-    { label: 'Bookings', icon: Calendar, route: '/lab-assistant/bookings', permission: { resource: 'bookings', action: 'read' } },
-  ],
-  patient: [
-    { label: 'Dashboard', icon: LayoutDashboard, route: '/dashboard' },
-    { label: 'Tests', icon: TestTube, route: '/booking/tests', permission: { resource: 'tests', action: 'read' } },
-    { label: 'Packages', icon: Package, route: '/booking/packages', permission: { resource: 'packages', action: 'read' } },
-    { label: 'My Bookings', icon: Calendar, route: '/booking/bookings', permission: { resource: 'bookings', action: 'read' } },
-    { label: 'Upload Prescription', icon: Upload, route: '/upload-prescription', permission: { resource: 'bookings', action: 'create' } },
-    { label: 'Reports', icon: FileText, route: '/booking/reports', permission: { resource: 'reports', action: 'read' } },
-  ],
+const ROLE_PREFIX = {
+  admin: '/admin',
+  lab_owner: '/lab-owner',
+  lab_assistant: '/lab-assistant',
+  patient: '/booking',
+}
+
+const PATIENT_DASHBOARD_ROUTE = '/dashboard'
+
+export const ALL_MENU_ITEMS = [
+  {
+    label: 'Dashboard',
+    icon: LayoutDashboard,
+    permission: null,
+    routes: {
+      admin: '/admin',
+      lab_owner: '/lab-owner',
+      lab_assistant: '/lab-assistant',
+      patient: PATIENT_DASHBOARD_ROUTE,
+    },
+  },
+  {
+    label: 'Tests',
+    icon: TestTube,
+    permission: { resource: 'tests', action: 'read' },
+    routes: {
+      admin: '/admin/tests',
+      lab_owner: '/lab-owner/tests',
+      lab_assistant: '/lab-assistant/tests',
+      patient: '/booking/tests',
+    },
+  },
+  {
+    label: 'Packages',
+    icon: Package,
+    permission: { resource: 'packages', action: 'read' },
+    routes: {
+      admin: '/admin/packages',
+      lab_owner: '/lab-owner/packages',
+      lab_assistant: '/lab-assistant/packages',
+      patient: '/booking/packages',
+    },
+  },
+  {
+    label: 'Bookings',
+    icon: Calendar,
+    permission: { resource: 'bookings', action: 'read' },
+    routes: {
+      admin: '/admin/bookings',
+      lab_owner: '/lab-owner/bookings',
+      lab_assistant: '/lab-assistant/bookings',
+      patient: '/booking/bookings',
+    },
+  },
+  {
+    label: 'My Bookings',
+    icon: Calendar,
+    permission: { resource: 'bookings', action: 'read' },
+    routes: {
+      patient: '/booking/bookings',
+    },
+    roles: ['patient'],
+  },
+  {
+    label: 'Payments',
+    icon: CreditCard,
+    permission: { resource: 'payments', action: 'read' },
+    routes: {
+      admin: '/admin/payments',
+      lab_owner: '/lab-owner/payments',
+    },
+  },
+  {
+    label: 'Settlements',
+    icon: Landmark,
+    permission: { resource: 'settlements', action: 'read' },
+    routes: {
+      admin: '/admin/settlements',
+      lab_owner: '/lab-owner/settlements',
+      lab_assistant: '/lab-assistant/settlements',
+      patient: '/booking/settlements',
+    },
+  },
+  {
+    label: 'Lab Owners',
+    icon: Building2,
+    permission: { resource: 'lab_owners', action: 'read' },
+    routes: {
+      admin: '/admin/lab-owners',
+    },
+  },
+  {
+    label: 'Assistants',
+    icon: Users,
+    permission: { resource: 'lab_assistants', action: 'read' },
+    routes: {
+      lab_owner: '/lab-owner/assistants',
+    },
+  },
+  {
+    label: 'Reports',
+    icon: FileText,
+    permission: { resource: 'reports', action: 'read' },
+    routes: {
+      admin: '/admin/reports',
+      lab_owner: '/lab-owner/reports',
+      lab_assistant: '/lab-assistant/reports',
+      patient: '/booking/reports',
+    },
+  },
+  {
+    label: 'Offers',
+    icon: Tag,
+    permission: { resource: 'offers', action: 'read' },
+    routes: {
+      admin: '/admin/offers',
+    },
+  },
+  {
+    label: 'Users',
+    icon: Users,
+    permission: { resource: 'users', action: 'read' },
+    routes: {
+      admin: '/admin/users',
+    },
+  },
+  {
+    label: 'Sample Pickups',
+    icon: ClipboardList,
+    permission: { resource: 'bookings', action: 'read' },
+    routes: {
+      lab_owner: '/lab-owner/sample-pickups',
+      lab_assistant: '/lab-assistant/sample-pickups',
+    },
+  },
+  {
+    label: 'Upload Reports',
+    icon: Upload,
+    permission: { resource: 'bookings', action: 'update' },
+    routes: {
+      lab_owner: '/lab-owner/upload-reports',
+      lab_assistant: '/lab-assistant/upload-reports',
+    },
+  },
+  {
+    label: 'Upload Prescription',
+    icon: Upload,
+    permission: { resource: 'bookings', action: 'create' },
+    routes: {
+      patient: '/upload-prescription',
+    },
+  },
+  {
+    label: 'Lab Profile',
+    icon: UserCog,
+    permission: { resource: 'lab_owners', action: 'read' },
+    routes: {
+      lab_owner: '/lab-owner/lab-profile',
+    },
+  },
+  {
+    label: 'Settings',
+    icon: Settings,
+    permission: { resource: 'roles', action: 'read' },
+    routes: {
+      admin: '/admin/settings',
+    },
+  },
+]
+
+export const getMenuItemsForRole = (role, permissions) => {
+  return ALL_MENU_ITEMS.filter((item) => {
+    if (item.roles && !item.roles.includes(role)) return false
+    if (!item.routes[role]) return false
+    if (!item.permission) return true
+    const { resource, action } = item.permission
+    return permissions?.[resource]?.[action] === true
+  }).map((item) => ({
+    label: item.label,
+    icon: item.icon,
+    route: item.routes[role],
+    permission: item.permission,
+  }))
 }

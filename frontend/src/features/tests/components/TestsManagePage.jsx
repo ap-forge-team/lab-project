@@ -1,33 +1,22 @@
 import React, { useMemo, useState, useCallback, useContext, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import {
-  Activity,
   ArrowDown,
   ArrowUp,
   CheckCircle2,
   ChevronsUpDown,
   Copy,
-  Download,
-  Droplet,
   Eye,
   EyeOff,
   FlaskConical,
   Grid2X2,
-  HeartPulse,
   List,
   Pencil,
   Plus,
-  RefreshCw,
   Search,
-  Shield,
   ShoppingCart,
-  Syringe,
-  TestTube2,
   MoreVertical,
   Trash2,
-  Upload,
-  Wind,
-  X,
   XCircle,
 } from 'lucide-react'
 import Tooltip from '@mui/material/Tooltip'
@@ -45,19 +34,10 @@ import BookTestModal from '@/features/booking/components/BookTestModal'
 import { AuthContext } from '@/context/AuthContext'
 import { deleteTest } from '@/services/test.service'
 import { getIconById } from '@/components/icons/MedicalIcons'
+import { TestCard } from './TestCard'
 
 const PAGE_SIZE = 12
 const PAGE_SIZES = [12, 24, 48]
-const CARD_STYLES = [
-  { icon: Droplet, bg: 'bg-blue-50', text: 'text-blue-500' },
-  { icon: FlaskConical, bg: 'bg-teal-50', text: 'text-teal-500' },
-  { icon: Activity, bg: 'bg-orange-50', text: 'text-orange-500' },
-  { icon: Shield, bg: 'bg-violet-50', text: 'text-violet-500' },
-  { icon: Droplet, bg: 'bg-rose-50', text: 'text-rose-500' },
-  { icon: Syringe, bg: 'bg-amber-50', text: 'text-amber-500' },
-  { icon: HeartPulse, bg: 'bg-sky-50', text: 'text-sky-500' },
-  { icon: Wind, bg: 'bg-indigo-50', text: 'text-indigo-500' },
-]
 
 const ICON_STYLES = {
   blood: { bg: 'bg-red-50', text: 'text-red-500' },
@@ -524,14 +504,22 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
       </div>
 
       {isLoading ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">Loading tests…</div> : isError ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-destructive">Unable to load tests. Please try again.</div> : visibleTests.length === 0 ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">No tests match the selected filters.</div> : view === 'grid' ? (
-        <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pb-2">
-        <div className="flex gap-4 min-w-max lg:min-w-0">{visibleTests.map((test, index) => {
-          const Icon = getTestIcon(test)
-          const style = getTestIconStyle(test)
-          const catColor = getCategoryColor(getCategory(test))
-          return <article key={test._id || test.id || `${getTitle(test)}-${index}`} className="w-[280px] lg:w-[calc((100%-48px)/4)] shrink-0 flex min-h-[250px] flex-col rounded-xl border border-border bg-white p-4 shadow-sm transition hover:shadow-md"><div className="flex gap-3"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${style.bg} ${style.text}`}><Icon size={22} /></span><div className="min-w-0"><h2 className="truncate font-semibold text-foreground" title={getTitle(test)}>{getTitle(test)}</h2><p className="mt-0.5 text-xs text-muted-foreground">{test.code || test.testCode || '—'}</p><span className={`mt-1.5 inline-block rounded-md px-2 py-0.5 text-xs font-medium ${catColor.bg} ${catColor.text}`}>{getCategory(test)}</span></div></div><dl className="mt-3.5 space-y-2 text-xs"><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Sample Type</dt><dd className="text-right text-foreground">{getValue(test, ['sampleType', 'sample'])}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Method</dt><dd className="text-right text-foreground">{getValue(test, ['method'])}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Price</dt><dd className="text-right font-medium text-foreground">{formatPrice(getValue(test, ['price'], null))}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">TAT</dt><dd className="text-right text-foreground">{getValue(test, ['reportTime', 'tat', 'turnaroundTime'])}</dd></div></dl><div className="mt-auto flex items-center justify-between border-t border-border pt-3"><span className={`rounded-md px-2 py-1 text-xs font-medium ${isActive(test) ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>{isActive(test) ? 'Active' : 'Inactive'}</span><div className="flex items-center gap-1"><Tooltip title="View" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); setSelectedTestId(getTestId(test, index)) }} className="p-1.5 text-muted-foreground hover:text-foreground rounded transition"><Eye size={15} /></button></Tooltip>{isPatient && <Tooltip title="Book" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); setBookModal({ open: true, test }) }} className="p-1.5 text-primary hover:bg-primary/10 rounded transition"><ShoppingCart size={15} /></button></Tooltip>}<Can resource="tests" action="update"><Tooltip title="Edit" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); handleEdit(test) }} className="p-1.5 text-muted-foreground hover:text-foreground rounded transition"><Pencil size={15} /></button></Tooltip></Can><Can resource="tests" action="create"><Tooltip title="Duplicate" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); handleDuplicate(test) }} className="p-1.5 text-muted-foreground hover:text-foreground rounded transition"><Copy size={15} /></button></Tooltip></Can><Can resource="tests" action="delete"><Tooltip title="Delete" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); handleDelete(test) }} className="p-1.5 text-muted-foreground hover:text-red-500 rounded transition"><Trash2 size={15} /></button></Tooltip></Can></div></div></article>
-        })}
-        </div>
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {visibleTests.map((test, index) => {
+            const id = getTestId(test, index)
+            return (
+              <TestCard
+                key={id}
+                test={test}
+                isPatient={isPatient}
+                onView={() => setSelectedTestId(id)}
+                onEdit={isPatient ? undefined : () => handleEdit(test)}
+                onDuplicate={isPatient ? undefined : () => handleDuplicate(test)}
+                onDelete={isPatient ? undefined : () => handleDelete(test)}
+                onBook={isPatient ? () => setBookModal({ open: true, test }) : undefined}
+              />
+            )
+          })}
         </div>
       ) : (
         <div className="overflow-y-auto max-h-[calc(100vh-250px)] pb-2 pr-1">

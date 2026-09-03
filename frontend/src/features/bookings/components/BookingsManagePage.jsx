@@ -760,6 +760,7 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
               </div>
             </>
           )}
+        </div>
       </div>
       <div className="flex justify-center gap-1.5 sm:hidden">
         <span className="w-2 h-2 rounded-full bg-primary"></span>

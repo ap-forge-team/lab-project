@@ -64,7 +64,7 @@ const SidebarPage = ({ page: pageProp }) => {
   const [search, setSearch] = useState('')
   const config = getSidebarPage(user?.role, slug)
 
-  // Handle settlements page separately (not in sidebarPages config)
+  // Handle settlements page separately (uses custom SettlementDashboard component)
   if (slug === 'settlements') {
     return (
       <DashboardLayout>

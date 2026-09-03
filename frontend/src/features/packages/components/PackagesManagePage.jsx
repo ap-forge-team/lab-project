@@ -29,6 +29,7 @@ import FilterButton from '@/components/ui/FilterButton'
 import Pagination from '@/components/ui/Pagination'
 import CreatePackageModal from './CreatePackageModal'
 import { deletePackage } from '@/services/package.service'
+import { PackageCard } from './PackageCard'
 
 const PAGE_SIZE = 12
 const PAGE_SIZES = [12, 24, 48]
@@ -434,97 +435,20 @@ const PackagesManagePage = ({ packages, isLoading, isError, onRefresh }) => {
       </div>
 
       {isLoading ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">Loading packages…</div> : isError ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-destructive">Unable to load packages. Please try again.</div> : visiblePackages.length === 0 ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">No packages match the selected filters.</div> : view === 'grid' ? (
-        <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pb-2">
-        <div className="flex gap-5 min-w-max lg:min-w-0">{visiblePackages.map((pkg, index) => {
-          const cardWidth = 'w-[280px] lg:w-[calc((100%-60px)/4)]'
-          const id = getPackageId(pkg, index)
-          const catColor = getCategoryColor(getCategory(pkg))
-          const testsList = (pkg.testsIncluded || []).slice(0, 4)
-          return (
-            <article
-              key={id}
-              className={`${cardWidth} shrink-0 flex flex-col rounded-xl border border-border bg-white shadow-sm transition hover:shadow-md overflow-hidden`}
-            >
-              {/* Image */}
-              <div className="relative h-44 bg-gradient-to-br from-blue-50 to-blue-100 overflow-hidden">
-                {pkg.image ? (
-                  <img src={pkg.image} alt={getTitle(pkg)} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Package size={48} className="text-blue-200" />
-                  </div>
-                )}
-                <span className={`absolute top-2.5 left-2.5 rounded-md px-2 py-0.5 text-[10px] font-semibold ${isActive(pkg) ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'}`}>
-                  {isActive(pkg) ? 'Active' : 'Inactive'}
-                </span>
-              </div>
-
-              {/* Content */}
-              <div className="flex flex-col flex-1 p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-semibold text-foreground text-sm leading-snug" title={getTitle(pkg)}>{getTitle(pkg)}</h3>
-                  <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-medium ${catColor.bg} ${catColor.text}`}>{getCategory(pkg)}</span>
-                </div>
-
-                <div className="mt-2">
-                  <span className="text-lg font-bold text-foreground">{formatPrice(pkg.price)}</span>
-                </div>
-
-                <p className="mt-1 text-xs text-muted-foreground">{pkg.testsIncluded?.length || 0} Tests Included</p>
-
-                {/* Test list */}
-                {testsList.length > 0 && (
-                  <ul className="mt-3 space-y-1.5">
-                    {testsList.map((t) => {
-                  const testName = typeof t === 'object' ? (t.title || t.name) : ''
-                      if (!testName) return null
-                      return (
-                        <li key={typeof t === 'object' ? t._id : t} className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span className="w-4 h-4 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                            <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                          </span>
-                          <span className="truncate">{testName}</span>
-                        </li>
-                      )
-                    })}
-                    {(pkg.testsIncluded?.length || 0) > 4 && (
-                      <li className="text-[11px] text-primary font-medium pl-6">+{pkg.testsIncluded.length - 4} more tests</li>
-                    )}
-                  </ul>
-                )}
-
-                {/* Footer */}
-                <div className="mt-auto pt-4 border-t border-border flex items-center justify-between">
-                  <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/><path d="M5 8l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    NABL Accredited Labs
-                  </span>
-                  <div className="flex items-center gap-1">
-                    <Tooltip title="View" arrow placement="top">
-                      <button type="button" onClick={(e) => { e.stopPropagation(); setSelectedPackageId(id) }} className="rounded p-1 text-muted-foreground hover:text-primary hover:bg-primary/5 transition"><Eye size={14} /></button>
-                    </Tooltip>
-                    <Can resource="packages" action="update">
-                      <Tooltip title="Edit" arrow placement="top">
-                        <button type="button" onClick={(e) => { e.stopPropagation(); handleEdit(pkg) }} className="rounded p-1 text-muted-foreground hover:text-primary hover:bg-primary/5 transition"><Pencil size={14} /></button>
-                      </Tooltip>
-                    </Can>
-                    <Can resource="packages" action="create">
-                      <Tooltip title="Duplicate" arrow placement="top">
-                        <button type="button" onClick={(e) => { e.stopPropagation(); handleDuplicate(pkg) }} className="rounded p-1 text-muted-foreground hover:text-primary hover:bg-primary/5 transition"><Copy size={14} /></button>
-                      </Tooltip>
-                    </Can>
-                    <Can resource="packages" action="delete">
-                      <Tooltip title="Delete" arrow placement="top">
-                        <button type="button" onClick={(e) => { e.stopPropagation(); handleDelete(pkg) }} className="rounded p-1 text-muted-foreground hover:text-red-500 hover:bg-red-50 transition"><Trash2 size={14} /></button>
-                      </Tooltip>
-                    </Can>
-                  </div>
-                </div>
-              </div>
-            </article>
-          )
-        })}
-        </div>
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {visiblePackages.map((pkg, index) => {
+            const id = getPackageId(pkg, index)
+            return (
+              <PackageCard
+                key={id}
+                pkg={pkg}
+                onView={() => setSelectedPackageId(id)}
+                onEdit={() => handleEdit(pkg)}
+                onDuplicate={() => handleDuplicate(pkg)}
+                onDelete={() => handleDelete(pkg)}
+              />
+            )
+          })}
         </div>
       ) : (
         <div className="overflow-y-auto max-h-[calc(100vh-250px)] pb-2 pr-1">
