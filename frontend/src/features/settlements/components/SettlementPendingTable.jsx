@@ -181,10 +181,10 @@ const SettlementPendingTable = ({
       {sortedBookings.length === 0 ? (
         <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">No pending settlements found.</div>
       ) : (
-        <div className="overflow-y-auto max-h-[calc(100vh-400px)] pb-2 pr-1">
-          <div className="rounded-xl border border-border bg-white">
+        <div className="rounded-xl border border-border bg-white overflow-hidden">
+          <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full min-w-[1000px] text-sm">
-              <thead className="bg-accent text-left text-muted-foreground sticky top-0">
+              <thead className="bg-accent text-left text-muted-foreground">
                 <tr>
                   {isAdmin && (
                     <th className="px-4 py-3 w-10">
@@ -300,21 +300,16 @@ const SettlementPendingTable = ({
       )}
 
       {/* Pagination */}
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">
-          Showing {Math.min((page - 1) * pageSize + 1, sortedBookings.length)} to {Math.min(page * pageSize, sortedBookings.length)} of {sortedBookings.length} results
-        </p>
-        <Pagination
-          page={page}
-          totalPages={totalPages}
-          pageSize={pageSize}
-          totalItems={sortedBookings.length}
-          onPageChange={setPage}
-          onPageSizeChange={(size) => { setPageSize(size); setPage(1) }}
-          pageSizes={PAGE_SIZES}
-          itemName="settlements"
-        />
-      </div>
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        pageSize={pageSize}
+        totalItems={sortedBookings.length}
+        onPageChange={setPage}
+        onPageSizeChange={(size) => { setPageSize(size); setPage(1) }}
+        pageSizes={PAGE_SIZES}
+        itemName="settlements"
+      />
     </div>
   )
 }

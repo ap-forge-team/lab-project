@@ -151,7 +151,7 @@ app.use("/api/payment-setting", paymentSettingRoutes);
 app.use("/api/payment-statistic", paymentStatisticRoutes);
 app.use("/api/commission", commissionRoutes);
 app.use("/api/export", exportSettlementHistoryRoute);
-app.use("/api/payment-settlement", paymentSettlementRoute);
+app.use("/api/settlements", paymentSettlementRoute);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/subcategories", subcategoryRoutes);
 

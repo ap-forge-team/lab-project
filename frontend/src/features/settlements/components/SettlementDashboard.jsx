@@ -7,6 +7,7 @@ import SettlementStatsGrid from './SettlementStatsGrid'
 import SettlementFilters from './SettlementFilters'
 import SettlementPendingTable from './SettlementPendingTable'
 import SettlementHistoryTable from './SettlementHistoryTable'
+import SettlementDetailModal from './SettlementDetailModal'
 import SettlementCharts from './SettlementCharts'
 import SettlementFooter from './SettlementFooter'
 import { Spinner } from '@/components/ui/Loader'
@@ -22,6 +23,7 @@ const SettlementDashboard = () => {
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
   const [selectedBookings, setSelectedBookings] = useState([])
+  const [selectedBooking, setSelectedBooking] = useState(null)
 
   // Fetch statistics
   const { data: statsData, isLoading: statsLoading } = useQuery({
@@ -44,9 +46,9 @@ const SettlementDashboard = () => {
     enabled: !!user?.role && activeTab === 'history',
   })
 
-  const statistics = statsData?.data || {}
-  const pendingBookings = pendingData?.data || []
-  const history = historyData?.data || []
+  const statistics = statsData?.data?.statistics || statsData?.data || {}
+  const pendingBookings = pendingData?.data?.bookings || pendingData?.data || []
+  const history = historyData?.data?.history || historyData?.data || []
 
   const handleRefresh = useCallback(() => {
     if (activeTab === 'pending') {
@@ -57,8 +59,7 @@ const SettlementDashboard = () => {
   }, [activeTab, refetchPending, refetchHistory])
 
   const handleViewDetails = useCallback((item) => {
-    // TODO: Open detail modal
-    console.log('View details:', item)
+    setSelectedBooking(item)
   }, [])
 
   const handleBulkSettlement = useCallback(() => {
@@ -165,6 +166,14 @@ const SettlementDashboard = () => {
 
       {/* Footer */}
       <SettlementFooter statistics={statistics} isAdmin={isAdmin} />
+
+      {/* Detail Modal */}
+      <SettlementDetailModal
+        open={!!selectedBooking}
+        onClose={() => setSelectedBooking(null)}
+        booking={selectedBooking}
+        isAdmin={isAdmin}
+      />
     </section>
   )
 }
