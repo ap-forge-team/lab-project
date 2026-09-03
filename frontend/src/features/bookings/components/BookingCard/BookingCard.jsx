@@ -48,7 +48,7 @@ const BookingCard = ({
   return (
     <article
       onClick={() => onSelect?.(booking)}
-      className="flex flex-col rounded-xl border border-border bg-white shadow-sm transition hover:shadow-md overflow-hidden cursor-pointer"
+      className="flex flex-col rounded-xl border border-border bg-white shadow-sm transition hover:shadow-md cursor-pointer"
     >
       <BookingCardHeader
         patientName={booking.patientName}
