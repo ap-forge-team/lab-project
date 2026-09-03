@@ -1,13 +1,16 @@
-import React, { useMemo, useState, useCallback, useContext } from 'react'
+import React, { useMemo, useState, useCallback, useContext, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import {
   Activity,
+  ArrowDown,
+  ArrowUp,
   CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
+  ChevronsUpDown,
   Copy,
   Download,
   Droplet,
   Eye,
+  EyeOff,
   FlaskConical,
   Grid2X2,
   HeartPulse,
@@ -29,12 +32,14 @@ import {
 } from 'lucide-react'
 import Tooltip from '@mui/material/Tooltip'
 import { toast } from 'react-toastify'
+import { useSearchParams } from 'react-router-dom'
 import Can from '@/components/Can'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
 import ConfirmModal from '@/components/ui/ConfirmModal'
 import FilterPanel from '@/components/ui/FilterPanel'
 import FilterButton from '@/components/ui/FilterButton'
+import Pagination from '@/components/ui/Pagination'
 import AddTestModal from './AddTestModal'
 import BookTestModal from '@/features/booking/components/BookTestModal'
 import { AuthContext } from '@/context/AuthContext'
@@ -112,11 +117,21 @@ const formatPrice = (value) => {
   return Number.isFinite(numeric) ? `₹${numeric.toLocaleString('en-IN')}` : '—'
 }
 
-const StatCard = ({ icon: Icon, iconClass, title, value, detail }) => (
-  <div className="rounded-xl border border-border bg-white p-3 shadow-sm sm:p-4">
+const StatCard = ({ icon: Icon, borderColor, iconColor, cardBg, title, value, detailTop, detailBottom }) => (
+  <div className={`rounded-2xl border ${borderColor} px-4 py-3 ${cardBg}`}>
     <div className="flex items-center gap-3">
-      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${iconClass}`}>{React.createElement(Icon, { size: 20 })}</span>
-      <div><p className="text-xs text-muted-foreground">{title}</p><p className="mt-0.5 text-xl font-bold text-foreground">{value}</p><p className="mt-0.5 text-[11px] text-muted-foreground">{detail}</p></div>
+      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border ${borderColor} ${iconColor}`}>
+        {React.createElement(Icon, { size: 18 })}
+      </span>
+      <div className="min-w-0 flex-1 space-y-0">
+        <p className="text-xs text-muted-foreground">{title}</p>
+        <p className="text-xl font-bold leading-tight text-foreground">{value}</p>
+      </div>
+      <div className="h-8 w-px shrink-0 self-stretch my-auto bg-border" />
+      <div className="shrink-0 text-right leading-tight">
+        <p className="text-xs text-muted-foreground">{detailTop}</p>
+        <p className="text-xs text-muted-foreground">{detailBottom}</p>
+      </div>
     </div>
   </div>
 )
@@ -164,8 +179,48 @@ const TestDetailsPanel = ({ test, style, catColor, onClose }) => {
   )
 }
 
+const SortableHeader = ({ title, sortKey, sortConfig, onSort, onHide }) => {
+  const [open, setOpen] = useState(false)
+  const currentSort = sortConfig?.key === sortKey ? sortConfig.direction : null
+
+  const handleSort = (direction) => {
+    onSort(sortKey, direction)
+    setOpen(false)
+  }
+
+  return (
+    <th className="px-4 py-3 relative">
+      <div className="flex items-center gap-1">
+        <span>{title}</span>
+        <button type="button" onClick={() => setOpen(!open)} className="p-0.5 rounded hover:bg-accent">
+          {currentSort === 'asc' ? <ArrowUp size={14} /> : currentSort === 'desc' ? <ArrowDown size={14} /> : <ChevronsUpDown size={14} className="text-muted-foreground" />}
+        </button>
+      </div>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-[99]" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 top-full mt-1 bg-white border border-border rounded-lg shadow-lg py-1 z-[100] min-w-[120px]">
+            <button onClick={() => handleSort('asc')} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left">
+              <ArrowUp size={14} /> Asc
+            </button>
+            <button onClick={() => handleSort('desc')} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left">
+              <ArrowDown size={14} /> Desc
+            </button>
+            {onHide && (
+              <button onClick={() => { onHide(); setOpen(false) }} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left">
+                <EyeOff size={14} /> Hide
+              </button>
+            )}
+          </div>
+        </>
+      )}
+    </th>
+  )
+}
+
 const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
   const { user } = useContext(AuthContext)
+  const [searchParams, setSearchParams] = useSearchParams()
   const isPatient = user?.role === 'patient'
   const [search, setSearch] = useState('')
   const [view, setView] = useState('grid')
@@ -179,6 +234,25 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
   const [menuOpen, setMenuOpen] = useState(null)
   const [activeFilters, setActiveFilters] = useState({})
   const [filterPanelOpen, setFilterPanelOpen] = useState(null)
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: null })
+  const [hiddenColumns, setHiddenColumns] = useState({})
+
+  const handleSort = useCallback((key, direction) => {
+    setSortConfig((prev) => {
+      if (prev.key === key && prev.direction === direction) {
+        return { key: null, direction: null }
+      }
+      return { key, direction }
+    })
+  }, [])
+
+  useEffect(() => {
+    if (searchParams.get('modal') === 'create-test') {
+      setShowCreate(true)
+      searchParams.delete('modal')
+      setSearchParams(searchParams, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
 
   const categories = useMemo(() => [...new Set(tests.map(getCategory))].sort(), [tests])
   const activeTests = useMemo(() => tests.filter(isActive), [tests])
@@ -231,9 +305,22 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
     setPage(1)
   }, [])
 
+  const getSortValue = useCallback((test, key) => {
+    switch (key) {
+      case 'name': return getTitle(test).toLowerCase()
+      case 'code': return (test.code || test.testCode || '').toLowerCase()
+      case 'category': return getCategory(test).toLowerCase()
+      case 'sampleType': return getValue(test, ['sampleType', 'sample'], '').toLowerCase()
+      case 'price': return Number(getValue(test, ['price'], 0)) || 0
+      case 'tat': return getValue(test, ['reportTime', 'tat', 'turnaroundTime'], '')
+      case 'status': return isActive(test) ? 'active' : 'inactive'
+      default: return ''
+    }
+  }, [])
+
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase()
-    return tests.filter((test) => {
+    let result = tests.filter((test) => {
       const matchesSearch = !term || `${getTitle(test)} ${test.code || ''} ${getCategory(test)}`.toLowerCase().includes(term)
       if (!matchesSearch) return false
       if (activeFilters.name?.length && !activeFilters.name.includes(getTitle(test))) return false
@@ -248,12 +335,23 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
       }
       return true
     })
-  }, [tests, search, activeFilters])
+
+    if (sortConfig.key && sortConfig.direction) {
+      result = [...result].sort((a, b) => {
+        const aVal = getSortValue(a, sortConfig.key)
+        const bVal = getSortValue(b, sortConfig.key)
+        if (typeof aVal === 'number' && typeof bVal === 'number') {
+          return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal
+        }
+        const comparison = String(aVal).localeCompare(String(bVal))
+        return sortConfig.direction === 'asc' ? comparison : -comparison
+      })
+    }
+
+    return result
+  }, [tests, search, activeFilters, sortConfig, getSortValue])
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const visibleTests = filtered.slice((page - 1) * pageSize, page * pageSize)
-  const pageNumbers = totalPages <= 5
-    ? Array.from({ length: totalPages }, (_, index) => index + 1)
-    : [1, 2, 3, 'ellipsis', totalPages]
 
   const handleEdit = useCallback((test) => {
     setEditModal({ open: true, test, mode: 'edit' })
@@ -290,12 +388,27 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
 
   return (
     <section className="mx-auto max-w-[1500px] space-y-4 lg:space-y-5">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-center justify-between gap-3 sm:hidden">
+        <h1 className="text-2xl font-bold text-foreground">Tests</h1>
+        {isPatient ? (
+          <Button onClick={() => setBookModal({ open: true, test: null })} className="shrink-0">
+            <ShoppingCart size={18} className="mr-2" />Book a Test
+          </Button>
+        ) : (
+          <Can resource="tests" action="create">
+            <Button onClick={() => setShowCreate(true)} className="shrink-0">
+              <Plus size={18} className="mr-2" />Add Test
+            </Button>
+          </Can>
+        )}
+      </div>
+
+      <div className="hidden sm:flex items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Tests</h1>
           <p className="mt-1 text-sm text-muted-foreground">Manage and view all laboratory tests</p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2">
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} placeholder="Search tests by name or code..." className="pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary w-64" />
@@ -316,12 +429,12 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
             </Tooltip>
           </div>
           {isPatient ? (
-            <Button onClick={() => setBookModal({ open: true, test: null })}>
+            <Button onClick={() => setBookModal({ open: true, test: null })} className="shrink-0">
               <ShoppingCart size={18} className="mr-2" />Book a Test
             </Button>
           ) : (
             <Can resource="tests" action="create">
-              <Button onClick={() => setShowCreate(true)}>
+              <Button onClick={() => setShowCreate(true)} className="shrink-0">
                 <Plus size={18} className="mr-2" />Add Test
               </Button>
             </Can>
@@ -329,33 +442,110 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard icon={List} iconClass="bg-blue-50 text-primary" title="Total Tests" value={tests.length} detail="All time" />
-        <StatCard icon={CheckCircle2} iconClass="bg-emerald-50 text-emerald-500" title="Active Tests" value={activeTests.length} detail={tests.length ? `${((activeTests.length / tests.length) * 100).toFixed(2)}% of total` : '0% of total'} />
-        <StatCard icon={XCircle} iconClass="bg-orange-50 text-orange-500" title="Inactive Tests" value={tests.length - activeTests.length} detail={tests.length ? `${(((tests.length - activeTests.length) / tests.length) * 100).toFixed(2)}% of total` : '0% of total'} />
-        <StatCard icon={FlaskConical} iconClass="bg-violet-50 text-violet-500" title="Categories" value={categories.length} detail="Total categories" />
+      <div className="flex sm:hidden items-center gap-2">
+        <div className="relative flex-1">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} placeholder="Search tests by name or code..." className="w-full pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
+        </div>
+        <FilterButton
+          onClick={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect()
+            setFilterPanelOpen({ top: rect.bottom + 8, left: Math.max(16, rect.right - 680) })
+          }}
+          activeCount={activeFilterCount}
+        />
+        <div className="flex items-center rounded-lg border border-border p-1">
+          <Tooltip title="Grid View" arrow placement="top">
+            <button type="button" aria-label="Grid view" onClick={() => { setView('grid'); setSelectedTestId(null) }} className={`rounded p-1.5 ${view === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><Grid2X2 size={18} /></button>
+          </Tooltip>
+          <Tooltip title="List View" arrow placement="top">
+            <button type="button" aria-label="List view" onClick={() => setView('list')} className={`rounded p-1.5 ${view === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
+          </Tooltip>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex gap-4 min-w-max">
+          <div className="snap-start min-w-[220px] shrink-0">
+            <StatCard
+              icon={List}
+              borderColor="border-blue-200"
+              iconColor="text-blue-500"
+              cardBg="bg-blue-50"
+              title="Total Tests"
+              value={tests.length}
+              detailTop="All"
+              detailBottom="time"
+            />
+          </div>
+          <div className="snap-start min-w-[220px] shrink-0">
+            <StatCard
+              icon={CheckCircle2}
+              borderColor="border-emerald-200"
+              iconColor="text-emerald-500"
+              cardBg="bg-emerald-50"
+              title="Active Tests"
+              value={activeTests.length}
+              detailTop={tests.length ? `${((activeTests.length / tests.length) * 100).toFixed(2)}%` : '0%'}
+              detailBottom="of total"
+            />
+          </div>
+          <div className="snap-start min-w-[220px] shrink-0">
+            <StatCard
+              icon={XCircle}
+              borderColor="border-orange-200"
+              iconColor="text-orange-500"
+              cardBg="bg-orange-50"
+              title="Inactive Tests"
+              value={tests.length - activeTests.length}
+              detailTop={tests.length ? `${(((tests.length - activeTests.length) / tests.length) * 100).toFixed(2)}%` : '0%'}
+              detailBottom="of total"
+            />
+          </div>
+          <div className="snap-start min-w-[220px] shrink-0">
+            <StatCard
+              icon={FlaskConical}
+              borderColor="border-violet-200"
+              iconColor="text-violet-500"
+              cardBg="bg-violet-50"
+              title="Categories"
+              value={categories.length}
+              detailTop="Total"
+              detailBottom="categories"
+            />
+          </div>
+        </div>
+      </div>
+      <div className="flex justify-center gap-1.5 sm:hidden">
+        <span className="w-2 h-2 rounded-full bg-primary"></span>
+        <span className="w-2 h-2 rounded-full bg-border"></span>
+        <span className="w-2 h-2 rounded-full bg-border"></span>
+        <span className="w-2 h-2 rounded-full bg-border"></span>
       </div>
 
       {isLoading ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">Loading tests…</div> : isError ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-destructive">Unable to load tests. Please try again.</div> : visibleTests.length === 0 ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">No tests match the selected filters.</div> : view === 'grid' ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">{visibleTests.map((test, index) => {
+        <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pb-2">
+        <div className="flex gap-4 min-w-max lg:min-w-0">{visibleTests.map((test, index) => {
           const Icon = getTestIcon(test)
           const style = getTestIconStyle(test)
           const catColor = getCategoryColor(getCategory(test))
-          return <article key={test._id || test.id || `${getTitle(test)}-${index}`} className="flex min-h-[250px] flex-col rounded-xl border border-border bg-white p-4 shadow-sm transition hover:shadow-md"><div className="flex gap-3"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${style.bg} ${style.text}`}><Icon size={22} /></span><div className="min-w-0"><h2 className="truncate font-semibold text-foreground" title={getTitle(test)}>{getTitle(test)}</h2><p className="mt-0.5 text-xs text-muted-foreground">{test.code || test.testCode || '—'}</p><span className={`mt-1.5 inline-block rounded-md px-2 py-0.5 text-xs font-medium ${catColor.bg} ${catColor.text}`}>{getCategory(test)}</span></div></div><dl className="mt-3.5 space-y-2 text-xs"><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Sample Type</dt><dd className="text-right text-foreground">{getValue(test, ['sampleType', 'sample'])}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Method</dt><dd className="text-right text-foreground">{getValue(test, ['method'])}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Price</dt><dd className="text-right font-medium text-foreground">{formatPrice(getValue(test, ['price'], null))}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">TAT</dt><dd className="text-right text-foreground">{getValue(test, ['reportTime', 'tat', 'turnaroundTime'])}</dd></div></dl><div className="mt-auto flex items-center justify-between border-t border-border pt-3"><span className={`rounded-md px-2 py-1 text-xs font-medium ${isActive(test) ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>{isActive(test) ? 'Active' : 'Inactive'}</span><div className="flex items-center gap-1"><Tooltip title="View" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); setSelectedTestId(getTestId(test, index)) }} className="p-1.5 text-muted-foreground hover:text-foreground rounded transition"><Eye size={15} /></button></Tooltip>{isPatient && <Tooltip title="Book" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); setBookModal({ open: true, test }) }} className="p-1.5 text-primary hover:bg-primary/10 rounded transition"><ShoppingCart size={15} /></button></Tooltip>}<Can resource="tests" action="update"><Tooltip title="Edit" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); handleEdit(test) }} className="p-1.5 text-muted-foreground hover:text-foreground rounded transition"><Pencil size={15} /></button></Tooltip></Can><Can resource="tests" action="create"><Tooltip title="Duplicate" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); handleDuplicate(test) }} className="p-1.5 text-muted-foreground hover:text-foreground rounded transition"><Copy size={15} /></button></Tooltip></Can><Can resource="tests" action="delete"><Tooltip title="Delete" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); handleDelete(test) }} className="p-1.5 text-muted-foreground hover:text-red-500 rounded transition"><Trash2 size={15} /></button></Tooltip></Can></div></div></article>
-        })}</div>
+          return <article key={test._id || test.id || `${getTitle(test)}-${index}`} className="w-[280px] lg:w-[calc((100%-48px)/4)] shrink-0 flex min-h-[250px] flex-col rounded-xl border border-border bg-white p-4 shadow-sm transition hover:shadow-md"><div className="flex gap-3"><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${style.bg} ${style.text}`}><Icon size={22} /></span><div className="min-w-0"><h2 className="truncate font-semibold text-foreground" title={getTitle(test)}>{getTitle(test)}</h2><p className="mt-0.5 text-xs text-muted-foreground">{test.code || test.testCode || '—'}</p><span className={`mt-1.5 inline-block rounded-md px-2 py-0.5 text-xs font-medium ${catColor.bg} ${catColor.text}`}>{getCategory(test)}</span></div></div><dl className="mt-3.5 space-y-2 text-xs"><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Sample Type</dt><dd className="text-right text-foreground">{getValue(test, ['sampleType', 'sample'])}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Method</dt><dd className="text-right text-foreground">{getValue(test, ['method'])}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">Price</dt><dd className="text-right font-medium text-foreground">{formatPrice(getValue(test, ['price'], null))}</dd></div><div className="flex justify-between gap-3"><dt className="text-muted-foreground">TAT</dt><dd className="text-right text-foreground">{getValue(test, ['reportTime', 'tat', 'turnaroundTime'])}</dd></div></dl><div className="mt-auto flex items-center justify-between border-t border-border pt-3"><span className={`rounded-md px-2 py-1 text-xs font-medium ${isActive(test) ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>{isActive(test) ? 'Active' : 'Inactive'}</span><div className="flex items-center gap-1"><Tooltip title="View" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); setSelectedTestId(getTestId(test, index)) }} className="p-1.5 text-muted-foreground hover:text-foreground rounded transition"><Eye size={15} /></button></Tooltip>{isPatient && <Tooltip title="Book" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); setBookModal({ open: true, test }) }} className="p-1.5 text-primary hover:bg-primary/10 rounded transition"><ShoppingCart size={15} /></button></Tooltip>}<Can resource="tests" action="update"><Tooltip title="Edit" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); handleEdit(test) }} className="p-1.5 text-muted-foreground hover:text-foreground rounded transition"><Pencil size={15} /></button></Tooltip></Can><Can resource="tests" action="create"><Tooltip title="Duplicate" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); handleDuplicate(test) }} className="p-1.5 text-muted-foreground hover:text-foreground rounded transition"><Copy size={15} /></button></Tooltip></Can><Can resource="tests" action="delete"><Tooltip title="Delete" arrow placement="top"><button type="button" onClick={(e) => { e.stopPropagation(); handleDelete(test) }} className="p-1.5 text-muted-foreground hover:text-red-500 rounded transition"><Trash2 size={15} /></button></Tooltip></Can></div></div></article>
+        })}
+        </div>
+        </div>
       ) : (
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-          <div className="min-w-0 flex-1 overflow-x-auto rounded-xl border border-border bg-white">
+        <div className="overflow-y-auto max-h-[calc(100vh-250px)] pb-2 pr-1">
+          <div className="rounded-xl border border-border bg-white">
             <table className="w-full min-w-[820px] text-sm">
-              <thead className="bg-accent text-left text-muted-foreground">
+              <thead className="bg-accent text-left text-muted-foreground sticky top-0">
                 <tr>
-                  <th className="px-4 py-3">Test Name</th>
-                  <th className="px-4 py-3">Test Code</th>
-                  <th className="px-4 py-3">Category</th>
-                  <th className="px-4 py-3">Sample Type</th>
-                  <th className="px-4 py-3">Price (₹)</th>
-                  <th className="px-4 py-3">TAT</th>
-                  <th className="px-4 py-3">Status</th>
+                  <SortableHeader title="Test Name" sortKey="name" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, name: true }))} />
+                  <SortableHeader title="Test Code" sortKey="code" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, code: true }))} />
+                  <SortableHeader title="Category" sortKey="category" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, category: true }))} />
+                  <SortableHeader title="Sample Type" sortKey="sampleType" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, sampleType: true }))} />
+                  <SortableHeader title="Price (₹)" sortKey="price" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, price: true }))} />
+                  <SortableHeader title="TAT" sortKey="tat" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, tat: true }))} />
+                  <SortableHeader title="Status" sortKey="status" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns(prev => ({ ...prev, status: true }))} />
                   <th className="px-4 py-3">Actions</th>
                 </tr>
               </thead>
@@ -365,13 +555,13 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
                   const catColor = getCategoryColor(getCategory(test))
                   return (
                     <tr key={id} onClick={() => setSelectedTestId(id)} className={`cursor-pointer border-t border-border transition hover:bg-accent/40 ${selectedTestId === id ? 'bg-primary/5' : ''}`}>
-                      <td className="px-4 py-3 font-medium text-foreground">{getTitle(test)}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{test.code || test.testCode || '—'}</td>
-                      <td className="px-4 py-3"><span className={`rounded-md px-2 py-1 text-xs font-medium ${catColor.bg} ${catColor.text}`}>{getCategory(test)}</span></td>
-                      <td className="px-4 py-3">{getValue(test, ['sampleType', 'sample'])}</td>
-                      <td className="px-4 py-3">{getValue(test, ['price'], null) != null ? Number(getValue(test, ['price'], null)).toLocaleString('en-IN') : '—'}</td>
-                      <td className="px-4 py-3">{getValue(test, ['reportTime', 'tat', 'turnaroundTime'])}</td>
-                      <td className="px-4 py-3"><span className={`rounded-md px-2 py-1 text-xs ${isActive(test) ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>{isActive(test) ? 'Active' : 'Inactive'}</span></td>
+                      {!hiddenColumns.name && <td className="px-4 py-3 font-medium text-foreground">{getTitle(test)}</td>}
+                      {!hiddenColumns.code && <td className="px-4 py-3 text-muted-foreground">{test.code || test.testCode || '—'}</td>}
+                      {!hiddenColumns.category && <td className="px-4 py-3"><span className={`rounded-md px-2 py-1 text-xs font-medium ${catColor.bg} ${catColor.text}`}>{getCategory(test)}</span></td>}
+                      {!hiddenColumns.sampleType && <td className="px-4 py-3">{getValue(test, ['sampleType', 'sample'])}</td>}
+                      {!hiddenColumns.price && <td className="px-4 py-3">{getValue(test, ['price'], null) != null ? Number(getValue(test, ['price'], null)).toLocaleString('en-IN') : '—'}</td>}
+                      {!hiddenColumns.tat && <td className="px-4 py-3">{getValue(test, ['reportTime', 'tat', 'turnaroundTime'])}</td>}
+                      {!hiddenColumns.status && <td className="px-4 py-3"><span className={`rounded-md px-2 py-1 text-xs ${isActive(test) ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>{isActive(test) ? 'Active' : 'Inactive'}</span></td>}
                       <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
                         <div className="flex items-center gap-1">
                           {isPatient && (
@@ -415,7 +605,18 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
         <TestDetailsPanel test={selectedTest} style={selectedTestStyle} catColor={selectedTestCatColor} onClose={() => setSelectedTestId(null)} />
       )}
 
-      {filtered.length > 0 && <div className="flex flex-col gap-3 pb-2 text-sm text-muted-foreground lg:flex-row lg:items-center lg:justify-between"><p>Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, filtered.length)} of {filtered.length} tests</p><div className="flex flex-wrap items-center gap-2"><button type="button" aria-label="Previous page" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page === 1} className="rounded-lg border border-border p-2 transition hover:bg-accent disabled:opacity-40"><ChevronLeft size={17} /></button>{pageNumbers.map((item, index) => item === 'ellipsis' ? <span key={`ellipsis-${index}`} className="px-1">…</span> : <button key={item} type="button" onClick={() => setPage(item)} className={`flex h-9 min-w-9 items-center justify-center rounded-lg px-3 font-medium transition ${page === item ? 'bg-primary text-white' : 'hover:bg-accent text-foreground'}`}>{item}</button>)}<button type="button" aria-label="Next page" onClick={() => setPage((current) => Math.min(totalPages, current + 1))} disabled={page === totalPages} className="rounded-lg border border-border p-2 transition hover:bg-accent disabled:opacity-40"><ChevronRight size={17} /></button><select aria-label="Tests per page" value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value)); setPage(1) }} className="ml-1 rounded-lg border border-border bg-white px-3 py-2 text-sm text-foreground outline-none focus:border-primary">{PAGE_SIZES.map((size) => <option key={size} value={size}>{size} per page</option>)}</select></div></div>}
+      <div className="mt-4">
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={filtered.length}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => { setPageSize(size); setPage(1) }}
+          pageSizes={PAGE_SIZES}
+          itemName="tests"
+        />
+      </div>
 
       <AddTestModal open={showCreate} onClose={() => setShowCreate(false)} onCreated={onRefresh} />
       <AddTestModal
@@ -442,7 +643,7 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
         loading={deleteModal.loading}
       />
 
-      {filterPanelOpen && (
+      {filterPanelOpen && createPortal(
         <FilterPanel
           isOpen={true}
           onClose={() => setFilterPanelOpen(null)}
@@ -451,7 +652,8 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
           title="Filters"
           categories={filterCategories}
           activeFilters={activeFilters}
-        />
+        />,
+        document.body
       )}
 
       {menuOpen && (

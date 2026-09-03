@@ -31,6 +31,7 @@ export const API_ENDPOINTS = {
     LAB_OWNERS: '/admin/lab-owners',
     CREATE_LAB_OWNER: '/admin/create-lab-owner',
     CREATE_LAB_ASSISTANT: '/admin/create-lab-assistant',
+    DASHBOARD_STATS: '/admin/dashboard-stats',
   },
   USERS: {
     BASE: '/users',
@@ -69,5 +70,14 @@ export const API_ENDPOINTS = {
   COMMISSIONS: {
     BASE: '/commission',
     HISTORY: '/commission/history',
+  },
+  LAB_OWNER_DASHBOARD: {
+    DASHBOARD_STATS: '/lab-owner-dashboard/dashboard-stats',
+  },
+  LAB_ASSISTANT_DASHBOARD: {
+    DASHBOARD_STATS: '/lab-assistant-dashboard/dashboard-stats',
+  },
+  PATIENT_DASHBOARD: {
+    DASHBOARD_STATS: '/patient-dashboard/dashboard-stats',
   },
 }

@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react'
-import DashboardShell from '@/features/dashboard/components/DashboardShell'
+import React, { useEffect, useRef, useState, useMemo } from 'react'
+import DashboardLayout from '@/components/layout/DashboardLayout'
 import { toast } from 'react-toastify'
 import {
   getLabOwnerBookings,
@@ -7,43 +7,54 @@ import {
   assignAssistant,
   uploadReport,
 } from '@/services/booking.service'
-import { getMyAssistants, createLabAssistant } from '@/services/user.service'
+import { createLabAssistant } from '@/services/user.service'
 import { UserPlus } from 'lucide-react'
-import { DashboardStatsCard, EmptyState } from '@/components/Dashboard'
+import { EmptyState } from '@/components/Dashboard'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
-import Select from '@/components/ui/Select'
 import Modal from '@/components/ui/Modal'
 import { Spinner } from '@/components/ui/Loader'
+import LabOwnerDashboardHeader from '@/features/lab-owner/components/LabOwnerDashboardHeader'
 import LabOwnerStatsGrid from '@/features/lab-owner/components/LabOwnerStatsGrid'
-import LabOwnerAssistantsSection from '@/features/lab-owner/components/LabOwnerAssistantsSection'
-import LabOwnerBookingsTable from '@/features/lab-owner/components/LabOwnerBookingsTable'
-import LabOwnerBookingMobileCard from '@/features/lab-owner/components/LabOwnerBookingMobileCard'
-import LabOwnerPaymentSection from '@/features/lab-owner/components/LabOwnerPaymentSection'
+import BookingsOverviewChart from '@/features/lab-owner/components/BookingsOverviewChart'
+import RevenueOverviewChart from '@/features/lab-owner/components/RevenueOverviewChart'
+import WeeklyStatsRow from '@/features/lab-owner/components/WeeklyStatsRow'
+import LabOwnerRecentBookingsTable from '@/features/lab-owner/components/LabOwnerRecentBookingsTable'
+import LabOwnerPendingReportsTable from '@/features/lab-owner/components/LabOwnerPendingReportsTable'
+import TestsByCategoryChart from '@/features/lab-owner/components/TestsByCategoryChart'
+import SampleCollectionStatusChart from '@/features/lab-owner/components/SampleCollectionStatusChart'
+import LabOwnerTopTestsTable from '@/features/lab-owner/components/LabOwnerTopTestsTable'
+import LabOwnerRecentPaymentsTable from '@/features/lab-owner/components/LabOwnerRecentPaymentsTable'
+import LabOwnerRecentActivity from '@/features/lab-owner/components/LabOwnerRecentActivity'
+import LabOwnerAssistantsTable from '@/features/lab-owner/components/LabOwnerAssistantsTable'
 import ViewToggle from '@/components/ui/ViewToggle'
 import useResponsiveView from '@/hooks/useResponsiveView'
 import ReportViewerModal from '@/components/Dashboard/ReportViewerModal'
 import { Search } from 'lucide-react'
-import { BOOKING_STATUS, PAYMENT_STATUS } from '@/constants/status'
 import useFormErrors from '@/hooks/useFormErrors'
 import Can from '@/components/Can'
+import LabOwnerBookingsTable from '@/features/lab-owner/components/LabOwnerBookingsTable'
+import LabOwnerBookingMobileCard from '@/features/lab-owner/components/LabOwnerBookingMobileCard'
+import { useLabOwnerDashboard } from '@/hooks/useLabOwnerDashboard'
 
 const LabOwnerDashboard = () => {
   const tableRef = useRef(null)
   const [bookings, setBookings] = useState([])
   const [creatingAssistant, setCreatingAssistant] = useState(false)
-  const [assistants, setAssistants] = useState([])
   const [selectedReport, setSelectedReport] = useState({})
   const [uploadingReport, setUploadingReport] = useState({})
   const [previewReport, setPreviewReport] = useState(null)
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState(null)
-  const [activeSection, setActiveSection] = useState('all')
-  const [selectedAssistant, setSelectedAssistant] = useState(null)
-  const [showAssistantForm, setShowAssistantForm] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [view, setView] = useResponsiveView()
-  const [showPaymentOverview, setShowPaymentOverview] = useState(false)
+  const [showAssistantForm, setShowAssistantForm] = useState(false)
+  const [dateRange, setDateRange] = useState({ from: undefined, to: undefined })
+  const [bookingsFilter, setBookingsFilter] = useState('This Week')
+  const [revenueFilter, setRevenueFilter] = useState('This Week')
+  const [testsFilter, setTestsFilter] = useState('This Week')
+  const [sampleFilter, setSampleFilter] = useState('This Week')
+
   const {
     errors: assistantErrors,
     validate: validateAssistant,
@@ -78,6 +89,24 @@ const LabOwnerDashboard = () => {
           ? 'Password must be at least 6 characters'
           : '',
   })
+
+  const params = useMemo(() => {
+    const p = {}
+    if (dateRange?.from) {
+      p.from = dateRange.from instanceof Date
+        ? dateRange.from.toISOString().split('T')[0]
+        : String(dateRange.from)
+    }
+    if (dateRange?.to) {
+      p.to = dateRange.to instanceof Date
+        ? dateRange.to.toISOString().split('T')[0]
+        : String(dateRange.to)
+    }
+    return p
+  }, [dateRange?.from?.getTime?.(), dateRange?.to?.getTime?.()])
+
+  const { data: dashboardData, isLoading: dashboardLoading, error: dashboardError } = useLabOwnerDashboard(params)
+
   const fetchBookings = async () => {
     try {
       setFetchError(null)
@@ -90,25 +119,18 @@ const LabOwnerDashboard = () => {
       setLoading(false)
     }
   }
-  const fetchAssistants = async () => {
-    try {
-      const { data: res } = await getMyAssistants()
-      const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : []
-      setAssistants(list)
-    } catch (error) {
-      console.log(error)
-    }
-  }
+
   useEffect(() => {
     fetchBookings()
-    fetchAssistants()
   }, [])
+
   const handleChange = (e) => {
     const { name, value } = e.target
     const next = { ...assistantData, [name]: value }
     setAssistantData(next)
     onAssistantFieldChange(name, buildAssistantErrors(next))
   }
+
   const handleCreateAssistant = async (e) => {
     e.preventDefault()
     if (creatingAssistant) return
@@ -117,7 +139,6 @@ const LabOwnerDashboard = () => {
       setCreatingAssistant(true)
       const { data } = await createLabAssistant(assistantData)
       toast.success(data?.message || 'Assistant created successfully')
-      fetchAssistants()
       setAssistantData({
         name: '',
         email: '',
@@ -132,6 +153,7 @@ const LabOwnerDashboard = () => {
       setCreatingAssistant(false)
     }
   }
+
   const handleAssignAssistant = async (bookingId, assistantId) => {
     if (!assistantId) {
       return toast.error('Please select an assistant')
@@ -144,6 +166,7 @@ const LabOwnerDashboard = () => {
       toast.error(error?.response?.data?.message || 'Failed to assign assistant')
     }
   }
+
   const searchBookings = async (value) => {
     setSearchTerm(value)
     try {
@@ -154,6 +177,7 @@ const LabOwnerDashboard = () => {
       console.log(error)
     }
   }
+
   const handleUploadReport = async (bookingId) => {
     if (!selectedReport[bookingId]) {
       return toast.error('Please select report file')
@@ -177,13 +201,7 @@ const LabOwnerDashboard = () => {
       }))
     }
   }
-  const scrollToTable = () => {
-    setTimeout(() => {
-      tableRef.current?.scrollIntoView({
-        behavior: 'smooth',
-      })
-    }, 100)
-  }
+
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchTerm.trim()) {
@@ -194,184 +212,186 @@ const LabOwnerDashboard = () => {
     }, 500)
     return () => clearTimeout(timer)
   }, [searchTerm])
-  const filteredBookings = selectedAssistant
-    ? bookings.filter((booking) => booking.assignedLabAssistant?._id === selectedAssistant)
-    : activeSection === 'pending'
-      ? bookings.filter((item) => item.status === BOOKING_STATUS.PENDING)
-      : activeSection === 'completed'
-        ? bookings.filter((item) => item.status === BOOKING_STATUS.COMPLETED)
-        : bookings
+
+  const dashboardStats = dashboardData?.stats || {
+    totalBookings: 0,
+    samplesCollected: 0,
+    testsCompleted: 0,
+    totalRevenue: 0,
+    pendingReports: 0,
+    totalBookingsTrend: 0,
+    samplesCollectedTrend: 0,
+    testsCompletedTrend: 0,
+    totalRevenueTrend: 0,
+    pendingReportsTrend: 0,
+  }
+
+  const weeklyStats = dashboardData?.weekStats || {
+    samplesCollected: 0,
+    reportsCompleted: 0,
+    reportsPending: 0,
+    reportsOverdue: 0,
+  }
+
+  const bookingsChartData = dashboardData?.bookingsOverview || []
+  const revenueChartData = dashboardData?.revenueOverview || []
+  const testsByCategoryData = dashboardData?.testsByCategory || []
+  const sampleCollectionData = dashboardData?.sampleCollectionData || []
+  const recentBookings = dashboardData?.recentBookings || []
+  const pendingReports = dashboardData?.pendingReports || []
+  const topTests = dashboardData?.topTests || []
+  const recentPayments = dashboardData?.recentPayments || []
+  const recentActivity = dashboardData?.recentActivity || []
+  const assistants = dashboardData?.assistants || []
+  const totalRevenue = dashboardData?.totalRevenue || 0
+
+  const isInitialLoading = dashboardLoading && !dashboardData
+
   return (
-    <DashboardShell
-      badge="Laboratory Management Portal"
-      title="Lab Owner Dashboard"
-      subtitle="Manage bookings, assign assistants, and monitor laboratory operations."
-    >
-      <LabOwnerStatsGrid
-        bookings={bookings}
-        assistants={assistants}
-        activeSection={activeSection}
-        setActiveSection={setActiveSection}
-        setSelectedAssistant={setSelectedAssistant}
-        scrollToTable={scrollToTable}
-        openPaymentOverview={() => setShowPaymentOverview(true)}
-      />
-      <LabOwnerAssistantsSection
-        assistants={assistants}
-        bookings={bookings}
-        activeSection={activeSection}
-        selectedAssistant={selectedAssistant}
-        setSelectedAssistant={setSelectedAssistant}
-        showAssistantForm={showAssistantForm}
-        setShowAssistantForm={setShowAssistantForm}
-        scrollToTable={scrollToTable}
-      />
-          <Can resource="lab_assistants" action="create">
-            <Modal
-              open={showAssistantForm}
-              onClose={() => setShowAssistantForm(false)}
-              title="Create Assistant"
-              subtitle="Add new laboratory assistant"
-              size="lg"
-            >
-            <form onSubmit={handleCreateAssistant} className="space-y-6">
-              <Input
-                label="Full Name"
-                type="text"
-                name="name"
-                placeholder="Enter full name"
-                value={assistantData.name}
-                onChange={handleChange}
-                required
-                error={assistantErrors.name}
-              />
-              <Input
-                label="Email Address"
-                type="email"
-                name="email"
-                placeholder="Enter email"
-                value={assistantData.email}
-                onChange={handleChange}
-                required
-                error={assistantErrors.email}
-              />
-              <Input
-                label="Phone Number"
-                type="text"
-                name="phone"
-                placeholder="Enter phone number"
-                value={assistantData.phone}
-                onChange={handleChange}
-                required
-                error={assistantErrors.phone}
-              />
-              <Input
-                label="Verification Document"
-                type="text"
-                name="document"
-                placeholder="Document URL"
-                value={assistantData.document}
-                onChange={handleChange}
-              />
-              <Input
-                label="Password"
-                type="password"
-                name="password"
-                placeholder="Enter password"
-                value={assistantData.password}
-                onChange={handleChange}
-                required
-                error={assistantErrors.password}
-              />
-              <Button type="submit" loading={creatingAssistant} fullWidth size="lg">
-                Create Assistant
-              </Button>
-            </form>
-          </Modal>
-          </Can>
-          <LabOwnerPaymentSection open={showPaymentOverview} onClose={() => setShowPaymentOverview(false)} />
-          <div ref={tableRef} className="bg-white rounded-[35px] shadow-sm mt-10 p-5 md:p-8">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
-                <div className="flex items-center gap-4">
-                  <div>
-                    <h2 className="text-2xl font-bold text-slate-900">Booking Management</h2>
-                    <p className="text-gray-500">Manage laboratory bookings</p>
-                  </div>
-                  <ViewToggle view={view} onChange={setView} />
-                </div>
-                <div className="flex flex-col md:flex-row gap-3 w-full lg:w-auto">
-                  <div className="relative flex-1 lg:w-96">
-                    <Input
-                      type="text"
-                      placeholder="Search patient, mobile, test, package..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-12"
-                      containerClassName="relative"
-                    />
-                    <Search
-                      size={18}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                    />
-                  </div>
-                  <div className="bg-primary/10 px-4 py-2.5 rounded-lg text-xs font-semibold text-primary whitespace-nowrap flex items-center h-11">
-                    Total: {filteredBookings.length}
-                  </div>
-                  <Can resource="lab_assistants" action="create">
-                    <Button
-                      onClick={() => setShowAssistantForm(true)}
-                      className="flex items-center justify-center gap-2"
-                    >
-                      <UserPlus />
-                      Create Assistant
-                    </Button>
-                  </Can>
-                </div>
-              </div>
-              {loading ? (
-                <Spinner />
-              ) : fetchError ? (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-5 text-center mt-6">
-                  <p className="text-red-600 text-xs font-medium">{fetchError}</p>
-                  <Button onClick={fetchBookings} variant="outline" className="mt-4">
-                    Retry
-                  </Button>
-                </div>
-              ) : filteredBookings.length === 0 ? (
-                <EmptyState text="No Bookings Found" />
-              ) : (
-                <>
-                  {view === 'table' ? (
-                    <LabOwnerBookingsTable
-                      filteredBookings={filteredBookings}
-                      assistants={assistants}
-                      handleAssignAssistant={handleAssignAssistant}
-                      setSelectedReport={setSelectedReport}
-                      uploadingReport={uploadingReport}
-                      handleUploadReport={handleUploadReport}
-                      setPreviewReport={setPreviewReport}
-                    />
-                  ) : (
-                    <LabOwnerBookingMobileCard
-                      filteredBookings={filteredBookings}
-                      assistants={assistants}
-                      handleAssignAssistant={handleAssignAssistant}
-                      selectedReport={selectedReport}
-                      setSelectedReport={setSelectedReport}
-                      uploadingReport={uploadingReport}
-                      handleUploadReport={handleUploadReport}
-                      setPreviewReport={setPreviewReport}
-                    />
-                  )}
-                </>
-              )}
-            </div>
+    <DashboardLayout>
+      <div className="space-y-6">
+        {isInitialLoading ? (
+          <div className="flex items-center justify-center min-h-[400px]">
+            <Spinner />
+          </div>
+        ) : dashboardError ? (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-5 text-center">
+            <p className="text-red-600 text-xs font-medium">Failed to load dashboard data. Please try again.</p>
+          </div>
+        ) : (
+          <>
+            {/* Header */}
+            <LabOwnerDashboardHeader dateRange={dateRange} onDateRangeChange={setDateRange} />
+
+        {/* Stats Grid */}
+        <LabOwnerStatsGrid stats={dashboardStats} />
+
+        {/* Charts Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+          <BookingsOverviewChart
+            data={bookingsChartData}
+            filter={bookingsFilter}
+            onFilterChange={setBookingsFilter}
+          />
+          <RevenueOverviewChart
+            data={revenueChartData}
+            totalRevenue={totalRevenue}
+            trend={dashboardStats.totalRevenueTrend}
+            filter={revenueFilter}
+            onFilterChange={setRevenueFilter}
+          />
+        </div>
+
+        {/* Weekly Stats */}
+        <WeeklyStatsRow stats={weeklyStats} />
+
+        {/* Tables Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+          <LabOwnerRecentBookingsTable data={recentBookings} />
+          <LabOwnerPendingReportsTable data={pendingReports} />
+        </div>
+
+        {/* Charts Row 2 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+          <TestsByCategoryChart
+            data={testsByCategoryData}
+            filter={testsFilter}
+            onFilterChange={setTestsFilter}
+          />
+          <SampleCollectionStatusChart
+            data={sampleCollectionData}
+            filter={sampleFilter}
+            onFilterChange={setSampleFilter}
+          />
+        </div>
+
+        {/* Bottom Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+          <LabOwnerTopTestsTable data={topTests} />
+          <LabOwnerRecentPaymentsTable data={recentPayments} />
+        </div>
+
+          {/* Activity and Assistants */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+            <LabOwnerRecentActivity data={recentActivity} />
+            <LabOwnerAssistantsTable data={assistants} />
+          </div>
+          </>
+        )}
+      </div>
+
+      {/* Create Assistant Modal */}
+      <Can resource="lab_assistants" action="create">
+        <Modal
+          open={showAssistantForm}
+          onClose={() => setShowAssistantForm(false)}
+          title="Create Assistant"
+          subtitle="Add new laboratory assistant"
+          size="lg"
+        >
+          <form onSubmit={handleCreateAssistant} className="space-y-6">
+            <Input
+              label="Full Name"
+              type="text"
+              name="name"
+              placeholder="Enter full name"
+              value={assistantData.name}
+              onChange={handleChange}
+              required
+              error={assistantErrors.name}
+            />
+            <Input
+              label="Email Address"
+              type="email"
+              name="email"
+              placeholder="Enter email"
+              value={assistantData.email}
+              onChange={handleChange}
+              required
+              error={assistantErrors.email}
+            />
+            <Input
+              label="Phone Number"
+              type="text"
+              name="phone"
+              placeholder="Enter phone number"
+              value={assistantData.phone}
+              onChange={handleChange}
+              required
+              error={assistantErrors.phone}
+            />
+            <Input
+              label="Verification Document"
+              type="text"
+              name="document"
+              placeholder="Document URL"
+              value={assistantData.document}
+              onChange={handleChange}
+            />
+            <Input
+              label="Password"
+              type="password"
+              name="password"
+              placeholder="Enter password"
+              value={assistantData.password}
+              onChange={handleChange}
+              required
+              error={assistantErrors.password}
+            />
+            <Button type="submit" loading={creatingAssistant} fullWidth size="lg">
+              Create Assistant
+            </Button>
+          </form>
+        </Modal>
+      </Can>
+
       <ReportViewerModal
         isOpen={!!previewReport}
         onClose={() => setPreviewReport(null)}
         reportUrl={previewReport}
       />
-    </DashboardShell>
+    </DashboardLayout>
   )
 }
+
 export default LabOwnerDashboard

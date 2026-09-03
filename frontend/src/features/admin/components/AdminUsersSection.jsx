@@ -206,40 +206,7 @@ const AdminUsersSection = ({
         </Modal>
       </Can>
 
-      {/* Lab Owners Table */}
-      <div ref={labOwnersRef} className="bg-white border border-border rounded-xl shadow-card mt-8 p-5 md:p-6">
-        <DashboardSectionHeader title="Lab Owners" subtitle="Manage all laboratory owners" />
-        {labOwners.length === 0 ? (
-          <EmptyState text="No Lab Owners Found" />
-        ) : (
-          <div className="mt-4">
-            <DataTable
-              columns={labOwnerColumns}
-              data={labOwners}
-              enablePagination={true}
-              enableSorting={true}
-              pageSize={10}
-            />
-          </div>
-        )}
-
-        {/* Edit Modal */}
-        <Modal open={showEditModal} onClose={() => setShowEditModal(false)} title="Edit Assigned Lab">
-          <div className="space-y-4">
-            <Select value={selectedLab} onChange={(e) => setSelectedLab(e.target.value)} label="Lab Owner">
-              <option value="">Select Lab Owner</option>
-              {labOwners.map((lab) => (
-                <option key={lab._id} value={lab._id}>
-                  {lab.name}
-                </option>
-              ))}
-            </Select>
-            <Button onClick={handleUpdateLab} disabled={!selectedLab} loading={saving} fullWidth>
-              Save Changes
-            </Button>
-          </div>
-        </Modal>
-      </div>
+      
     </>
   )
 }

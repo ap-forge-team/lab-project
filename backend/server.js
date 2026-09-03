@@ -30,6 +30,9 @@ import paymentSettlementRoute from "./routes/paymentSettlementRoute.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
 import subcategoryRoutes from "./routes/subcategoryRoutes.js";
 import roleRoutes from "./routes/roleRoutes.js";
+import labOwnerDashboardRoutes from "./routes/labOwnerDashboardRoutes.js";
+import labAssistantDashboardRoutes from "./routes/labAssistantDashboardRoutes.js";
+import patientDashboardRoutes from "./routes/patientDashboardRoutes.js";
 
 /* ---------- Env Validation ---------- */
 
@@ -151,9 +154,12 @@ app.use("/api/payment-setting", paymentSettingRoutes);
 app.use("/api/payment-statistic", paymentStatisticRoutes);
 app.use("/api/commission", commissionRoutes);
 app.use("/api/export", exportSettlementHistoryRoute);
-app.use("/api/payment-settlement", paymentSettlementRoute);
+app.use("/api/settlements", paymentSettlementRoute);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/subcategories", subcategoryRoutes);
+app.use("/api/lab-owner-dashboard", labOwnerDashboardRoutes);
+app.use("/api/lab-assistant-dashboard", labAssistantDashboardRoutes);
+app.use("/api/patient-dashboard", patientDashboardRoutes);
 
 /* ---------- 404 ---------- */
 

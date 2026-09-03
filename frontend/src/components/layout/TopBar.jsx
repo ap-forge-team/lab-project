@@ -4,6 +4,7 @@ import { Menu, Search, Bell, HelpCircle, LogOut, ChevronDown } from 'lucide-reac
 import { motion, AnimatePresence } from 'framer-motion'
 import { AuthContext } from '@/context/AuthContext'
 import { ROUTES } from '@/constants/routes'
+import { ROLES } from '@/constants/roles'
 import useClickOutside from '@/hooks/useClickOutside'
 
 const TopBar = ({ onToggleSidebar }) => {
@@ -98,13 +99,15 @@ const TopBar = ({ onToggleSidebar }) => {
 
                 {/* Menu */}
                 <div className="py-2">
-                  <Link
-                    to={ROUTES.HOME}
-                    onClick={() => setProfileOpen(false)}
-                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-accent transition"
-                  >
-                    Home
-                  </Link>
+                  {user?.role === ROLES.ADMIN && (
+                    <Link
+                      to={ROUTES.HOME}
+                      onClick={() => setProfileOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-accent transition"
+                    >
+                      Home
+                    </Link>
+                  )}
                   <button
                     onClick={handleLogout}
                     className="flex items-center gap-3 px-4 py-2.5 w-full text-sm text-red-500 hover:bg-red-50 transition text-left"
