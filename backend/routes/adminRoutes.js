@@ -6,8 +6,16 @@ import {
   createLabOwner,
   getLabOwners,
 } from "../controllers/adminController.js";
+import { getAdminDashboardStats } from "../controllers/adminDashboardController.js";
 
 const router = express.Router();
+
+router.get(
+  "/dashboard-stats",
+  protect,
+  authorizePermissions("bookings", "read"),
+  getAdminDashboardStats
+);
 
 router.post(
   "/create-lab-assistant",

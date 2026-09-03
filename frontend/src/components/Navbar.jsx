@@ -15,10 +15,11 @@ import useClickOutside from '@/hooks/useClickOutside'
 
 const roleConfig = {
   [ROLES.PATIENT]: {
-    quickLink: { label: 'Book a Test', route: ROUTES.BOOKING, icon: Calendar },
-    dashboardRoute: ROUTES.BOOKING,
-    dashboardLabel: 'Book a Test',
+    quickLink: { label: 'Patient Dashboard', route: ROUTES.DASHBOARD, icon: LayoutDashboard },
+    dashboardRoute: ROUTES.DASHBOARD,
+    dashboardLabel: 'Patient Dashboard',
     menuItems: [
+      { label: 'Dashboard', description: 'View your health overview', icon: LayoutDashboard, route: ROUTES.DASHBOARD },
       { label: 'Book a Test', description: 'Book lab tests at home', icon: Calendar, route: ROUTES.BOOKING },
       { label: 'Upload Prescription', description: 'Get tests recommended', icon: FileText, route: '/upload-prescription' },
       { label: 'Account Settings', description: 'Manage your preferences', icon: Settings, route: ROUTES.ADMIN_SETTINGS },

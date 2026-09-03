@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useMemo, useCallback, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowDown, ArrowUp, Building2, Plus, Search, ChevronRight, Eye, EyeOff, Pencil, Trash2, X, MoreVertical, MapPin, Mail, Phone, Calendar, Shield, Users, MapPinned, ChevronsUpDown, Copy } from 'lucide-react'
 import { toast } from 'react-toastify'
 import Button from '@/components/ui/Button'
@@ -76,6 +76,7 @@ const StatCard = ({ icon: Icon, borderColor, iconColor, cardBg, title, value, de
 
 const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [search, setSearch] = useState('')
   const [activeFilters, setActiveFilters] = useState({})
   const [filterPanelOpen, setFilterPanelOpen] = useState(null)
@@ -120,6 +121,14 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
   const emptyForm = { name: '', email: '', phone: '', password: '', servicePincodes: '', labAddress: '', latitude: '', longitude: '' }
   const [form, setForm] = useState(emptyForm)
   const [errors, setErrors] = useState({})
+
+  useEffect(() => {
+    if (searchParams.get('modal') === 'add-lab-owner') {
+      setShowAddModal(true)
+      searchParams.delete('modal')
+      setSearchParams(searchParams, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
 
   // Unique locations from data
   const locations = useMemo(() => {

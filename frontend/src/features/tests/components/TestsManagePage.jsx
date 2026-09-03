@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback, useContext } from 'react'
+import React, { useMemo, useState, useCallback, useContext, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import {
   Activity,
@@ -32,6 +32,7 @@ import {
 } from 'lucide-react'
 import Tooltip from '@mui/material/Tooltip'
 import { toast } from 'react-toastify'
+import { useSearchParams } from 'react-router-dom'
 import Can from '@/components/Can'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
@@ -219,6 +220,7 @@ const SortableHeader = ({ title, sortKey, sortConfig, onSort, onHide }) => {
 
 const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
   const { user } = useContext(AuthContext)
+  const [searchParams, setSearchParams] = useSearchParams()
   const isPatient = user?.role === 'patient'
   const [search, setSearch] = useState('')
   const [view, setView] = useState('grid')
@@ -243,6 +245,14 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
       return { key, direction }
     })
   }, [])
+
+  useEffect(() => {
+    if (searchParams.get('modal') === 'create-test') {
+      setShowCreate(true)
+      searchParams.delete('modal')
+      setSearchParams(searchParams, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
 
   const categories = useMemo(() => [...new Set(tests.map(getCategory))].sort(), [tests])
   const activeTests = useMemo(() => tests.filter(isActive), [tests])
