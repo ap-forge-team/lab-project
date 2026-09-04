@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useCallback, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   ArrowDown,
   ArrowUp,
@@ -13,6 +14,7 @@ import {
   Pencil,
   Plus,
   Search,
+  ShoppingCart,
   Trash2,
   XCircle,
   MoreVertical,
@@ -22,6 +24,9 @@ import { toast } from 'react-toastify'
 import { useSearchParams } from 'react-router-dom'
 import Can from '@/components/Can'
 import Button from '@/components/ui/Button'
+import useAuth from '@/hooks/useAuth'
+import { ROLES } from '@/constants/roles'
+import { ROUTES } from '@/constants/routes'
 import Modal from '@/components/ui/Modal'
 import ConfirmModal from '@/components/ui/ConfirmModal'
 import FilterPanel from '@/components/ui/FilterPanel'
@@ -156,6 +161,9 @@ const PackageDetailsPanel = ({ pkg, onClose }) => {
 }
 
 const PackagesManagePage = ({ packages, isLoading, isError, onRefresh }) => {
+  const navigate = useNavigate()
+  const { user } = useAuth()
+  const isPatient = user?.role === ROLES.PATIENT
   const [searchParams, setSearchParams] = useSearchParams()
   const [search, setSearch] = useState('')
   const [view, setView] = useState('grid')
@@ -310,11 +318,17 @@ const PackagesManagePage = ({ packages, isLoading, isError, onRefresh }) => {
       {/* Mobile Header */}
       <div className="flex items-center justify-between gap-3 sm:hidden">
         <h1 className="text-2xl font-bold text-foreground">Packages</h1>
-        <Can resource="packages" action="create">
-          <Button onClick={() => setShowCreate(true)} className="shrink-0">
-            <Plus size={18} className="mr-2" />Add Package
+        {isPatient ? (
+          <Button onClick={() => navigate(ROUTES.BOOKING)} className="shrink-0">
+            <ShoppingCart size={18} className="mr-2" />Book a Test
           </Button>
-        </Can>
+        ) : (
+          <Can resource="packages" action="create">
+            <Button onClick={() => setShowCreate(true)} className="shrink-0">
+              <Plus size={18} className="mr-2" />Add Package
+            </Button>
+          </Can>
+        )}
       </div>
 
       {/* Desktop Header */}
@@ -343,11 +357,17 @@ const PackagesManagePage = ({ packages, isLoading, isError, onRefresh }) => {
               <button type="button" aria-label="List view" onClick={() => setView('list')} className={`rounded p-1.5 ${view === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
             </Tooltip>
           </div>
-          <Can resource="packages" action="create">
-            <Button onClick={() => setShowCreate(true)}>
-              <Plus size={18} className="mr-2" />Add Package
+          {isPatient ? (
+            <Button onClick={() => navigate(ROUTES.BOOKING)}>
+              <ShoppingCart size={18} className="mr-2" />Book a Test
             </Button>
-          </Can>
+          ) : (
+            <Can resource="packages" action="create">
+              <Button onClick={() => setShowCreate(true)}>
+                <Plus size={18} className="mr-2" />Add Package
+              </Button>
+            </Can>
+          )}
         </div>
       </div>
 

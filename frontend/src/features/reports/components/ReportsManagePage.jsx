@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useCallback } from 'react'
 import { createPortal } from 'react-dom'
+import { useNavigate } from 'react-router-dom'
 import {
   CheckCircle2,
   Clock,
@@ -7,6 +8,7 @@ import {
   Eye,
   FileText,
   Search,
+  ShoppingCart,
   CloudUpload,
   Grid2X2,
   List,
@@ -15,6 +17,10 @@ import Tooltip from '@mui/material/Tooltip'
 import FilterPanel from '@/components/ui/FilterPanel'
 import FilterButton from '@/components/ui/FilterButton'
 import Pagination from '@/components/ui/Pagination'
+import Button from '@/components/ui/Button'
+import useAuth from '@/hooks/useAuth'
+import { ROLES } from '@/constants/roles'
+import { ROUTES } from '@/constants/routes'
 import ReportViewerModal from '@/components/Dashboard/ReportViewerModal'
 
 const PAGE_SIZE = 10
@@ -60,6 +66,9 @@ const StatCard = ({ icon: Icon, borderColor, iconColor, cardBg, title, value, de
 )
 
 const ReportsManagePage = ({ bookings, isLoading, isError }) => {
+  const navigate = useNavigate()
+  const { user } = useAuth()
+  const isPatient = user?.role === ROLES.PATIENT
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(PAGE_SIZE)
@@ -183,14 +192,19 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
     <section className="mx-auto max-w-[1500px] space-y-4 lg:space-y-5">
       {/* Mobile Header */}
       <div className="flex items-center justify-between gap-3 sm:hidden">
-        <h1 className="text-2xl font-bold text-foreground">Reports</h1>
+        <h1 className="text-2xl font-bold text-foreground">{isPatient ? 'My Reports' : 'Reports'}</h1>
+        {isPatient && (
+          <Button onClick={() => navigate(ROUTES.BOOKING)} className="shrink-0">
+            <ShoppingCart size={18} className="mr-2" />Book a Test
+          </Button>
+        )}
       </div>
 
       {/* Desktop Header */}
       <div className="hidden sm:flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Reports</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Review completed bookings and uploaded reports.</p>
+          <h1 className="text-2xl font-bold text-foreground">{isPatient ? 'My Reports' : 'Reports'}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{isPatient ? 'View reports for your completed bookings.' : 'Review completed bookings and uploaded reports.'}</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
@@ -209,6 +223,11 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
             }}
             activeCount={activeFilterCount}
           />
+          {isPatient && (
+            <Button onClick={() => navigate(ROUTES.BOOKING)} className="shrink-0">
+              <ShoppingCart size={18} className="mr-2" />Book a Test
+            </Button>
+          )}
         </div>
       </div>
 

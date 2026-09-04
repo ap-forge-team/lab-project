@@ -1,10 +1,10 @@
 import React, { useState, useMemo, useCallback } from 'react'
-import { ArrowDown, ArrowUp, ChevronsUpDown, EyeOff, Eye, Download, Search } from 'lucide-react'
+import { ArrowDown, ArrowUp, ChevronsUpDown, Eye, Download } from 'lucide-react'
 import Tooltip from '@mui/material/Tooltip'
 import Pagination from '@/components/ui/Pagination'
 
 const PAGE_SIZE = 10
-const PAGE_SIZES = [10, 25, 50]
+const PAGE_SIZES = [5, 10, 25, 50]
 
 const formatCurrency = (amount) => `₹${Number(amount || 0).toLocaleString('en-IN')}`
 
@@ -27,7 +27,7 @@ const STATUS_STYLES = {
   Rejected: { bg: 'bg-red-50', text: 'text-red-600', dot: 'bg-red-500' },
 }
 
-const SortableHeader = ({ title, sortKey, sortConfig, onSort, onHide }) => {
+const SortableHeader = ({ title, sortKey, sortConfig, onSort }) => {
   const [open, setOpen] = useState(false)
   const currentSort = sortConfig?.key === sortKey ? sortConfig.direction : null
 
@@ -37,7 +37,7 @@ const SortableHeader = ({ title, sortKey, sortConfig, onSort, onHide }) => {
   }
 
   return (
-    <th className="px-4 py-3 relative">
+    <th className="px-4 py-3 relative text-left">
       <div className="flex items-center gap-1">
         <span>{title}</span>
         <button type="button" onClick={() => setOpen(!open)} className="p-0.5 rounded hover:bg-accent">
@@ -54,11 +54,6 @@ const SortableHeader = ({ title, sortKey, sortConfig, onSort, onHide }) => {
             <button onClick={() => handleSort('desc')} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left">
               <ArrowDown size={14} /> Desc
             </button>
-            {onHide && (
-              <button onClick={() => { onHide(); setOpen(false) }} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left">
-                <EyeOff size={14} /> Hide
-              </button>
-            )}
           </div>
         </>
       )}
@@ -66,9 +61,8 @@ const SortableHeader = ({ title, sortKey, sortConfig, onSort, onHide }) => {
   )
 }
 
-const SettlementHistoryTable = ({ history, isLoading, onViewDetails, onDownload }) => {
+const SettlementHistoryTable = ({ history, isLoading, activeFilters, onViewDetails, onDownload }) => {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null })
-  const [hiddenColumns, setHiddenColumns] = useState({})
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(PAGE_SIZE)
 
@@ -87,16 +81,81 @@ const SettlementHistoryTable = ({ history, isLoading, onViewDetails, onDownload 
       case 'labOwner': return (item.labOwner?.name || '').toLowerCase()
       case 'totalAmount': return item.totalAmount || 0
       case 'commission': return item.commission || 0
-      case 'labShare': return item.labShare || 0
-      case 'utr': return (item.utr || '').toLowerCase()
-      case 'date': return item.settledAt || ''
+      case 'netPayable': return item.netPayable || item.labShare || 0
+      case 'utr': return (item.settlementUTR || item.utr || '').toLowerCase()
+      case 'paidOn': return item.paidAt || item.settledAt || item.createdAt || ''
       case 'status': return (item.status || '').toLowerCase()
       default: return ''
     }
   }, [])
 
-  const sortedHistory = useMemo(() => {
+  const filteredHistory = useMemo(() => {
     let result = history || []
+
+    if (activeFilters?.labOwner?.length) {
+      result = result.filter((item) => activeFilters.labOwner.includes(item.labOwner?._id || item.labOwner?.id))
+    }
+
+    if (activeFilters?.dateRange?.start) {
+      const start = new Date(activeFilters.dateRange.start)
+      result = result.filter((item) => {
+        const itemDate = new Date(item.paidAt || item.settledAt || item.createdAt)
+        return itemDate >= start
+      })
+    }
+
+    if (activeFilters?.dateRange?.end) {
+      const end = new Date(activeFilters.dateRange.end)
+      end.setHours(23, 59, 59, 999)
+      result = result.filter((item) => {
+        const itemDate = new Date(item.paidAt || item.settledAt || item.createdAt)
+        return itemDate <= end
+      })
+    }
+
+    if (activeFilters?.totalAmount?.min) {
+      const min = Number(activeFilters.totalAmount.min)
+      result = result.filter((item) => (item.totalAmount || 0) >= min)
+    }
+
+    if (activeFilters?.totalAmount?.max) {
+      const max = Number(activeFilters.totalAmount.max)
+      result = result.filter((item) => (item.totalAmount || 0) <= max)
+    }
+
+    if (activeFilters?.commission?.min) {
+      const min = Number(activeFilters.commission.min)
+      result = result.filter((item) => (item.commission || 0) >= min)
+    }
+
+    if (activeFilters?.commission?.max) {
+      const max = Number(activeFilters.commission.max)
+      result = result.filter((item) => (item.commission || 0) <= max)
+    }
+
+    if (activeFilters?.netPayable?.min) {
+      const min = Number(activeFilters.netPayable.min)
+      result = result.filter((item) => ((item.netPayable || item.labShare) || 0) >= min)
+    }
+
+    if (activeFilters?.netPayable?.max) {
+      const max = Number(activeFilters.netPayable.max)
+      result = result.filter((item) => ((item.netPayable || item.labShare) || 0) <= max)
+    }
+
+    if (activeFilters?.utr) {
+      const term = activeFilters.utr.toLowerCase()
+      result = result.filter((item) => {
+        const utr = (item.settlementUTR || item.utr || '').toLowerCase()
+        return utr.includes(term)
+      })
+    }
+
+    return result
+  }, [history, activeFilters])
+
+  const sortedHistory = useMemo(() => {
+    let result = filteredHistory
     if (sortConfig.key && sortConfig.direction) {
       result = [...result].sort((a, b) => {
         const aVal = getSortValue(a, sortConfig.key)
@@ -109,7 +168,7 @@ const SettlementHistoryTable = ({ history, isLoading, onViewDetails, onDownload 
       })
     }
     return result
-  }, [history, sortConfig, getSortValue])
+  }, [filteredHistory, sortConfig, getSortValue])
 
   const totalPages = Math.max(1, Math.ceil(sortedHistory.length / pageSize))
   const visibleHistory = sortedHistory.slice((page - 1) * pageSize, page * pageSize)
@@ -122,23 +181,29 @@ const SettlementHistoryTable = ({ history, isLoading, onViewDetails, onDownload 
 
   return (
     <div className="space-y-4">
+      {/* Recent Settlement History Header */}
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-foreground">Recent Settlement History</h3>
+        <button className="text-sm text-primary hover:underline">View All</button>
+      </div>
+
       {sortedHistory.length === 0 ? (
         <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">No settlement history found.</div>
       ) : (
-        <div className="overflow-y-auto max-h-[calc(100vh-400px)] pb-2 pr-1">
-          <div className="rounded-xl border border-border bg-white">
-            <table className="w-full min-w-[900px] text-sm">
+        <div className="rounded-xl border border-border bg-white">
+          <div className="overflow-y-auto max-h-[calc(100vh-250px)] pb-2 pr-1">
+            <table className="w-full min-w-[1000px] text-sm">
               <thead className="bg-accent text-left text-muted-foreground sticky top-0">
                 <tr>
-                  <SortableHeader title="Settlement ID" sortKey="settlementId" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns((p) => ({ ...p, settlementId: true }))} />
-                  <SortableHeader title="Lab Owner" sortKey="labOwner" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns((p) => ({ ...p, labOwner: true }))} />
-                  <SortableHeader title="Total Amount" sortKey="totalAmount" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns((p) => ({ ...p, totalAmount: true }))} />
-                  <SortableHeader title="Commission" sortKey="commission" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns((p) => ({ ...p, commission: true }))} />
-                  <SortableHeader title="Net Payable" sortKey="labShare" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns((p) => ({ ...p, labShare: true }))} />
-                  <SortableHeader title="UTR Number" sortKey="utr" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns((p) => ({ ...p, utr: true }))} />
-                  <SortableHeader title="Paid On" sortKey="date" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns((p) => ({ ...p, date: true }))} />
-                  <SortableHeader title="Status" sortKey="status" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns((p) => ({ ...p, status: true }))} />
-                  <th className="px-4 py-3">Action</th>
+                  <SortableHeader title="Settlement ID" sortKey="settlementId" sortConfig={sortConfig} onSort={handleSort} />
+                  <SortableHeader title="Lab Owner" sortKey="labOwner" sortConfig={sortConfig} onSort={handleSort} />
+                  <SortableHeader title="Total Amount" sortKey="totalAmount" sortConfig={sortConfig} onSort={handleSort} />
+                  <SortableHeader title="Commission" sortKey="commission" sortConfig={sortConfig} onSort={handleSort} />
+                  <SortableHeader title="Net Payable" sortKey="netPayable" sortConfig={sortConfig} onSort={handleSort} />
+                  <SortableHeader title="UTR Number" sortKey="utr" sortConfig={sortConfig} onSort={handleSort} />
+                  <SortableHeader title="Paid On" sortKey="paidOn" sortConfig={sortConfig} onSort={handleSort} />
+                  <SortableHeader title="Status" sortKey="status" sortConfig={sortConfig} onSort={handleSort} />
+                  <th className="px-4 py-3 text-left">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -146,51 +211,35 @@ const SettlementHistoryTable = ({ history, isLoading, onViewDetails, onDownload 
                   const statusStyle = STATUS_STYLES[item.status] || STATUS_STYLES.Pending
                   return (
                     <tr key={item._id} className="border-t border-border transition hover:bg-accent/40">
-                      {!hiddenColumns.settlementId && (
-                        <td className="px-4 py-3">
-                          <span className="font-medium text-primary">{item.settlementBatchId || '—'}</span>
-                        </td>
-                      )}
-                      {!hiddenColumns.labOwner && (
-                        <td className="px-4 py-3">
-                          <span className="text-foreground">{item.labOwner?.name || '—'}</span>
-                        </td>
-                      )}
-                      {!hiddenColumns.totalAmount && (
-                        <td className="px-4 py-3 font-medium text-foreground">{formatCurrency(item.totalAmount)}</td>
-                      )}
-                      {!hiddenColumns.commission && (
-                        <td className="px-4 py-3">
-                          <div>
-                            <span className="font-medium text-foreground">{formatCurrency(item.commission)}</span>
-                            <span className="text-xs text-muted-foreground ml-1">(15%)</span>
-                          </div>
-                        </td>
-                      )}
-                      {!hiddenColumns.labShare && (
-                        <td className="px-4 py-3 font-medium text-foreground">{formatCurrency(item.labShare)}</td>
-                      )}
-                      {!hiddenColumns.utr && (
-                        <td className="px-4 py-3">
-                          <span className="text-xs text-muted-foreground font-mono">{item.utr || '—'}</span>
-                        </td>
-                      )}
-                      {!hiddenColumns.date && (
-                        <td className="px-4 py-3">
-                          <div>
-                            <span className="text-sm text-foreground">{formatDate(item.settledAt)}</span>
-                            <span className="text-xs text-muted-foreground block">{formatTime(item.settledAt)}</span>
-                          </div>
-                        </td>
-                      )}
-                      {!hiddenColumns.status && (
-                        <td className="px-4 py-3">
-                          <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium ${statusStyle.bg} ${statusStyle.text}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${statusStyle.dot}`}></span>
-                            {item.status}
-                          </span>
-                        </td>
-                      )}
+                      <td className="px-4 py-3">
+                        <span className="font-medium text-primary">{item.settlementBatchId || '—'}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-foreground">{item.labOwner?.name || '—'}</span>
+                      </td>
+                      <td className="px-4 py-3 font-medium text-foreground">{formatCurrency(item.totalAmount)}</td>
+                      <td className="px-4 py-3">
+                        <div>
+                          <span className="font-medium text-foreground">{formatCurrency(item.commission)}</span>
+                          <span className="text-xs text-muted-foreground ml-1">(15%)</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 font-medium text-foreground">{formatCurrency(item.netPayable || item.labShare)}</td>
+                      <td className="px-4 py-3">
+                        <span className="text-xs text-muted-foreground font-mono">{item.settlementUTR || item.utr || '—'}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div>
+                          <span className="text-sm text-foreground">{formatDate(item.paidAt || item.settledAt)}</span>
+                          <span className="text-xs text-muted-foreground block">{formatTime(item.paidAt || item.settledAt)}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium ${statusStyle.bg} ${statusStyle.text}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${statusStyle.dot}`}></span>
+                          {item.status}
+                        </span>
+                      </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1">
                           <Tooltip title="View Details" arrow placement="top">
@@ -223,10 +272,7 @@ const SettlementHistoryTable = ({ history, isLoading, onViewDetails, onDownload 
       )}
 
       {/* Pagination */}
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">
-          Showing {Math.min((page - 1) * pageSize + 1, sortedHistory.length)} to {Math.min(page * pageSize, sortedHistory.length)} of {sortedHistory.length} results
-        </p>
+      <div className="mt-4">
         <Pagination
           page={page}
           totalPages={totalPages}

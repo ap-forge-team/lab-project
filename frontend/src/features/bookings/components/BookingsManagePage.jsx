@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useCallback, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   ArrowDown,
   ArrowUp,
@@ -15,6 +16,7 @@ import {
   MapPin,
   Pencil,
   Search,
+  ShoppingCart,
   User,
   XCircle,
   MoreVertical,
@@ -38,6 +40,7 @@ import FilterButton from '@/components/ui/FilterButton'
 import Pagination from '@/components/ui/Pagination'
 import useAuth from '@/hooks/useAuth'
 import { ROLES } from '@/constants/roles'
+import { ROUTES } from '@/constants/routes'
 import { BOOKING_STATUS, PAYMENT_STATUS } from '@/constants/status'
 import { updateBookingLab, assignAssistant, markReached, uploadSample, uploadPaymentReceipt, uploadReport, manageBooking } from '@/services/booking.service'
 import { getAllLabOwners, getMyAssistants, getPaymentSetting } from '@/services/user.service'
@@ -220,6 +223,7 @@ const BookingDetailsModal = ({ booking, onClose }) => {
 }
 
 const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: userProp }) => {
+  const navigate = useNavigate()
   const { user: authUser } = useAuth()
   const user = userProp || authUser
   const isAdmin = user?.role === ROLES.ADMIN
@@ -587,14 +591,19 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
     <section className="mx-auto max-w-[1500px] space-y-4 lg:space-y-5">
       {/* Mobile Header */}
       <div className="flex items-center justify-between gap-3 sm:hidden">
-        <h1 className="text-2xl font-bold text-foreground">Bookings</h1>
+        <h1 className="text-2xl font-bold text-foreground">{isPatient ? 'My Bookings' : 'Bookings'}</h1>
+        {isPatient && (
+          <Button onClick={() => navigate(ROUTES.BOOKING)} className="shrink-0">
+            <ShoppingCart size={18} className="mr-2" />Book a Test
+          </Button>
+        )}
       </div>
 
       {/* Desktop Header */}
       <div className="hidden sm:flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Bookings</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Manage all test bookings and their status</p>
+          <h1 className="text-2xl font-bold text-foreground">{isPatient ? 'My Bookings' : 'Bookings'}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{isPatient ? 'Review your upcoming and previous bookings.' : 'Manage all test bookings and their status'}</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
@@ -616,6 +625,11 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
               <button type="button" aria-label="List view" onClick={() => setView('list')} className={`rounded p-1.5 ${view === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
             </Tooltip>
           </div>
+          {isPatient && (
+            <Button onClick={() => navigate(ROUTES.BOOKING)} className="shrink-0">
+              <ShoppingCart size={18} className="mr-2" />Book a Test
+            </Button>
+          )}
         </div>
       </div>
 

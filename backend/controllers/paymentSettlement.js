@@ -240,50 +240,51 @@ export const getSettlementHistory = async (req, res) => {
 };
 
 export const bulkSettlement = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
   try {
-    const { labOwnerId, bookingIds, utr, bankName, remark } = req.body;
+    const { labOwnerId, bookingIds: rawBookingIds, utr, bankName, remark } = req.body;
     const paymentProof = req.file?.path || "";
 
-    const existingUTR = await Booking.findOne({ settlementUTR: utr });
-    if (existingUTR) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({ success: false, message: MESSAGES.SETTLEMENT.UTR_EXISTS });
+    let bookingIds;
+    try {
+      bookingIds = typeof rawBookingIds === 'string' ? JSON.parse(rawBookingIds) : rawBookingIds;
+    } catch (e) {
+      return res.status(400).json({ success: false, message: "Invalid booking IDs format" });
     }
 
     if (!labOwnerId) {
-      await session.abortTransaction();
-      session.endSession();
       return res.status(400).json({ success: false, message: MESSAGES.SETTLEMENT.LAB_OWNER_REQUIRED });
     }
 
-    if (!bookingIds || bookingIds.length === 0) {
-      await session.abortTransaction();
-      session.endSession();
+    if (!bookingIds || !Array.isArray(bookingIds) || bookingIds.length === 0) {
       return res.status(400).json({ success: false, message: MESSAGES.SETTLEMENT.SELECT_BOOKINGS });
+    }
+
+    if (!utr || !utr.trim()) {
+      return res.status(400).json({ success: false, message: "UTR number is required" });
+    }
+
+    if (!bankName || !bankName.trim()) {
+      return res.status(400).json({ success: false, message: "Bank name is required" });
+    }
+
+    const existingUTR = await Booking.findOne({ settlementUTR: utr.trim() });
+    if (existingUTR) {
+      return res.status(400).json({ success: false, message: MESSAGES.SETTLEMENT.UTR_EXISTS });
     }
 
     const bookings = await Booking.find({
       _id: { $in: bookingIds },
-      labOwner: labOwnerId,
       paymentStatus: "Paid",
       labPaymentStatus: "Pending",
-    }).session(session);
+    });
+
+    if (!bookings.length) {
+      return res.status(404).json({ success: false, message: MESSAGES.SETTLEMENT.NO_PENDING });
+    }
 
     const labOwnerIds = new Set(bookings.map((b) => b.labOwner.toString()));
     if (labOwnerIds.size > 1) {
-      await session.abortTransaction();
-      session.endSession();
       return res.status(400).json({ success: false, message: MESSAGES.SETTLEMENT.DIFFERENT_LABS });
-    }
-
-    if (!bookings.length) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(404).json({ success: false, message: MESSAGES.SETTLEMENT.NO_PENDING });
     }
 
     const batchId = "SET-" + Date.now();
@@ -294,16 +295,13 @@ export const bulkSettlement = async (req, res) => {
       booking.labPaymentStatus = "Sent";
       booking.labPaidAt = new Date();
       booking.labPaidBy = req.user._id;
-      booking.settlementUTR = utr;
-      booking.bankName = bankName;
+      booking.settlementUTR = utr.trim();
+      booking.bankName = bankName.trim();
       booking.paymentProof = paymentProof;
-      booking.settlementRemark = remark;
+      booking.settlementRemark = remark || "";
       booking.settlementBatchId = batchId;
-      await booking.save({ session });
+      await booking.save();
     }
-
-    await session.commitTransaction();
-    session.endSession();
 
     res.status(200).json({
       success: true,
@@ -313,10 +311,8 @@ export const bulkSettlement = async (req, res) => {
       totalAmount,
     });
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-    logger.error("Bulk settlement error", { message: error.message });
-    res.status(500).json({ success: false, message: MESSAGES.SERVER_ERROR });
+    logger.error("Bulk settlement error", { message: error.message, stack: error.stack });
+    res.status(500).json({ success: false, message: error.message || MESSAGES.SERVER_ERROR });
   }
 };
 

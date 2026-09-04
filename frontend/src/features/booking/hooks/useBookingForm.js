@@ -35,6 +35,7 @@ export default function useBookingForm() {
           : '',
     flatNo: !f.flatNo ? 'Flat / apartment is required' : '',
     city: !f.city ? 'City is required' : '',
+    state: !f.state ? 'State is required' : '',
     pincode:
       !f.pincode
         ? 'Pincode is required'
@@ -56,9 +57,11 @@ export default function useBookingForm() {
     age: '',
     gender: '',
     phone: '',
+    email: '',
     flatNo: '',
     landmark: '',
     city: '',
+    state: '',
     pincode: '',
     address: '',
     bookingDate: '',
@@ -143,9 +146,10 @@ export default function useBookingForm() {
       const fullAddress = [area, road, society, city, state, pincode].filter(Boolean).join(', ')
       setFormData((prev) => ({
         ...prev,
-        address: fullAddress,
+        address: area || road || '',
         landmark: road,
         city,
+        state,
         pincode,
         latitude: lat,
         longitude: lng,
@@ -209,7 +213,7 @@ export default function useBookingForm() {
       }
       await createBooking(payload)
       toast.success('Booking Created Successfully')
-      navigate(ROUTES.HOME)
+      navigate('/booking/bookings')
     } catch (error) {
       toast.error(error.response?.data?.message || 'Booking Failed')
     } finally {

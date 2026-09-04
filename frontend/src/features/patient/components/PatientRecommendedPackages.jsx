@@ -39,7 +39,7 @@ const PatientRecommendedPackages = ({ data }) => {
                 <span className="font-bold text-foreground">₹{pkg.price.toLocaleString('en-IN')}</span>
               </div>
               <button
-                onClick={() => navigate(ROUTES.PACKAGES)}
+                onClick={() => navigate(ROUTES.BOOKING, { state: { selectedItem: pkg, bookingType: 'package' } })}
                 className="w-full mt-2 py-1.5 px-3 text-xs font-semibold text-primary border border-primary rounded-lg hover:bg-primary hover:text-white transition"
               >
                 Book Now

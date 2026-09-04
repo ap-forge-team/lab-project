@@ -51,7 +51,7 @@ const ManageBookingModal = ({
             >
               ← Back
             </Button>
-            <BookingDateTime formData={rescheduleData} handleChange={handleRescheduleChange} />
+            <BookingDateTime formData={rescheduleData} errors={{}} handleChange={handleRescheduleChange} />
             <Textarea
               rows={3}
               value={reason}

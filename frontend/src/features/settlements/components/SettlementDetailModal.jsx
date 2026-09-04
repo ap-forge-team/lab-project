@@ -100,6 +100,21 @@ const SettlementDetailModal = ({ open, onClose, booking, isAdmin }) => {
             </div>
           </div>
 
+          {/* Payment Proof */}
+          {!isPending && (displaySummary.paymentProof || displayBookings[0]?.paymentProof) && (
+            <div>
+              <h4 className="text-sm font-medium mb-2">Payment Proof</h4>
+              <div className="border border-border rounded-lg overflow-hidden inline-block">
+                <img
+                  src={displaySummary.paymentProof || displayBookings[0]?.paymentProof}
+                  alt="Payment Proof"
+                  className="max-h-48 rounded-lg cursor-pointer hover:opacity-90 transition"
+                  onClick={() => window.open(displaySummary.paymentProof || displayBookings[0]?.paymentProof, '_blank')}
+                />
+              </div>
+            </div>
+          )}
+
           {/* Bookings Table */}
           {displayBookings.length > 0 && (
             <div>

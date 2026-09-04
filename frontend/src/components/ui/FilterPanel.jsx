@@ -41,7 +41,8 @@ const FilterPanel = ({
   const getActiveCount = (catKey) => {
     const val = draftFilters[catKey]
     if (Array.isArray(val)) return val.length
-    if (val && typeof val === 'object' && (val.start || val.end)) return 1
+    if (val && typeof val === 'object' && (val.start || val.end || val.min || val.max)) return 1
+    if (val && typeof val === 'string') return 1
     if (val) return 1
     return 0
   }
@@ -64,6 +65,17 @@ const FilterPanel = ({
       const current = prev[catKey] || {}
       return { ...prev, [catKey]: { ...current, [field]: value } }
     })
+  }
+
+  const setRangeValue = (catKey, field, value) => {
+    setDraftFilters((prev) => {
+      const current = prev[catKey] || {}
+      return { ...prev, [catKey]: { ...current, [field]: value } }
+    })
+  }
+
+  const setTextSearch = (catKey, value) => {
+    setDraftFilters((prev) => ({ ...prev, [catKey]: value || undefined }))
   }
 
   const removeFilter = (catKey, value) => {
@@ -116,6 +128,40 @@ const FilterPanel = ({
             {categories.map((cat) => {
               const vals = draftFilters[cat.key]
               if (!vals) return null
+              if (cat.type === 'date-range') {
+                const range = vals
+                if (!range?.start && !range?.end) return null
+                return (
+                  <span key={cat.key} className="flex items-center gap-1 bg-primary/10 text-primary text-xs px-2 py-1 rounded-full">
+                    {range.start || '...'} – {range.end || '...'}
+                    <button onClick={() => setDraftFilters((p) => ({ ...p, [cat.key]: undefined }))} className="hover:text-primary/70">
+                      <X size={12} />
+                    </button>
+                  </span>
+                )
+              }
+              if (cat.type === 'range' && typeof vals === 'object') {
+                if (!vals.min && !vals.max) return null
+                return (
+                  <span key={cat.key} className="flex items-center gap-1 bg-primary/10 text-primary text-xs px-2 py-1 rounded-full">
+                    {vals.min || '0'} – {vals.max || '∞'}
+                    <button onClick={() => setDraftFilters((p) => ({ ...p, [cat.key]: undefined }))} className="hover:text-primary/70">
+                      <X size={12} />
+                    </button>
+                  </span>
+                )
+              }
+              if (cat.type === 'text-search' && typeof vals === 'string') {
+                if (!vals) return null
+                return (
+                  <span key={cat.key} className="flex items-center gap-1 bg-primary/10 text-primary text-xs px-2 py-1 rounded-full">
+                    {vals}
+                    <button onClick={() => setDraftFilters((p) => ({ ...p, [cat.key]: undefined }))} className="hover:text-primary/70">
+                      <X size={12} />
+                    </button>
+                  </span>
+                )
+              }
               const arr = Array.isArray(vals) ? vals : [vals]
               return arr.map((v) => (
                 <span key={`${cat.key}-${v}`} className="flex items-center gap-1 bg-primary/10 text-primary text-xs px-2 py-1 rounded-full">
@@ -188,6 +234,46 @@ const FilterPanel = ({
                     type="date"
                     value={draftFilters[activeCat?.key]?.end || ''}
                     onChange={(e) => setDateRange(activeCat.key, 'end', e.target.value)}
+                    className="w-full border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
+                  />
+                </div>
+              </div>
+            )}
+
+            {activeCat?.type === 'range' && (
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1.5 block">Min {activeCat.unit || ''}</label>
+                  <input
+                    type="number"
+                    placeholder={activeCat.minPlaceholder || '0'}
+                    value={draftFilters[activeCat?.key]?.min || ''}
+                    onChange={(e) => setRangeValue(activeCat.key, 'min', e.target.value)}
+                    className="w-full border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1.5 block">Max {activeCat.unit || ''}</label>
+                  <input
+                    type="number"
+                    placeholder={activeCat.maxPlaceholder || 'No limit'}
+                    value={draftFilters[activeCat?.key]?.max || ''}
+                    onChange={(e) => setRangeValue(activeCat.key, 'max', e.target.value)}
+                    className="w-full border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
+                  />
+                </div>
+              </div>
+            )}
+
+            {activeCat?.type === 'text-search' && (
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1.5 block">{activeCat.label}</label>
+                  <input
+                    type="text"
+                    placeholder={activeCat.placeholder || 'Search...'}
+                    value={draftFilters[activeCat?.key] || ''}
+                    onChange={(e) => setTextSearch(activeCat.key, e.target.value)}
                     className="w-full border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
                   />
                 </div>
@@ -307,6 +393,46 @@ const FilterPanel = ({
               </div>
             )}
 
+            {activeCat?.type === 'range' && (
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1.5 block">Min {activeCat.unit || ''}</label>
+                  <input
+                    type="number"
+                    placeholder={activeCat.minPlaceholder || '0'}
+                    value={draftFilters[activeCat?.key]?.min || ''}
+                    onChange={(e) => setRangeValue(activeCat.key, 'min', e.target.value)}
+                    className="w-full border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1.5 block">Max {activeCat.unit || ''}</label>
+                  <input
+                    type="number"
+                    placeholder={activeCat.maxPlaceholder || 'No limit'}
+                    value={draftFilters[activeCat?.key]?.max || ''}
+                    onChange={(e) => setRangeValue(activeCat.key, 'max', e.target.value)}
+                    className="w-full border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
+                  />
+                </div>
+              </div>
+            )}
+
+            {activeCat?.type === 'text-search' && (
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1.5 block">{activeCat.label}</label>
+                  <input
+                    type="text"
+                    placeholder={activeCat.placeholder || 'Search...'}
+                    value={draftFilters[activeCat?.key] || ''}
+                    onChange={(e) => setTextSearch(activeCat.key, e.target.value)}
+                    className="w-full border border-border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary"
+                  />
+                </div>
+              </div>
+            )}
+
             {(activeCat?.type === 'checkbox' || activeCat?.type === 'search-checkbox') && (
               filteredOptions.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">No options available</p>
@@ -369,6 +495,61 @@ const FilterPanel = ({
                               </button>
                             </div>
                           )}
+                        </div>
+                      </div>
+                    )
+                  }
+
+                  if (cat.type === 'date-range') {
+                    const range = vals
+                    if (!range?.start && !range?.end) return null
+                    return (
+                      <div key={cat.key}>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-xs font-medium text-foreground">{cat.label}</span>
+                          <button onClick={() => setDraftFilters((p) => ({ ...p, [cat.key]: undefined }))} className="text-[10px] text-primary hover:underline">Clear</button>
+                        </div>
+                        <div className="flex items-center justify-between bg-accent/50 rounded px-2 py-1">
+                          <span className="text-xs text-foreground truncate">{range.start || '...'} – {range.end || '...'}</span>
+                          <button onClick={() => setDraftFilters((p) => ({ ...p, [cat.key]: undefined }))} className="text-muted-foreground hover:text-foreground ml-1 shrink-0">
+                            <X size={12} />
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  }
+
+                  if (cat.type === 'range' && typeof vals === 'object') {
+                    if (!vals.min && !vals.max) return null
+                    return (
+                      <div key={cat.key}>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-xs font-medium text-foreground">{cat.label}</span>
+                          <button onClick={() => setDraftFilters((p) => ({ ...p, [cat.key]: undefined }))} className="text-[10px] text-primary hover:underline">Clear</button>
+                        </div>
+                        <div className="flex items-center justify-between bg-accent/50 rounded px-2 py-1">
+                          <span className="text-xs text-foreground truncate">{vals.min || '0'} – {vals.max || '∞'}</span>
+                          <button onClick={() => setDraftFilters((p) => ({ ...p, [cat.key]: undefined }))} className="text-muted-foreground hover:text-foreground ml-1 shrink-0">
+                            <X size={12} />
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  }
+
+                  if (cat.type === 'text-search' && typeof vals === 'string') {
+                    if (!vals) return null
+                    return (
+                      <div key={cat.key}>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-xs font-medium text-foreground">{cat.label}</span>
+                          <button onClick={() => setDraftFilters((p) => ({ ...p, [cat.key]: undefined }))} className="text-[10px] text-primary hover:underline">Clear</button>
+                        </div>
+                        <div className="flex items-center justify-between bg-accent/50 rounded px-2 py-1">
+                          <span className="text-xs text-foreground truncate">{vals}</span>
+                          <button onClick={() => setDraftFilters((p) => ({ ...p, [cat.key]: undefined }))} className="text-muted-foreground hover:text-foreground ml-1 shrink-0">
+                            <X size={12} />
+                          </button>
                         </div>
                       </div>
                     )
