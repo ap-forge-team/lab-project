@@ -15,3 +15,7 @@ export const getLabSettlementStatistics = () => API.get('/settlements/lab/statis
 export const getLabSettlementPending = () => API.get('/settlements/lab/pending')
 export const getLabSettlementHistory = () => API.get('/settlements/lab/history')
 export const getLabSettlementDetails = (batchId) => API.get(`/settlements/lab/details/${batchId}`)
+
+// Export APIs
+export const exportSettlementHistory = () => API.get('/export/history', { responseType: 'blob' })
+export const exportLabSettlementHistory = (params) => API.get('/export/lab/history', { params, responseType: 'blob' })

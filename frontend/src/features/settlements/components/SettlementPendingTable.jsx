@@ -1,11 +1,11 @@
 import React, { useState, useMemo, useCallback } from 'react'
-import { ArrowDown, ArrowUp, ChevronsUpDown, EyeOff, Eye, Search, RefreshCw, CheckSquare } from 'lucide-react'
+import { ArrowDown, ArrowUp, ChevronsUpDown, Eye, CheckSquare, Send, CheckCircle } from 'lucide-react'
 import Tooltip from '@mui/material/Tooltip'
 import Pagination from '@/components/ui/Pagination'
 import Button from '@/components/ui/Button'
 
 const PAGE_SIZE = 10
-const PAGE_SIZES = [10, 25, 50]
+const PAGE_SIZES = [5, 10, 25, 50]
 
 const formatCurrency = (amount) => `₹${Number(amount || 0).toLocaleString('en-IN')}`
 
@@ -21,7 +21,7 @@ const formatTime = (dateStr) => {
   return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
 }
 
-const SortableHeader = ({ title, sortKey, sortConfig, onSort, onHide }) => {
+const SortableHeader = ({ title, sortKey, sortConfig, onSort }) => {
   const [open, setOpen] = useState(false)
   const currentSort = sortConfig?.key === sortKey ? sortConfig.direction : null
 
@@ -31,7 +31,7 @@ const SortableHeader = ({ title, sortKey, sortConfig, onSort, onHide }) => {
   }
 
   return (
-    <th className="px-4 py-3 relative">
+    <th className="px-4 py-3 relative text-left">
       <div className="flex items-center gap-1">
         <span>{title}</span>
         <button type="button" onClick={() => setOpen(!open)} className="p-0.5 rounded hover:bg-accent">
@@ -48,11 +48,6 @@ const SortableHeader = ({ title, sortKey, sortConfig, onSort, onHide }) => {
             <button onClick={() => handleSort('desc')} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left">
               <ArrowDown size={14} /> Desc
             </button>
-            {onHide && (
-              <button onClick={() => { onHide(); setOpen(false) }} className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left">
-                <EyeOff size={14} /> Hide
-              </button>
-            )}
           </div>
         </>
       )}
@@ -60,20 +55,26 @@ const SortableHeader = ({ title, sortKey, sortConfig, onSort, onHide }) => {
   )
 }
 
+const STATUS_STYLES = {
+  Verified: { bg: 'bg-emerald-50', text: 'text-emerald-600', dot: 'bg-emerald-500' },
+  Sent: { bg: 'bg-blue-50', text: 'text-blue-600', dot: 'bg-blue-500' },
+  Pending: { bg: 'bg-amber-50', text: 'text-amber-600', dot: 'bg-amber-500' },
+  Rejected: { bg: 'bg-red-50', text: 'text-red-600', dot: 'bg-red-500' },
+}
+
 const SettlementPendingTable = ({
   bookings,
   isLoading,
   search,
-  setSearch,
-  onRefresh,
   onBulkSettlement,
+  onSendSettlement,
+  onVerifySettlement,
   onViewDetails,
   isAdmin,
   selectedBookings,
   setSelectedBookings,
 }) => {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null })
-  const [hiddenColumns, setHiddenColumns] = useState({})
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(PAGE_SIZE)
 
@@ -91,6 +92,7 @@ const SettlementPendingTable = ({
       case 'patient': return (booking.patientName || booking.user?.name || '').toLowerCase()
       case 'labOwner': return (booking.labOwner?.name || '').toLowerCase()
       case 'test': return (booking.test?.title || booking.package?.title || '').toLowerCase()
+      case 'bookings': return 1
       case 'amount': return booking.paymentAmount || 0
       case 'labShare': return booking.labShare || 0
       case 'commission': return booking.systemCommission || 0
@@ -151,40 +153,24 @@ const SettlementPendingTable = ({
 
   return (
     <div className="space-y-4">
-      {/* Search and Actions */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="relative flex-1 max-w-md">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search Lab / Batch ID / UTR Number"
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-            className="w-full pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <Button onClick={onRefresh} variant="outline" size="sm" className="flex items-center gap-2">
-            <RefreshCw size={14} />
-            Refresh
+      {/* Table Toolbar */}
+      {isAdmin && (
+        <div className="flex items-center justify-end">
+          <Button onClick={onBulkSettlement} variant="success" size="sm" className="flex items-center gap-2" disabled={selectedBookings.length === 0}>
+            <CheckSquare size={14} />
+            Bulk Settlement{selectedBookings.length > 0 && ` (${selectedBookings.length})`}
           </Button>
-          {isAdmin && selectedBookings.length > 0 && (
-            <Button onClick={onBulkSettlement} variant="success" size="sm" className="flex items-center gap-2">
-              <CheckSquare size={14} />
-              Bulk Settlement ({selectedBookings.length})
-            </Button>
-          )}
         </div>
-      </div>
+      )}
 
       {/* Table */}
       {sortedBookings.length === 0 ? (
         <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">No pending settlements found.</div>
       ) : (
-        <div className="rounded-xl border border-border bg-white overflow-hidden">
-          <div className="overflow-x-auto custom-scrollbar">
-            <table className="w-full min-w-[1000px] text-sm">
-              <thead className="bg-accent text-left text-muted-foreground">
+        <div className="rounded-xl border border-border bg-white">
+          <div className="overflow-y-auto max-h-[calc(100vh-250px)] pb-2 pr-1">
+            <table className="w-full min-w-[1100px] text-sm">
+              <thead className="bg-accent text-left text-muted-foreground sticky top-0">
                 <tr>
                   {isAdmin && (
                     <th className="px-4 py-3 w-10">
@@ -196,16 +182,17 @@ const SettlementPendingTable = ({
                       />
                     </th>
                   )}
-                  <SortableHeader title="Patient" sortKey="patient" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns((p) => ({ ...p, patient: true }))} />
-                  <SortableHeader title="Lab Owner" sortKey="labOwner" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns((p) => ({ ...p, labOwner: true }))} />
-                  <SortableHeader title="Test / Package" sortKey="test" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns((p) => ({ ...p, test: true }))} />
-                  <SortableHeader title="Amount" sortKey="amount" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns((p) => ({ ...p, amount: true }))} />
-                  <SortableHeader title="Lab Share" sortKey="labShare" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns((p) => ({ ...p, labShare: true }))} />
-                  <SortableHeader title="Commission" sortKey="commission" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns((p) => ({ ...p, commission: true }))} />
-                  <th className="px-4 py-3">UTR</th>
-                  <SortableHeader title="Date" sortKey="date" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns((p) => ({ ...p, date: true }))} />
-                  <SortableHeader title="Status" sortKey="status" sortConfig={sortConfig} onSort={handleSort} onHide={() => setHiddenColumns((p) => ({ ...p, status: true }))} />
-                  <th className="px-4 py-3">Action</th>
+                  <SortableHeader title="Patient" sortKey="patient" sortConfig={sortConfig} onSort={handleSort} />
+                  <SortableHeader title="Lab Owner" sortKey="labOwner" sortConfig={sortConfig} onSort={handleSort} />
+                  <SortableHeader title="Test / Package" sortKey="test" sortConfig={sortConfig} onSort={handleSort} />
+                  <SortableHeader title="Bookings" sortKey="bookings" sortConfig={sortConfig} onSort={handleSort} />
+                  <SortableHeader title="Amount" sortKey="amount" sortConfig={sortConfig} onSort={handleSort} />
+                  <SortableHeader title="Lab Share" sortKey="labShare" sortConfig={sortConfig} onSort={handleSort} />
+                  <SortableHeader title="Commission" sortKey="commission" sortConfig={sortConfig} onSort={handleSort} />
+                  <th className="px-4 py-3 text-left">UTR</th>
+                  <SortableHeader title="Date" sortKey="date" sortConfig={sortConfig} onSort={handleSort} />
+                  <SortableHeader title="Status" sortKey="status" sortConfig={sortConfig} onSort={handleSort} />
+                  <th className="px-4 py-3 text-left">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -223,72 +210,88 @@ const SettlementPendingTable = ({
                           />
                         </td>
                       )}
-                      {!hiddenColumns.patient && (
-                        <td className="px-4 py-3">
-                          <div>
-                            <p className="font-medium text-foreground">{booking.patientName || booking.user?.name || '—'}</p>
-                            <p className="text-xs text-muted-foreground">{booking.phone}</p>
-                          </div>
-                        </td>
-                      )}
-                      {!hiddenColumns.labOwner && (
-                        <td className="px-4 py-3">
-                          <span className="text-sm text-foreground">{booking.labOwner?.name || '—'}</span>
-                        </td>
-                      )}
-                      {!hiddenColumns.test && (
-                        <td className="px-4 py-3">
-                          <span className="text-sm text-foreground">{booking.test?.title || booking.package?.title || '—'}</span>
-                        </td>
-                      )}
-                      {!hiddenColumns.amount && (
-                        <td className="px-4 py-3 font-medium text-foreground">{formatCurrency(booking.paymentAmount)}</td>
-                      )}
-                      {!hiddenColumns.labShare && (
-                        <td className="px-4 py-3">
-                          <div>
-                            <span className="font-medium text-foreground">{formatCurrency(booking.labShare)}</span>
-                            <span className="text-xs text-muted-foreground ml-1">(85%)</span>
-                          </div>
-                        </td>
-                      )}
-                      {!hiddenColumns.commission && (
-                        <td className="px-4 py-3">
-                          <div>
-                            <span className="font-medium text-foreground">{formatCurrency(booking.systemCommission)}</span>
-                            <span className="text-xs text-muted-foreground ml-1">(15%)</span>
-                          </div>
-                        </td>
-                      )}
+                      <td className="px-4 py-3">
+                        <div>
+                          <p className="font-medium text-foreground">{booking.patientName || booking.user?.name || '—'}</p>
+                          <p className="text-xs text-muted-foreground">{booking.phone}</p>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm text-foreground">{booking.labOwner?.name || '—'}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm text-foreground">{booking.test?.title || booking.package?.title || '—'}</span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className="text-sm text-foreground">1</span>
+                      </td>
+                      <td className="px-4 py-3 font-medium text-foreground">{formatCurrency(booking.paymentAmount)}</td>
+                      <td className="px-4 py-3">
+                        <div>
+                          <span className="font-medium text-foreground">{formatCurrency(booking.labShare)}</span>
+                          <span className="text-xs text-muted-foreground ml-1">(85%)</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div>
+                          <span className="font-medium text-foreground">{formatCurrency(booking.systemCommission)}</span>
+                          <span className="text-xs text-muted-foreground ml-1">(15%)</span>
+                        </div>
+                      </td>
                       <td className="px-4 py-3">
                         <span className="text-xs text-muted-foreground">{booking.settlementUTR || '—'}</span>
                       </td>
-                      {!hiddenColumns.date && (
-                        <td className="px-4 py-3">
-                          <div>
-                            <span className="text-sm text-foreground">{formatDate(booking.createdAt)}</span>
-                            <span className="text-xs text-muted-foreground block">{formatTime(booking.createdAt)}</span>
-                          </div>
-                        </td>
-                      )}
-                      {!hiddenColumns.status && (
-                        <td className="px-4 py-3">
-                          <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium bg-amber-50 text-amber-600">
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                            {booking.labPaymentStatus || 'Pending'}
-                          </span>
-                        </td>
-                      )}
                       <td className="px-4 py-3">
-                        <Tooltip title="View Details" arrow placement="top">
-                          <button
-                            type="button"
-                            onClick={() => onViewDetails(booking)}
-                            className="rounded p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/5 transition"
-                          >
-                            <Eye size={15} />
-                          </button>
-                        </Tooltip>
+                        <div>
+                          <span className="text-sm text-foreground">{formatDate(booking.createdAt)}</span>
+                          <span className="text-xs text-muted-foreground block">{formatTime(booking.createdAt)}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        {(() => {
+                          const statusStyle = STATUS_STYLES[booking.labPaymentStatus] || STATUS_STYLES.Pending
+                          return (
+                            <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium ${statusStyle.bg} ${statusStyle.text}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${statusStyle.dot}`}></span>
+                              {booking.labPaymentStatus || 'Pending'}
+                            </span>
+                          )
+                        })()}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1">
+                          {isAdmin && (
+                            <Tooltip title="Send Settlement" arrow placement="top">
+                              <button
+                                type="button"
+                                onClick={() => onSendSettlement(booking)}
+                                className="rounded p-1.5 text-muted-foreground hover:text-green-600 hover:bg-green-50 transition"
+                              >
+                                <Send size={15} />
+                              </button>
+                            </Tooltip>
+                          )}
+                          {!isAdmin && booking.labPaymentStatus === 'Sent' && (
+                            <Tooltip title="Verify Payment Received" arrow placement="top">
+                              <button
+                                type="button"
+                                onClick={() => onVerifySettlement(booking)}
+                                className="rounded p-1.5 text-muted-foreground hover:text-green-600 hover:bg-green-50 transition"
+                              >
+                                <CheckCircle size={15} />
+                              </button>
+                            </Tooltip>
+                          )}
+                          <Tooltip title="View Details" arrow placement="top">
+                            <button
+                              type="button"
+                              onClick={() => onViewDetails(booking)}
+                              className="rounded p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/5 transition"
+                            >
+                              <Eye size={15} />
+                            </button>
+                          </Tooltip>
+                        </div>
                       </td>
                     </tr>
                   )
@@ -300,16 +303,18 @@ const SettlementPendingTable = ({
       )}
 
       {/* Pagination */}
-      <Pagination
-        page={page}
-        totalPages={totalPages}
-        pageSize={pageSize}
-        totalItems={sortedBookings.length}
-        onPageChange={setPage}
-        onPageSizeChange={(size) => { setPageSize(size); setPage(1) }}
-        pageSizes={PAGE_SIZES}
-        itemName="settlements"
-      />
+      <div className="mt-4">
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={sortedBookings.length}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => { setPageSize(size); setPage(1) }}
+          pageSizes={PAGE_SIZES}
+          itemName="settlements"
+        />
+      </div>
     </div>
   )
 }

@@ -66,7 +66,6 @@ export const ALL_MENU_ITEMS = [
       admin: '/admin/bookings',
       lab_owner: '/lab-owner/bookings',
       lab_assistant: '/lab-assistant/bookings',
-      patient: '/booking/bookings',
     },
   },
   {

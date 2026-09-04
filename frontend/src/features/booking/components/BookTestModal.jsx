@@ -24,6 +24,7 @@ export default function BookTestModal({ open, onClose, preselectedTest, onBooked
     flatNo: '',
     landmark: '',
     city: '',
+    state: '',
     pincode: '',
     address: '',
     bookingDate: '',
@@ -43,7 +44,7 @@ export default function BookTestModal({ open, onClose, preselectedTest, onBooked
     if (!open) return
     setFormData({
       test: '', package: '', patientName: '', age: '', gender: '', phone: '',
-      flatNo: '', landmark: '', city: '', pincode: '', address: '',
+      flatNo: '', landmark: '', city: '', state: '', pincode: '', address: '',
       bookingDate: '', bookingTime: '', latitude: '', longitude: '',
     })
     setMapLocation(null)
@@ -96,7 +97,7 @@ export default function BookTestModal({ open, onClose, preselectedTest, onBooked
       const state = data.address?.state || ''
       const pincode = data.address?.postcode || ''
       const fullAddress = [area, road, society, city, state, pincode].filter(Boolean).join(', ')
-      setFormData((prev) => ({ ...prev, address: fullAddress, landmark: road, city, pincode, latitude: lat, longitude: lng }))
+      setFormData((prev) => ({ ...prev, address: area || road || '', landmark: road, city, state, pincode, latitude: lat, longitude: lng }))
       toast.success(`Location Selected: ${area}`)
     } catch {
       toast.error('Unable to fetch address')

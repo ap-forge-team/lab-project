@@ -288,7 +288,6 @@ settlementBatchId: {
 
 settlementUTR: {
     type: String,
-    unique: true,
     sparse: true,
     trim: true
 },

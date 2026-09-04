@@ -21,7 +21,7 @@ const PatientRecentBookings = ({ data }) => {
       <div className="flex items-center justify-between mb-3 sm:mb-4">
         <h3 className="font-serif text-base sm:text-lg font-bold text-foreground">Recent Bookings</h3>
         <button
-          onClick={() => navigate('/booking/history')}
+          onClick={() => navigate('/booking/bookings')}
           className="text-xs font-semibold text-primary hover:underline"
         >
           View All
@@ -43,7 +43,7 @@ const PatientRecentBookings = ({ data }) => {
           </thead>
           <tbody>
             {(data || []).map((booking) => (
-              <tr key={booking._id} className="border-b border-border/50 last:border-0 hover:bg-accent/50 cursor-pointer">
+              <tr key={booking._id} onClick={() => navigate('/booking/bookings')} className="border-b border-border/50 last:border-0 hover:bg-accent/50 cursor-pointer">
                 <td className="py-3">
                   <span className="font-semibold text-primary text-xs sm:text-[13px]">{booking.bookingId}</span>
                 </td>

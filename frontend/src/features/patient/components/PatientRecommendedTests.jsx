@@ -47,7 +47,7 @@ const PatientRecommendedTests = ({ data }) => {
                 )}
               </div>
               <button
-                onClick={() => navigate(ROUTES.TESTS)}
+                onClick={() => navigate(ROUTES.BOOKING, { state: { selectedItem: test, bookingType: 'test' } })}
                 className="w-full mt-3 py-1.5 px-3 text-xs font-semibold text-primary border border-primary rounded-lg hover:bg-primary hover:text-white transition"
               >
                 Book Now

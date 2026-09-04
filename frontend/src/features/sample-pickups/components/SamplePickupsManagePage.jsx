@@ -220,11 +220,11 @@ const SamplePickupsManagePage = ({ bookings, isLoading, isError }) => {
             activeCount={activeFilterCount}
           />
           <div className="flex items-center rounded-lg border border-border p-1">
-            <Tooltip title="Table View" arrow placement="top">
-              <button type="button" aria-label="Table view" onClick={() => setView('table')} className={`rounded p-1.5 ${view === 'table' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
-            </Tooltip>
             <Tooltip title="Grid View" arrow placement="top">
               <button type="button" aria-label="Grid view" onClick={() => setView('grid')} className={`rounded p-1.5 ${view === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><Grid2X2 size={18} /></button>
+            </Tooltip>
+            <Tooltip title="Table View" arrow placement="top">
+              <button type="button" aria-label="Table view" onClick={() => setView('table')} className={`rounded p-1.5 ${view === 'table' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
             </Tooltip>
           </div>
         </div>
@@ -249,11 +249,11 @@ const SamplePickupsManagePage = ({ bookings, isLoading, isError }) => {
           activeCount={activeFilterCount}
         />
         <div className="flex items-center rounded-lg border border-border p-1">
-          <Tooltip title="Table View" arrow placement="top">
-            <button type="button" aria-label="Table view" onClick={() => setView('table')} className={`rounded p-1.5 ${view === 'table' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
-          </Tooltip>
           <Tooltip title="Grid View" arrow placement="top">
             <button type="button" aria-label="Grid view" onClick={() => setView('grid')} className={`rounded p-1.5 ${view === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><Grid2X2 size={18} /></button>
+          </Tooltip>
+          <Tooltip title="Table View" arrow placement="top">
+            <button type="button" aria-label="Table view" onClick={() => setView('table')} className={`rounded p-1.5 ${view === 'table' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
           </Tooltip>
         </div>
       </div>
