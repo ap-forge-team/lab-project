@@ -5,9 +5,10 @@ import {
   Clock,
   Download,
   Eye,
-  FileText,
+  ClipboardList,
   Search,
-  CloudUpload,
+  Truck,
+  CalendarCheck,
   Grid2X2,
   List,
 } from 'lucide-react'
@@ -76,7 +77,7 @@ const StatCard = ({ icon: Icon, borderColor, iconColor, cardBg, title, value, de
   </div>
 )
 
-const ReportsManagePage = ({ bookings, isLoading, isError }) => {
+const SamplePickupsManagePage = ({ bookings, isLoading, isError }) => {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(PAGE_SIZE)
@@ -90,14 +91,16 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
     return bookings
   }, [bookings])
 
+  const today = new Date().toISOString().slice(0, 10)
+
   const stats = useMemo(() => {
     const total = list.length
     const completed = list.filter((b) => b.status === 'Completed').length
-    const pending = list.filter((b) => ['Processing', 'Sample Collected', 'Assigned', 'Pending'].includes(b.status)).length
-    const uploaded = list.filter((b) => b.report).length
-    const downloaded = list.filter((b) => b.report).length
-    return { total, completed, pending, uploaded, downloaded }
-  }, [list])
+    const assigned = list.filter((b) => b.status === 'Assigned').length
+    const inTransit = list.filter((b) => b.status === 'Reached' || b.status === 'Sample Collected').length
+    const todayPickups = list.filter((b) => b.bookingDate === today).length
+    return { total, completed, assigned, inTransit, todayPickups }
+  }, [list, today])
 
   const filterCategories = useMemo(() => [
     {
@@ -190,14 +193,14 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
     <section className="mx-auto max-w-[1500px] space-y-4 lg:space-y-5">
       {/* Mobile Header */}
       <div className="flex items-center justify-between gap-3 sm:hidden">
-        <h1 className="text-2xl font-bold text-foreground">Reports</h1>
+        <h1 className="text-2xl font-bold text-foreground">Sample Pickups</h1>
       </div>
 
       {/* Desktop Header */}
       <div className="hidden sm:flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Reports</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Review completed bookings and uploaded reports.</p>
+          <h1 className="text-2xl font-bold text-foreground">Sample Pickups</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Track sample collection for bookings.</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
@@ -205,7 +208,7 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
             <input
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-              placeholder="Search reports..."
+              placeholder="Search sample pickups..."
               className="pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary w-64"
             />
           </div>
@@ -234,7 +237,7 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
           <input
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-            placeholder="Search reports..."
+            placeholder="Search sample pickups..."
             className="w-full pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
           />
         </div>
@@ -260,11 +263,11 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
         <div className="flex gap-4 min-w-max">
           <div className="snap-start min-w-[220px] shrink-0">
             <StatCard
-              icon={FileText}
+              icon={ClipboardList}
               borderColor="border-blue-200"
               iconColor="text-blue-500"
               cardBg="bg-blue-50"
-              title="Total Reports"
+              title="Total Pickups"
               value={stats.total.toLocaleString()}
               detailTop="All"
               detailBottom="time"
@@ -288,34 +291,34 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
               borderColor="border-amber-200"
               iconColor="text-amber-500"
               cardBg="bg-amber-50"
-              title="Pending"
-              value={stats.pending.toLocaleString()}
-              detailTop={stats.total ? `${((stats.pending / stats.total) * 100).toFixed(1)}%` : '0%'}
+              title="Assigned"
+              value={stats.assigned.toLocaleString()}
+              detailTop={stats.total ? `${((stats.assigned / stats.total) * 100).toFixed(1)}%` : '0%'}
               detailBottom="of total"
             />
           </div>
           <div className="snap-start min-w-[220px] shrink-0">
             <StatCard
-              icon={CloudUpload}
+              icon={Truck}
               borderColor="border-violet-200"
               iconColor="text-violet-500"
               cardBg="bg-violet-50"
-              title="Uploaded"
-              value={stats.uploaded.toLocaleString()}
-              detailTop={stats.total ? `${((stats.uploaded / stats.total) * 100).toFixed(1)}%` : '0%'}
+              title="In Transit"
+              value={stats.inTransit.toLocaleString()}
+              detailTop={stats.total ? `${((stats.inTransit / stats.total) * 100).toFixed(1)}%` : '0%'}
               detailBottom="of total"
             />
           </div>
           <div className="snap-start min-w-[220px] shrink-0">
             <StatCard
-              icon={Download}
+              icon={CalendarCheck}
               borderColor="border-sky-200"
               iconColor="text-sky-500"
               cardBg="bg-sky-50"
-              title="Downloaded"
-              value={stats.downloaded.toLocaleString()}
-              detailTop={stats.total ? `${((stats.downloaded / stats.total) * 100).toFixed(1)}%` : '0%'}
-              detailBottom="of total"
+              title="Today's Pickups"
+              value={stats.todayPickups.toLocaleString()}
+              detailTop="Scheduled"
+              detailBottom="today"
             />
           </div>
         </div>
@@ -330,11 +333,11 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
 
       {/* Content */}
       {isLoading ? (
-        <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">Loading reports…</div>
+        <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">Loading sample pickups…</div>
       ) : isError ? (
-        <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-destructive">Unable to load reports. Please try again.</div>
+        <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-destructive">Unable to load sample pickups. Please try again.</div>
       ) : sorted.length === 0 ? (
-        <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">No reports match the selected filters.</div>
+        <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">No sample pickups match the selected filters.</div>
       ) : view === 'grid' ? (
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {visibleBookings.map((booking) => {
@@ -502,4 +505,4 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
   )
 }
 
-export default ReportsManagePage
+export default SamplePickupsManagePage

@@ -56,17 +56,19 @@ const AssistantSelect = ({ assistants, isAssistantMissing, assistantName, bookin
   )
 }
 
-const BookingCardContent = ({ testName, testCity, amount, bookingDate, bookingTime, detail, detailType = 'address', isDetailMissing = false, assistantName, isAssistantMissing = false, assistants, onAssignAssistant, bookingId, bookingStatus }) => {
+const BookingCardContent = ({ testName, testCity, amount, bookingDate, bookingTime, detail, detailType = 'address', isDetailMissing = false, assistantName, isAssistantMissing = false, assistants, onAssignAssistant, bookingId, bookingStatus, additionalTests, additionalPackages }) => {
   return (
     <div className="flex flex-col flex-1 p-4 pt-3">
-      <div>
-        <h4 className="font-medium text-foreground text-sm leading-snug" title={testName}>
-          {testName}
-        </h4>
-        {testCity && (
-          <p className="text-xs text-muted-foreground mt-0.5">{testCity}</p>
-        )}
-      </div>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <h4 className="font-medium text-foreground text-sm leading-snug" title={testName}>
+            {testName}
+          </h4>
+          {(additionalTests?.length > 0 || additionalPackages?.length > 0) && (
+            <span className="text-[10px] text-purple-700 font-medium bg-purple-50 px-1.5 py-0.5 rounded">
+              +{additionalTests.length + additionalPackages.length}
+            </span>
+          )}
+        </div>
 
       <div className="mt-2">
         <span className="font-mono text-sm font-bold text-primary">

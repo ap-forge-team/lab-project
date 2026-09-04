@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Users, Plus, Search, ChevronRight, Eye, Pencil, Trash2, X, MoreVertical, Phone, Mail, Calendar, Shield } from 'lucide-react'
+import { Users, Plus, Search, ChevronRight, Eye, Pencil, Trash2, X, MoreVertical, Phone, Mail, Calendar, Shield, Upload, FileText } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { DataTable } from '@/components/ui/data-table'
 import { assistantColumns } from '@/features/lab-owner/columns/assistants.columns'
@@ -50,6 +50,8 @@ const AssistantsManagePage = ({ assistants, isLoading, isError, onRefresh }) => 
   const emptyForm = { name: '', email: '', phone: '', password: '', verificationDoc: '' }
   const [form, setForm] = useState(emptyForm)
   const [errors, setErrors] = useState({})
+  const [idProofFile, setIdProofFile] = useState(null)
+  const [otherDocsFiles, setOtherDocsFiles] = useState([])
 
   const filterCategories = useMemo(() => {
     const nameOptions = (assistants || []).map((a) => ({ value: a.name, label: a.name }))
@@ -205,13 +207,20 @@ const AssistantsManagePage = ({ assistants, isLoading, isError, onRefresh }) => 
     if (!validate()) return
     try {
       setSaving(true)
-      await createLabAssistant({
-        name: form.name,
-        email: form.email,
-        phone: form.phone,
-        password: form.password,
-        verificationDoc: form.verificationDoc,
-      })
+      const formData = new FormData()
+      formData.append('name', form.name)
+      formData.append('email', form.email)
+      formData.append('phone', form.phone)
+      formData.append('password', form.password)
+      if (idProofFile) {
+        formData.append('idProof', idProofFile)
+      }
+      if (otherDocsFiles.length > 0) {
+        otherDocsFiles.forEach((file) => {
+          formData.append('otherDocuments', file)
+        })
+      }
+      await createLabAssistant(formData)
       toast.success('Assistant created successfully')
       setShowAddModal(false)
       setForm(emptyForm)
@@ -283,7 +292,7 @@ const AssistantsManagePage = ({ assistants, isLoading, isError, onRefresh }) => 
     }
   }
 
-  const handleCloseAdd = () => { setShowAddModal(false); setForm(emptyForm); setErrors({}) }
+  const handleCloseAdd = () => { setShowAddModal(false); setForm(emptyForm); setIdProofFile(null); setOtherDocsFiles([]); setErrors({}) }
   const handleCloseEdit = () => { setShowEditModal(false); setSelectedAssistant(null); setForm(emptyForm); setErrors({}) }
   const handleChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -380,7 +389,54 @@ const AssistantsManagePage = ({ assistants, isLoading, isError, onRefresh }) => 
               <Input label="Email" name="email" type="email" value={form.email} onChange={(e) => handleChange('email', e.target.value)} placeholder="e.g. john@example.com" error={errors.email} required />
               <Input label="Phone" name="phone" value={form.phone} onChange={(e) => handleChange('phone', e.target.value)} placeholder="e.g. 9876543210" inputMode="numeric" maxLength={10} error={errors.phone} required />
               <Input label="Password" name="password" type="password" value={form.password} onChange={(e) => handleChange('password', e.target.value)} placeholder="Min 6 characters" error={errors.password} required />
-              <Input label="Verification Document" name="verificationDoc" value={form.verificationDoc} onChange={(e) => handleChange('verificationDoc', e.target.value)} placeholder="e.g. Aadhaar, PAN, License number" />
+              {/* Document Uploads */}
+              <div className="space-y-3">
+                <p className="text-sm font-medium text-foreground">Documents</p>
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">ID Proof</label>
+                  <label className="flex items-center gap-2 border-2 border-dashed border-border rounded-lg p-3 cursor-pointer hover:bg-accent/50 transition">
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png,.webp"
+                      className="hidden"
+                      onChange={(e) => setIdProofFile(e.target.files?.[0] || null)}
+                    />
+                    <Upload size={16} className="text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">
+                      {idProofFile ? idProofFile.name : 'Upload ID proof (PDF, JPG, PNG)'}
+                    </span>
+                  </label>
+                  {idProofFile && (
+                    <button onClick={() => setIdProofFile(null)} className="text-[10px] text-red-500 mt-1 hover:underline">Remove</button>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">Other Documents (max 5)</label>
+                  <label className="flex items-center gap-2 border-2 border-dashed border-border rounded-lg p-3 cursor-pointer hover:bg-accent/50 transition">
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png,.webp"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => setOtherDocsFiles(Array.from(e.target.files || []))}
+                    />
+                    <Upload size={16} className="text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">
+                      {otherDocsFiles.length > 0 ? `${otherDocsFiles.length}/5 file(s) selected` : 'Upload additional documents'}
+                    </span>
+                  </label>
+                  {otherDocsFiles.length > 0 && (
+                    <div className="mt-1 space-y-0.5">
+                      {otherDocsFiles.map((f, i) => (
+                        <div key={i} className="flex items-center justify-between">
+                          <span className="text-[10px] text-muted-foreground truncate">{f.name}</span>
+                          <button onClick={() => setOtherDocsFiles((prev) => prev.filter((_, idx) => idx !== i))} className="text-[10px] text-red-500 hover:underline">Remove</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
             <div className="flex items-center justify-end gap-3 p-4 border-t border-border">
               <button onClick={handleCloseAdd} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-accent rounded-lg transition">Cancel</button>
@@ -428,6 +484,24 @@ const AssistantsManagePage = ({ assistants, isLoading, isError, onRefresh }) => 
                   <Calendar size={16} className="text-muted-foreground" />
                   <div><p className="text-[10px] text-muted-foreground">Registered On</p><p className="text-sm text-foreground">{selectedAssistant.createdAt ? new Date(selectedAssistant.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</p></div>
                 </div>
+                {/* Documents */}
+                {(selectedAssistant.idProof || selectedAssistant.otherDocuments?.length > 0) && (
+                  <div className="p-3 bg-accent/50 rounded-lg">
+                    <p className="text-[10px] text-muted-foreground mb-2">Documents</p>
+                    <div className="space-y-1.5">
+                      {selectedAssistant.idProof && (
+                        <a href={selectedAssistant.idProof} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline">
+                          <FileText size={12} /> ID Proof
+                        </a>
+                      )}
+                      {selectedAssistant.otherDocuments?.map((doc, i) => (
+                        <a key={i} href={doc.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline">
+                          <FileText size={12} /> {doc.name || 'Document'}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex items-center justify-end gap-3 p-4 border-t border-border">

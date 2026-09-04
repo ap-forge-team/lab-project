@@ -110,7 +110,7 @@ const MobileBookingCard = ({ booking, handleReached, openSampleModal, openNaviga
       </div>
       <div className="flex flex-col flex-1 p-4 pt-3">
         <div className="flex items-center justify-between">
-          <span className="text-lg font-bold text-foreground">₹{(booking.test?.price || booking.package?.price || 0).toLocaleString('en-IN')}</span>
+          <span className="text-lg font-bold text-foreground">₹{(booking.totalAmount || booking.test?.price || booking.package?.price || 0).toLocaleString('en-IN')}</span>
           <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-medium ${paymentStyle.bg} ${paymentStyle.text}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${paymentStyle.dot}`}></span>
             {booking.paymentStatus}
@@ -119,7 +119,14 @@ const MobileBookingCard = ({ booking, handleReached, openSampleModal, openNaviga
         <dl className="mt-3 space-y-1.5 text-xs">
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Test</span>
-            <span className="font-medium text-foreground text-right max-w-[180px] truncate">{booking.test?.title || booking.package?.title}</span>
+            <div className="flex items-center gap-1">
+              <span className="font-medium text-foreground text-right max-w-[140px] truncate">{booking.test?.title || booking.package?.title}</span>
+              {(booking.additionalTests?.length > 0 || booking.additionalPackages?.length > 0) && (
+                <span className="text-purple-700 text-[10px] font-medium bg-purple-50 px-1.5 py-0.5 rounded whitespace-nowrap">
+                  +{booking.additionalTests.length + booking.additionalPackages.length}
+                </span>
+              )}
+            </div>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Date</span>
@@ -264,8 +271,15 @@ const LabAssistantBookingsTable = ({
                         {!hiddenColumns.test && (
                           <td className="px-4 py-3">
                             <div>
-                              <p className="text-sm font-medium text-foreground">{booking.test?.title || booking.package?.title}</p>
-                              <p className="font-mono text-xs font-bold text-primary mt-0.5">₹{booking.test?.price || booking.package?.price}</p>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <p className="text-sm font-medium text-foreground">{booking.test?.title || booking.package?.title}</p>
+                                {(booking.additionalTests?.length > 0 || booking.additionalPackages?.length > 0) && (
+                                  <span className="text-[10px] text-purple-700 font-medium bg-purple-50 px-1.5 py-0.5 rounded">
+                                    +{booking.additionalTests.length + booking.additionalPackages.length}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="font-mono text-xs font-bold text-primary mt-0.5">₹{(booking.totalAmount || booking.test?.price || booking.package?.price || 0).toLocaleString('en-IN')}</p>
                             </div>
                           </td>
                         )}

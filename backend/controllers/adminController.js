@@ -12,7 +12,6 @@ export const createLabAssistant = async (req, res) => {
       email,
       password,
       phone,
-      documents,
     } = req.body;
 
     // Validation
@@ -57,15 +56,27 @@ export const createLabAssistant = async (req, res) => {
       salt,
     );
 
+    // Handle document uploads
+    const idProof = req.files?.idProof?.[0]?.path || "";
+    const otherDocuments = [];
+    if (req.files?.otherDocuments) {
+      req.files.otherDocuments.forEach((file) => {
+        otherDocuments.push({
+          name: file.originalname,
+          url: file.path,
+        });
+      });
+    }
 
     const user = await User.create({
       name,
       email,
       phone,
-      documents,
       password: hashedPassword,
       role: "lab_assistant",
       labOwner: req.user._id,
+      idProof,
+      otherDocuments,
     });
 
     const { password: _, ...userWithoutPassword } = user.toObject();
@@ -143,6 +154,20 @@ export const createLabOwner = async (req, res) => {
       password,
       salt,
     );
+
+    // Handle document uploads
+    const labCertificate = req.files?.labCertificate?.[0]?.path || "";
+    const labRegistration = req.files?.labRegistration?.[0]?.path || "";
+    const otherDocuments = [];
+    if (req.files?.otherDocuments) {
+      req.files.otherDocuments.forEach((file) => {
+        otherDocuments.push({
+          name: file.originalname,
+          url: file.path,
+        });
+      });
+    }
+
     // Create Lab Owner
     const user = await User.create({
       name,
@@ -153,6 +178,9 @@ export const createLabOwner = async (req, res) => {
       labAddress,
       latitude,
       longitude,
+      labCertificate,
+      labRegistration,
+      otherDocuments,
     });
 
     const { password: _, ...userWithoutPassword } = user.toObject();

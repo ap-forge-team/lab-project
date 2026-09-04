@@ -21,6 +21,8 @@ import LabOwnersManagePage from '@/features/admin/components/LabOwnersManagePage
 import AssistantsManagePage from '@/features/lab-owner/components/AssistantsManagePage'
 import SettlementDashboard from '@/features/settlements/components/SettlementDashboard'
 import ReportsManagePage from '@/features/reports/components/ReportsManagePage'
+import SamplePickupsManagePage from '@/features/sample-pickups/components/SamplePickupsManagePage'
+import UploadReportsManagePage from '@/features/upload-reports/components/UploadReportsManagePage'
 
 const sources = {
   tests: getAllTests,
@@ -162,6 +164,22 @@ const SidebarPage = ({ page: pageProp }) => {
     return (
       <DashboardLayout>
         <ReportsManagePage bookings={items} isLoading={query.isLoading} isError={query.isError} />
+      </DashboardLayout>
+    )
+  }
+
+  if (slug === 'sample-pickups') {
+    return (
+      <DashboardLayout>
+        <SamplePickupsManagePage bookings={items} isLoading={query.isLoading} isError={query.isError} />
+      </DashboardLayout>
+    )
+  }
+
+  if (slug === 'upload-reports') {
+    return (
+      <DashboardLayout>
+        <UploadReportsManagePage bookings={items} isLoading={query.isLoading} isError={query.isError} onRefresh={query.refetch} />
       </DashboardLayout>
     )
   }

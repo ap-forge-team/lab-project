@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Users, UserPlus, Search, Download, ChevronRight, Eye, EyeOff, Pencil, Trash2, ChevronDown, Calendar, X, MoreVertical, Edit2, Shield, Mail, Phone, Lock, MapPin, UserCheck, UserX, ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-react'
+import { Users, UserPlus, Search, Download, ChevronRight, Eye, EyeOff, Pencil, Trash2, ChevronDown, Calendar, X, MoreVertical, Edit2, Shield, Mail, Phone, Lock, MapPin, UserCheck, UserX, ArrowDown, ArrowUp, ChevronsUpDown, Upload, FileText } from 'lucide-react'
 import { toast } from 'react-toastify'
 import Button from '@/components/ui/Button'
 import Pagination from '@/components/ui/Pagination'
@@ -119,6 +119,8 @@ const UsersManagePage = ({ users, isLoading, isError, onRefresh }) => {
     role: 'patient',
   })
   const [errors, setErrors] = useState({})
+  const [idProofFile, setIdProofFile] = useState(null)
+  const [otherDocsFiles, setOtherDocsFiles] = useState([])
 
   const filterCategories = useMemo(() => {
     const nameOptions = (users || []).map((u) => ({ value: u.name, label: u.name }))
@@ -279,13 +281,28 @@ const UsersManagePage = ({ users, isLoading, isError, onRefresh }) => {
       if (form.role === 'lab_owner') {
         await createLabOwner({ ...payload, servicePincodes: [], labAddress: '' })
       } else if (form.role === 'lab_assistant') {
-        await createLabAssistant(payload)
+        const formData = new FormData()
+        formData.append('name', form.name)
+        formData.append('email', form.email)
+        formData.append('phone', form.phone)
+        formData.append('password', form.password)
+        if (idProofFile) {
+          formData.append('idProof', idProofFile)
+        }
+        if (otherDocsFiles.length > 0) {
+          otherDocsFiles.forEach((file) => {
+            formData.append('otherDocuments', file)
+          })
+        }
+        await createLabAssistant(formData)
       } else {
         await createLabOwner(payload)
       }
       toast.success('User created successfully')
       setShowAddModal(false)
       setForm({ name: '', email: '', phone: '', password: '', role: 'patient' })
+      setIdProofFile(null)
+      setOtherDocsFiles([])
       setErrors({})
       onRefresh()
     } catch (err) {
@@ -298,6 +315,8 @@ const UsersManagePage = ({ users, isLoading, isError, onRefresh }) => {
   const handleCloseModal = () => {
     setShowAddModal(false)
     setForm({ name: '', email: '', phone: '', password: '', role: 'patient' })
+    setIdProofFile(null)
+    setOtherDocsFiles([])
     setErrors({})
   }
 
@@ -710,6 +729,56 @@ const UsersManagePage = ({ users, isLoading, isError, onRefresh }) => {
                 </select>
                 {errors.role && <p className="text-destructive text-xs mt-1.5 font-medium">{errors.role}</p>}
               </div>
+              {/* Document Uploads - Only for Lab Assistant */}
+              {form.role === 'lab_assistant' && (
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-foreground">Documents</p>
+                  <div>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">ID Proof</label>
+                    <label className="flex items-center gap-2 border-2 border-dashed border-border rounded-lg p-3 cursor-pointer hover:bg-accent/50 transition">
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png,.webp"
+                        className="hidden"
+                        onChange={(e) => setIdProofFile(e.target.files?.[0] || null)}
+                      />
+                      <Upload size={16} className="text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">
+                        {idProofFile ? idProofFile.name : 'Upload ID proof (PDF, JPG, PNG)'}
+                      </span>
+                    </label>
+                    {idProofFile && (
+                      <button onClick={() => setIdProofFile(null)} className="text-[10px] text-red-500 mt-1 hover:underline">Remove</button>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">Other Documents (max 5)</label>
+                    <label className="flex items-center gap-2 border-2 border-dashed border-border rounded-lg p-3 cursor-pointer hover:bg-accent/50 transition">
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png,.webp"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => setOtherDocsFiles(Array.from(e.target.files || []))}
+                      />
+                      <Upload size={16} className="text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">
+                        {otherDocsFiles.length > 0 ? `${otherDocsFiles.length}/5 file(s) selected` : 'Upload additional documents'}
+                      </span>
+                    </label>
+                    {otherDocsFiles.length > 0 && (
+                      <div className="mt-1 space-y-0.5">
+                        {otherDocsFiles.map((f, i) => (
+                          <div key={i} className="flex items-center justify-between">
+                            <span className="text-[10px] text-muted-foreground truncate">{f.name}</span>
+                            <button onClick={() => setOtherDocsFiles((prev) => prev.filter((_, idx) => idx !== i))} className="text-[10px] text-red-500 hover:underline">Remove</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
             <div className="flex items-center justify-end gap-3 p-4 border-t border-border">
               <button onClick={handleCloseModal} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-accent rounded-lg transition">Cancel</button>
@@ -775,6 +844,34 @@ const UsersManagePage = ({ users, isLoading, isError, onRefresh }) => {
                     </p>
                   </div>
                 </div>
+                {/* Documents */}
+                {(selectedUser.idProof || selectedUser.otherDocuments?.length > 0 || selectedUser.labCertificate || selectedUser.labRegistration) && (
+                  <div className="p-3 bg-accent/50 rounded-lg">
+                    <p className="text-[10px] text-muted-foreground mb-2">Documents</p>
+                    <div className="space-y-1.5">
+                      {selectedUser.idProof && (
+                        <a href={selectedUser.idProof} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline">
+                          <FileText size={12} /> ID Proof
+                        </a>
+                      )}
+                      {selectedUser.labCertificate && (
+                        <a href={selectedUser.labCertificate} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline">
+                          <FileText size={12} /> Lab Certificate
+                        </a>
+                      )}
+                      {selectedUser.labRegistration && (
+                        <a href={selectedUser.labRegistration} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline">
+                          <FileText size={12} /> Lab Registration
+                        </a>
+                      )}
+                      {selectedUser.otherDocuments?.map((doc, i) => (
+                        <a key={i} href={doc.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline">
+                          <FileText size={12} /> {doc.name || 'Document'}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex items-center justify-end gap-3 p-4 border-t border-border">

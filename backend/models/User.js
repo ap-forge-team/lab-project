@@ -49,6 +49,24 @@ const userSchema = mongoose.Schema(
     document: {
       type: String,
     },
+    idProof: {
+      type: String,
+      default: "",
+    },
+    labCertificate: {
+      type: String,
+      default: "",
+    },
+    labRegistration: {
+      type: String,
+      default: "",
+    },
+    otherDocuments: [
+      {
+        name: { type: String },
+        url: { type: String },
+      }
+    ],
     servicePincodes: {
       type: [String],
       default: [],

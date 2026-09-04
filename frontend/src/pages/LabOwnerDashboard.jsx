@@ -8,7 +8,7 @@ import {
   uploadReport,
 } from '@/services/booking.service'
 import { createLabAssistant } from '@/services/user.service'
-import { UserPlus } from 'lucide-react'
+import { UserPlus, Upload, FileText } from 'lucide-react'
 import { EmptyState } from '@/components/Dashboard'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
@@ -67,6 +67,8 @@ const LabOwnerDashboard = () => {
     phone: '',
     document: '',
   })
+  const [idProofFile, setIdProofFile] = useState(null)
+  const [otherDocsFiles, setOtherDocsFiles] = useState([])
 
   const buildAssistantErrors = (a) => ({
     name: !a.name.trim() ? 'Full Name is required' : '',
@@ -137,7 +139,20 @@ const LabOwnerDashboard = () => {
     if (!validateAssistant(buildAssistantErrors(assistantData))) return
     try {
       setCreatingAssistant(true)
-      const { data } = await createLabAssistant(assistantData)
+      const formData = new FormData()
+      formData.append('name', assistantData.name)
+      formData.append('email', assistantData.email)
+      formData.append('password', assistantData.password)
+      formData.append('phone', assistantData.phone)
+      if (idProofFile) {
+        formData.append('idProof', idProofFile)
+      }
+      if (otherDocsFiles.length > 0) {
+        otherDocsFiles.forEach((file) => {
+          formData.append('otherDocuments', file)
+        })
+      }
+      const { data } = await createLabAssistant(formData)
       toast.success(data?.message || 'Assistant created successfully')
       setAssistantData({
         name: '',
@@ -146,6 +161,8 @@ const LabOwnerDashboard = () => {
         phone: '',
         document: '',
       })
+      setIdProofFile(null)
+      setOtherDocsFiles([])
       setShowAssistantForm(false)
     } catch (error) {
       toast.error(error?.response?.data?.message || 'Failed to create assistant')
@@ -368,6 +385,54 @@ const LabOwnerDashboard = () => {
               value={assistantData.document}
               onChange={handleChange}
             />
+            {/* Document Uploads */}
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-foreground">Documents</p>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1.5">ID Proof</label>
+                <label className="flex items-center gap-2 border-2 border-dashed border-border rounded-lg p-3 cursor-pointer hover:bg-accent/50 transition">
+                  <input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png,.webp"
+                    className="hidden"
+                    onChange={(e) => setIdProofFile(e.target.files?.[0] || null)}
+                  />
+                  <Upload size={16} className="text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">
+                    {idProofFile ? idProofFile.name : 'Upload ID proof (PDF, JPG, PNG)'}
+                  </span>
+                </label>
+                {idProofFile && (
+                  <button type="button" onClick={() => setIdProofFile(null)} className="text-[10px] text-red-500 mt-1 hover:underline">Remove</button>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1.5">Other Documents (max 5)</label>
+                <label className="flex items-center gap-2 border-2 border-dashed border-border rounded-lg p-3 cursor-pointer hover:bg-accent/50 transition">
+                  <input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png,.webp"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => setOtherDocsFiles(Array.from(e.target.files || []))}
+                  />
+                  <Upload size={16} className="text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">
+                    {otherDocsFiles.length > 0 ? `${otherDocsFiles.length}/5 file(s) selected` : 'Upload additional documents'}
+                  </span>
+                </label>
+                {otherDocsFiles.length > 0 && (
+                  <div className="mt-1 space-y-0.5">
+                    {otherDocsFiles.map((f, i) => (
+                      <div key={i} className="flex items-center justify-between">
+                        <span className="text-[10px] text-muted-foreground truncate">{f.name}</span>
+                        <button type="button" onClick={() => setOtherDocsFiles((prev) => prev.filter((_, idx) => idx !== i))} className="text-[10px] text-red-500 hover:underline">Remove</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
             <Input
               label="Password"
               type="password"
