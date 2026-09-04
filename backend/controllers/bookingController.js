@@ -2,6 +2,7 @@ import Booking from "../models/Booking.js";
 import CommissionSetting from "../models/CommissionSetting.js";
 import User from "../models/User.js";
 import Test from "../models/Test.js";
+import Package from "../models/Package.js";
 import { getDistance } from "geolib";
 import crypto from "crypto";
 import logger from "../Utils/logger.js";
@@ -179,6 +180,8 @@ export const getMyBookings = async (req, res) => {
     const bookings = await Booking.find({ user: req.user._id })
       .populate("test", "title price")
       .populate("package", "title price")
+      .populate("additionalTests.test", "title price")
+      .populate("additionalPackages.package", "title price")
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -231,6 +234,8 @@ export const getAllBookings = async (req, res) => {
       .populate("test")
       .populate("user")
       .populate("package")
+      .populate("additionalTests.test", "title price")
+      .populate("additionalPackages.package", "title price")
       .populate("assignedLabAssistant", "name email")
       .populate("labOwner", "name email labAddress")
       .sort({ createdAt: -1 });
@@ -253,6 +258,8 @@ export const getLabOwnerBookings = async (req, res) => {
       .populate("test")
       .populate("package")
       .populate("user")
+      .populate("additionalTests.test", "title price")
+      .populate("additionalPackages.package", "title price")
       .populate("assignedLabAssistant", "name email")
       .sort({ createdAt: -1 });
 
@@ -333,6 +340,10 @@ export const getAssignedBookings = async (req, res) => {
     })
       .populate("test", "title price")
       .populate("package", "title price")
+      .populate("additionalTests.test", "title price")
+      .populate("additionalPackages.package", "title price")
+      .populate("labOwner", "name email")
+      .populate("assignedLabAssistant", "name email")
       .populate("user")
       .sort({ createdAt: -1 });
 
@@ -512,6 +523,10 @@ export const searchAssignedBookings = async (req, res) => {
     })
       .populate("test", "title price")
       .populate("package", "title price")
+      .populate("additionalTests.test", "title price")
+      .populate("additionalPackages.package", "title price")
+      .populate("labOwner", "name email")
+      .populate("assignedLabAssistant", "name email")
       .populate("user");
 
     const searchText = search.toLowerCase();
@@ -545,6 +560,8 @@ export const searchLabOwnerBookings = async (req, res) => {
       .populate("test", "title price")
       .populate("package", "title price")
       .populate("user")
+      .populate("additionalTests.test", "title price")
+      .populate("additionalPackages.package", "title price")
       .populate("assignedLabAssistant", "name email");
 
     const searchText = search.toLowerCase();
@@ -774,12 +791,15 @@ export const getAllLabOwners = async (req, res) => {
 
 export const addTestsToBooking = async (req, res) => {
   try {
-    const { testIds } = req.body;
+    const { testIds, packageIds } = req.body;
 
-    if (!testIds || !Array.isArray(testIds) || testIds.length === 0) {
+    const hasTests = testIds && Array.isArray(testIds) && testIds.length > 0;
+    const hasPackages = packageIds && Array.isArray(packageIds) && packageIds.length > 0;
+
+    if (!hasTests && !hasPackages) {
       return res.status(400).json({
         success: false,
-        message: "Please provide at least one test ID",
+        message: "Please provide at least one test ID or package ID",
       });
     }
 
@@ -802,36 +822,55 @@ export const addTestsToBooking = async (req, res) => {
     if (booking.status !== "Reached") {
       return res.status(400).json({
         success: false,
-        message: "Tests can only be added when status is Reached",
+        message: "Tests/Packages can only be added when status is Reached",
       });
     }
 
-    const tests = await Test.find({ _id: { $in: testIds } });
+    let additionalTotal = 0;
 
-    if (tests.length !== testIds.length) {
-      return res.status(400).json({
-        success: false,
-        message: "One or more test IDs are invalid",
-      });
+    if (hasTests) {
+      const tests = await Test.find({ _id: { $in: testIds } });
+      if (tests.length !== testIds.length) {
+        return res.status(400).json({
+          success: false,
+          message: "One or more test IDs are invalid",
+        });
+      }
+      const newTests = tests.map((t) => ({
+        test: t._id,
+        price: t.offerPrice || t.price,
+      }));
+      booking.additionalTests.push(...newTests);
+      additionalTotal += newTests.reduce((sum, t) => sum + t.price, 0);
     }
 
-    const newTests = tests.map((t) => ({
-      test: t._id,
-      price: t.offerPrice || t.price,
-    }));
+    if (hasPackages) {
+      const packages = await Package.find({ _id: { $in: packageIds } });
+      if (packages.length !== packageIds.length) {
+        return res.status(400).json({
+          success: false,
+          message: "One or more package IDs are invalid",
+        });
+      }
+      const newPackages = packages.map((p) => ({
+        package: p._id,
+        price: p.price,
+      }));
+      booking.additionalPackages.push(...newPackages);
+      additionalTotal += newPackages.reduce((sum, p) => sum + p.price, 0);
+    }
 
-    booking.additionalTests.push(...newTests);
-
-    const additionalTotal = newTests.reduce((sum, t) => sum + t.price, 0);
     booking.totalAmount = (booking.totalAmount || 0) + additionalTotal;
 
     await booking.save();
 
-    const populated = await booking.populate("additionalTests.test", "title price");
+    const populated = await booking
+      .populate("additionalTests.test", "title price")
+      .populate("additionalPackages.package", "title price");
 
     res.status(200).json({
       success: true,
-      message: "Tests added successfully",
+      message: "Tests/Packages added successfully",
       booking: populated,
     });
   } catch (error) {

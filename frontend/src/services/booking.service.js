@@ -66,3 +66,7 @@ export const uploadPaymentReceipt = (bookingId, formData) => {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
 }
+
+export const addTestsToBooking = (bookingId, { testIds = [], packageIds = [] }) => {
+  return API.put(API_ENDPOINTS.BOOKINGS.ADD_TESTS(bookingId), { testIds, packageIds })
+}

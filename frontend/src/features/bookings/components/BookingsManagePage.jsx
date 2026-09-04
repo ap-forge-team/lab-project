@@ -42,6 +42,7 @@ import { BOOKING_STATUS, PAYMENT_STATUS } from '@/constants/status'
 import { updateBookingLab, assignAssistant, markReached, uploadSample, uploadPaymentReceipt, uploadReport, manageBooking } from '@/services/booking.service'
 import { getAllLabOwners, getMyAssistants, getPaymentSetting } from '@/services/user.service'
 import LabAssistantSampleModal from '@/features/lab-assistant/components/LabAssistantSampleModal'
+import AddTestsToBookingModal from '@/features/lab-assistant/components/AddTestsToBookingModal'
 import ReportViewerModal from '@/components/Dashboard/ReportViewerModal'
 import ManageBookingModal from '@/features/patient/components/ManageBookingModal'
 import { BookingCard } from './BookingCard'
@@ -187,8 +188,49 @@ const BookingDetailsModal = ({ booking, onClose }) => {
           </div>
         </div>
         <div className="divide-y divide-border border-t border-border">
-          <div className="flex justify-between py-2 text-sm"><span className="text-muted-foreground">Test / Package</span><span className="font-medium text-foreground">{booking.test?.title || booking.package?.title || 'N/A'}</span></div>
-          <div className="flex justify-between py-2 text-sm"><span className="text-muted-foreground">Amount</span><span className="font-medium text-foreground">₹{(booking.totalAmount || booking.test?.price || booking.package?.price || 0).toLocaleString('en-IN')}</span></div>
+          <div className="py-2 text-sm">
+            <span className="text-muted-foreground">Test / Package</span>
+            <div className="flex items-center justify-between mt-1">
+              <span className="font-medium text-foreground">{booking.test?.title || booking.package?.title || 'N/A'}</span>
+              <span className="font-mono text-sm font-bold text-primary">₹{(booking.test?.price || booking.package?.price || 0).toLocaleString('en-IN')}</span>
+            </div>
+          </div>
+          {booking.additionalTests?.length > 0 && (
+            <div className="py-2 text-sm">
+              <span className="text-muted-foreground">Additional Tests</span>
+              <div className="mt-1.5 space-y-1.5">
+                {booking.additionalTests.map((at, idx) => (
+                  <div key={idx} className="flex items-center justify-between bg-purple-50 rounded-lg px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-[10px] font-bold">{idx + 1}</span>
+                      <span className="text-foreground text-xs font-medium">{at.test?.title || 'Test'}</span>
+                    </div>
+                    <span className="font-mono text-xs font-bold text-purple-600">₹{at.price}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {booking.additionalPackages?.length > 0 && (
+            <div className="py-2 text-sm">
+              <span className="text-muted-foreground">Additional Packages</span>
+              <div className="mt-1.5 space-y-1.5">
+                {booking.additionalPackages.map((ap, idx) => (
+                  <div key={idx} className="flex items-center justify-between bg-blue-50 rounded-lg px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-[10px] font-bold">{idx + 1}</span>
+                      <span className="text-foreground text-xs font-medium">{ap.package?.title || 'Package'}</span>
+                    </div>
+                    <span className="font-mono text-xs font-bold text-blue-600">₹{ap.price}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="flex justify-between py-2 text-sm">
+            <span className="text-muted-foreground font-medium">Total Amount</span>
+            <span className="font-mono text-base font-bold text-primary">₹{(booking.totalAmount || booking.test?.price || booking.package?.price || 0).toLocaleString('en-IN')}</span>
+          </div>
           <div className="flex justify-between py-2 text-sm"><span className="text-muted-foreground">Booking Date</span><span className="font-medium text-foreground">{booking.bookingDate}</span></div>
           <div className="flex justify-between py-2 text-sm"><span className="text-muted-foreground">Booking Time</span><span className="font-medium text-foreground">{booking.bookingTime}</span></div>
           <div className="flex justify-between py-2 text-sm">
@@ -201,10 +243,14 @@ const BookingDetailsModal = ({ booking, onClose }) => {
             <span className="text-muted-foreground">Payment</span>
             <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${paymentStyle.bg} ${paymentStyle.text}`}>{booking.paymentStatus}</span>
           </div>
-          {booking.labOwner && (
+          <div className="flex justify-between py-2 text-sm">
+            <span className="text-muted-foreground">Assigned Lab</span>
+            <span className={`font-medium text-right ${booking.labOwner ? 'text-foreground' : 'text-muted-foreground'}`}>{booking.labOwner?.name || 'Not Assigned'}</span>
+          </div>
+          {booking.assignedLabAssistant && (
             <div className="flex justify-between py-2 text-sm">
-              <span className="text-muted-foreground">Assigned Lab</span>
-              <span className="font-medium text-foreground text-right">{booking.labOwner.name}</span>
+              <span className="text-muted-foreground">Lab Assistant</span>
+              <span className="font-medium text-foreground text-right">{booking.assignedLabAssistant.name}</span>
             </div>
           )}
           {booking.address && (
@@ -264,6 +310,8 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
   const [uploadingPayment, setUploadingPayment] = useState(false)
   const [paymentSetting, setPaymentSetting] = useState(null)
   const [reportModalBooking, setReportModalBooking] = useState(null)
+  const [showAddTestsModal, setShowAddTestsModal] = useState(false)
+  const [addTestsBooking, setAddTestsBooking] = useState(null)
 
   // Patient manage booking state
   const [showManageModal, setShowManageModal] = useState(false)
@@ -903,11 +951,18 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
                         {!hiddenColumns.test && (
                         <td className="px-4 py-3">
                           <div>
-                            <p className="text-sm font-medium text-foreground">
-                              {booking.test?.title || booking.package?.title}
-                            </p>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <p className="text-sm font-medium text-foreground">
+                                {booking.test?.title || booking.package?.title}
+                              </p>
+                              {(booking.additionalTests?.length > 0 || booking.additionalPackages?.length > 0) && (
+                                <span className="text-[10px] text-purple-700 font-medium bg-purple-50 px-1.5 py-0.5 rounded">
+                                  +{booking.additionalTests.length + booking.additionalPackages.length}
+                                </span>
+                              )}
+                            </div>
                             <p className="font-mono text-xs font-bold text-primary mt-0.5">
-                              ₹{booking.test?.price || booking.package?.price}
+                              ₹{(booking.totalAmount || booking.test?.price || booking.package?.price || 0).toLocaleString('en-IN')}
                             </p>
                           </div>
                         </td>
@@ -1172,6 +1227,21 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
+                    setAddTestsBooking(menuOpen.booking)
+                    setShowAddTestsModal(true)
+                    setMenuOpen(null)
+                  }}
+                  disabled={menuOpen.booking?.status === BOOKING_STATUS.COMPLETED || menuOpen.booking?.status === BOOKING_STATUS.CANCELLED}
+                  className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span className="inline-flex items-center justify-center size-6 rounded-md bg-purple-100 text-purple-600">
+                    <FlaskConical size={14} />
+                  </span>
+                  Add Test
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
                     handleMarkReached(menuOpen.booking?._id)
                     setMenuOpen(null)
                   }}
@@ -1353,6 +1423,19 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
           setAssistantNotes={setAssistantNotes}
           handleSampleUpload={handleSampleUpload}
           uploadingSample={uploadingSample}
+        />
+      )}
+
+      {/* Add Tests Modal */}
+      {isLabAssistant && (
+        <AddTestsToBookingModal
+          open={showAddTestsModal}
+          onClose={() => {
+            setShowAddTestsModal(false)
+            setAddTestsBooking(null)
+          }}
+          booking={addTestsBooking}
+          onTestsAdded={() => onRefresh?.()}
         />
       )}
 

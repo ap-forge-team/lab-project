@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowDown, ArrowUp, Building2, Plus, Search, ChevronRight, Eye, EyeOff, Pencil, Trash2, X, MoreVertical, MapPin, Mail, Phone, Calendar, Shield, Users, MapPinned, ChevronsUpDown, Copy } from 'lucide-react'
+import { ArrowDown, ArrowUp, Building2, Plus, Search, ChevronRight, Eye, EyeOff, Pencil, Trash2, X, MoreVertical, MapPin, Mail, Phone, Calendar, Shield, Users, MapPinned, ChevronsUpDown, Copy, FileText, Upload } from 'lucide-react'
 import { toast } from 'react-toastify'
 import Button from '@/components/ui/Button'
 import Pagination from '@/components/ui/Pagination'
@@ -120,6 +120,9 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
   // Form state
   const emptyForm = { name: '', email: '', phone: '', password: '', servicePincodes: '', labAddress: '', latitude: '', longitude: '' }
   const [form, setForm] = useState(emptyForm)
+  const [labCertificateFile, setLabCertificateFile] = useState(null)
+  const [labRegistrationFile, setLabRegistrationFile] = useState(null)
+  const [otherDocsFiles, setOtherDocsFiles] = useState([])
   const [errors, setErrors] = useState({})
 
   useEffect(() => {
@@ -290,19 +293,35 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
     if (!validate()) return
     try {
       setSaving(true)
-      await createLabOwner({
-        name: form.name,
-        email: form.email,
-        phone: form.phone,
-        password: form.password,
-        labAddress: form.labAddress,
-        latitude: form.latitude,
-        longitude: form.longitude,
-        servicePincodes: form.servicePincodes ? form.servicePincodes.split(',').map((s) => s.trim()) : [],
-      })
+      const formData = new FormData()
+      formData.append('name', form.name)
+      formData.append('email', form.email)
+      formData.append('phone', form.phone)
+      formData.append('password', form.password)
+      formData.append('labAddress', form.labAddress)
+      formData.append('latitude', form.latitude)
+      formData.append('longitude', form.longitude)
+      if (form.servicePincodes) {
+        formData.append('servicePincodes', form.servicePincodes)
+      }
+      if (labCertificateFile) {
+        formData.append('labCertificate', labCertificateFile)
+      }
+      if (labRegistrationFile) {
+        formData.append('labRegistration', labRegistrationFile)
+      }
+      if (otherDocsFiles.length > 0) {
+        otherDocsFiles.forEach((file) => {
+          formData.append('otherDocuments', file)
+        })
+      }
+      await createLabOwner(formData)
       toast.success('Lab Owner created successfully')
       setShowAddModal(false)
       setForm(emptyForm)
+      setLabCertificateFile(null)
+      setLabRegistrationFile(null)
+      setOtherDocFile(null)
       setErrors({})
       onRefresh()
     } catch (err) {
@@ -378,7 +397,7 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
     }
   }
 
-  const handleCloseModal = () => { setShowAddModal(false); setForm(emptyForm); setErrors({}) }
+  const handleCloseModal = () => { setShowAddModal(false); setForm(emptyForm); setLabCertificateFile(null); setLabRegistrationFile(null); setOtherDocsFiles([]); setErrors({}) }
 
   const handleChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -692,6 +711,72 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
                   </div>
                 )}
               </div>
+              {/* Document Uploads */}
+              <div className="space-y-3">
+                <p className="text-sm font-medium text-foreground">Documents</p>
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">Lab Certificate *</label>
+                  <label className="flex items-center gap-2 border-2 border-dashed border-border rounded-lg p-3 cursor-pointer hover:bg-accent/50 transition">
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png,.webp"
+                      className="hidden"
+                      onChange={(e) => setLabCertificateFile(e.target.files?.[0] || null)}
+                    />
+                    <Upload size={16} className="text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">
+                      {labCertificateFile ? labCertificateFile.name : 'Upload lab certificate (PDF, JPG, PNG)'}
+                    </span>
+                  </label>
+                  {labCertificateFile && (
+                    <button onClick={() => setLabCertificateFile(null)} className="text-[10px] text-red-500 mt-1 hover:underline">Remove</button>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">Lab Registration *</label>
+                  <label className="flex items-center gap-2 border-2 border-dashed border-border rounded-lg p-3 cursor-pointer hover:bg-accent/50 transition">
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png,.webp"
+                      className="hidden"
+                      onChange={(e) => setLabRegistrationFile(e.target.files?.[0] || null)}
+                    />
+                    <Upload size={16} className="text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">
+                      {labRegistrationFile ? labRegistrationFile.name : 'Upload lab registration (PDF, JPG, PNG)'}
+                    </span>
+                  </label>
+                  {labRegistrationFile && (
+                    <button onClick={() => setLabRegistrationFile(null)} className="text-[10px] text-red-500 mt-1 hover:underline">Remove</button>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1.5">Other Documents (max 5)</label>
+                  <label className="flex items-center gap-2 border-2 border-dashed border-border rounded-lg p-3 cursor-pointer hover:bg-accent/50 transition">
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png,.webp"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => setOtherDocsFiles(Array.from(e.target.files || []))}
+                    />
+                    <Upload size={16} className="text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">
+                      {otherDocsFiles.length > 0 ? `${otherDocsFiles.length}/5 file(s) selected` : 'Upload additional documents'}
+                    </span>
+                  </label>
+                  {otherDocsFiles.length > 0 && (
+                    <div className="mt-1 space-y-0.5">
+                      {otherDocsFiles.map((f, i) => (
+                        <div key={i} className="flex items-center justify-between">
+                          <span className="text-[10px] text-muted-foreground truncate">{f.name}</span>
+                          <button onClick={() => setOtherDocsFiles((prev) => prev.filter((_, idx) => idx !== i))} className="text-[10px] text-red-500 hover:underline">Remove</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
             <div className="flex items-center justify-end gap-3 p-4 border-t border-border">
               <button onClick={handleCloseModal} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-accent rounded-lg transition">Cancel</button>
@@ -743,6 +828,29 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
                   <Calendar size={16} className="text-muted-foreground" />
                   <div><p className="text-[10px] text-muted-foreground">Registered On</p><p className="text-sm text-foreground">{selectedOwner.createdAt ? new Date(selectedOwner.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</p></div>
                 </div>
+                {/* Documents */}
+                {(selectedOwner.labCertificate || selectedOwner.labRegistration || selectedOwner.otherDocuments?.length > 0) && (
+                  <div className="p-3 bg-accent/50 rounded-lg">
+                    <p className="text-[10px] text-muted-foreground mb-2">Documents</p>
+                    <div className="space-y-1.5">
+                      {selectedOwner.labCertificate && (
+                        <a href={selectedOwner.labCertificate} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline">
+                          <FileText size={12} /> Lab Certificate
+                        </a>
+                      )}
+                      {selectedOwner.labRegistration && (
+                        <a href={selectedOwner.labRegistration} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline">
+                          <FileText size={12} /> Lab Registration
+                        </a>
+                      )}
+                      {selectedOwner.otherDocuments?.map((doc, i) => (
+                        <a key={i} href={doc.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline">
+                          <FileText size={12} /> {doc.name || 'Document'}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex items-center justify-end gap-3 p-4 border-t border-border">

@@ -27,6 +27,20 @@ const bookingSchema = mongoose.Schema(
       }
     ],
 
+    additionalPackages: [
+      {
+        package: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Package',
+          required: true
+        },
+        price: {
+          type: Number,
+          required: true
+        }
+      }
+    ],
+
     totalAmount: {
       type: Number,
       default: 0
