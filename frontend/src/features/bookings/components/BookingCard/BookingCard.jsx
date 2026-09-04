@@ -23,7 +23,7 @@ const BookingCard = ({
   const isPatient = role === ROLES.PATIENT
   const testName = booking.test?.title || booking.package?.title || 'N/A'
   const testCity = booking.test?.city || booking.package?.city
-  const amount = booking.test?.price || booking.package?.price || booking.totalAmount || 0
+  const amount = booking.totalAmount || booking.test?.price || booking.package?.price || 0
   const detail = isPatient
     ? (booking.labOwner?.name || 'Lab Pending')
     : isLabAssistant
@@ -75,6 +75,8 @@ const BookingCard = ({
         onAssignAssistant={onAssignAssistant}
         bookingId={booking._id}
         bookingStatus={booking.status}
+        additionalTests={booking.additionalTests}
+        additionalPackages={booking.additionalPackages}
       />
 
       <BookingCardBadges

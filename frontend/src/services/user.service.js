@@ -10,7 +10,8 @@ export const getSingleUser = (id) => {
 }
 
 export const updateUser = (id, data) => {
-  return API.put(API_ENDPOINTS.USERS.BY_ID(id), data)
+  const isFormData = data instanceof FormData
+  return API.put(API_ENDPOINTS.USERS.BY_ID(id), data, isFormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {})
 }
 
 export const deleteUser = (id) => {

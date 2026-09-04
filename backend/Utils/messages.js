@@ -84,10 +84,11 @@ const MESSAGES = {
     RESCHEDULED: "Booking Rescheduled Successfully",
     LAB_OWNER_NOT_FOUND: "Lab Owner Not Found",
     LAB_ASSIGNED: "Lab Assigned Successfully",
-    TEST_IDS_REQUIRED: "Please provide at least one test ID",
-    TESTS_REACHED_STATUS: "Tests can only be added when status is Reached",
+    TEST_IDS_REQUIRED: "Please provide at least one test ID or package ID",
+    TESTS_REACHED_STATUS: "Tests/Packages can only be added when status is Reached",
     INVALID_TEST_IDS: "One or more test IDs are invalid",
-    TESTS_ADDED: "Tests added successfully",
+    INVALID_PACKAGE_IDS: "One or more package IDs are invalid",
+    TESTS_ADDED: "Tests/Packages added successfully",
   },
 
   // ─── Category ─────────────────────────────────────

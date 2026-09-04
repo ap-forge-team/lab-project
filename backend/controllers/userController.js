@@ -140,6 +140,24 @@ export const updateUser = async (req, res) => {
       servicePincodes ?? user.servicePincodes;
     user.document = document ?? user.document;
 
+    // Handle document uploads
+    if (req.files?.labCertificate?.[0]) {
+      user.labCertificate = req.files.labCertificate[0].path;
+    }
+    if (req.files?.labRegistration?.[0]) {
+      user.labRegistration = req.files.labRegistration[0].path;
+    }
+    if (req.files?.idProof?.[0]) {
+      user.idProof = req.files.idProof[0].path;
+    }
+    if (req.files?.otherDocuments) {
+      const newDocs = req.files.otherDocuments.map((file) => ({
+        name: file.originalname,
+        url: file.path,
+      }));
+      user.otherDocuments = [...(user.otherDocuments || []), ...newDocs];
+    }
+
     if (password) {
       user.password = await bcrypt.hash(password, 10);
     }

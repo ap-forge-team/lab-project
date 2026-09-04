@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowDown, ArrowUp, Building2, Plus, Search, ChevronRight, Eye, EyeOff, Pencil, Trash2, X, MoreVertical, MapPin, Mail, Phone, Calendar, Shield, Users, MapPinned, ChevronsUpDown, Copy } from 'lucide-react'
+import { ArrowDown, ArrowUp, Building2, Plus, Search, ChevronRight, Eye, EyeOff, Pencil, Trash2, X, MoreVertical, MapPin, Mail, Phone, Calendar, Shield, Users, MapPinned, ChevronsUpDown, Copy, FileText, Upload, List, Grid2X2 } from 'lucide-react'
+import Tooltip from '@mui/material/Tooltip'
 import { toast } from 'react-toastify'
 import Button from '@/components/ui/Button'
 import Pagination from '@/components/ui/Pagination'
@@ -12,6 +13,7 @@ import LocationPicker from '@/components/LocationPicker'
 import { Spinner } from '@/components/ui/Loader'
 import Can from '@/components/Can'
 import { createLabOwner, updateUser, deleteUser } from '@/services/user.service'
+import useResponsiveView from '@/hooks/useResponsiveView'
 
 const PAGE_SIZE = 10
 const PAGE_SIZES = [10, 25, 50]
@@ -85,6 +87,7 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
   const [hiddenColumns, setHiddenColumns] = useState({})
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(PAGE_SIZE)
+  const [view, setView] = useResponsiveView()
 
   const handleSort = useCallback((key, direction) => {
     setSortConfig((prev) => {
@@ -116,10 +119,17 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
   const [deleting, setDeleting] = useState(false)
   const [showLabMap, setShowLabMap] = useState(false)
   const [showEditMap, setShowEditMap] = useState(false)
+  const [lightbox, setLightbox] = useState(null)
 
   // Form state
   const emptyForm = { name: '', email: '', phone: '', password: '', servicePincodes: '', labAddress: '', latitude: '', longitude: '' }
   const [form, setForm] = useState(emptyForm)
+  const [labCertificateFile, setLabCertificateFile] = useState(null)
+  const [labRegistrationFile, setLabRegistrationFile] = useState(null)
+  const [otherDocsFiles, setOtherDocsFiles] = useState([])
+  const [editLabCertificateFile, setEditLabCertificateFile] = useState(null)
+  const [editLabRegistrationFile, setEditLabRegistrationFile] = useState(null)
+  const [editOtherDocsFiles, setEditOtherDocsFiles] = useState([])
   const [errors, setErrors] = useState({})
 
   useEffect(() => {
@@ -290,19 +300,35 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
     if (!validate()) return
     try {
       setSaving(true)
-      await createLabOwner({
-        name: form.name,
-        email: form.email,
-        phone: form.phone,
-        password: form.password,
-        labAddress: form.labAddress,
-        latitude: form.latitude,
-        longitude: form.longitude,
-        servicePincodes: form.servicePincodes ? form.servicePincodes.split(',').map((s) => s.trim()) : [],
-      })
+      const formData = new FormData()
+      formData.append('name', form.name)
+      formData.append('email', form.email)
+      formData.append('phone', form.phone)
+      formData.append('password', form.password)
+      formData.append('labAddress', form.labAddress)
+      formData.append('latitude', form.latitude)
+      formData.append('longitude', form.longitude)
+      if (form.servicePincodes) {
+        formData.append('servicePincodes', form.servicePincodes)
+      }
+      if (labCertificateFile) {
+        formData.append('labCertificate', labCertificateFile)
+      }
+      if (labRegistrationFile) {
+        formData.append('labRegistration', labRegistrationFile)
+      }
+      if (otherDocsFiles.length > 0) {
+        otherDocsFiles.forEach((file) => {
+          formData.append('otherDocuments', file)
+        })
+      }
+      await createLabOwner(formData)
       toast.success('Lab Owner created successfully')
       setShowAddModal(false)
       setForm(emptyForm)
+      setLabCertificateFile(null)
+      setLabRegistrationFile(null)
+      setOtherDocFile(null)
       setErrors({})
       onRefresh()
     } catch (err) {
@@ -341,20 +367,35 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
     }
     try {
       setSaving(true)
-      const payload = {
-        name: form.name,
-        email: form.email,
-        phone: form.phone,
-        labAddress: form.labAddress,
-        latitude: form.latitude,
-        longitude: form.longitude,
-        servicePincodes: form.servicePincodes ? form.servicePincodes.split(',').map((s) => s.trim()) : [],
+      const formData = new FormData()
+      formData.append('name', form.name)
+      formData.append('email', form.email)
+      formData.append('phone', form.phone)
+      formData.append('labAddress', form.labAddress)
+      formData.append('latitude', form.latitude)
+      formData.append('longitude', form.longitude)
+      if (form.servicePincodes) {
+        formData.append('servicePincodes', form.servicePincodes)
       }
-      await updateUser(selectedOwner._id, payload)
+      if (editLabCertificateFile) {
+        formData.append('labCertificate', editLabCertificateFile)
+      }
+      if (editLabRegistrationFile) {
+        formData.append('labRegistration', editLabRegistrationFile)
+      }
+      if (editOtherDocsFiles.length > 0) {
+        editOtherDocsFiles.forEach((file) => {
+          formData.append('otherDocuments', file)
+        })
+      }
+      await updateUser(selectedOwner._id, formData)
       toast.success('Lab Owner updated successfully')
       setShowEditModal(false)
       setSelectedOwner(null)
       setForm(emptyForm)
+      setEditLabCertificateFile(null)
+      setEditLabRegistrationFile(null)
+      setEditOtherDocsFiles([])
       onRefresh()
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to update lab owner')
@@ -378,7 +419,7 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
     }
   }
 
-  const handleCloseModal = () => { setShowAddModal(false); setForm(emptyForm); setErrors({}) }
+  const handleCloseModal = () => { setShowAddModal(false); setForm(emptyForm); setLabCertificateFile(null); setLabRegistrationFile(null); setOtherDocsFiles([]); setErrors({}) }
 
   const handleChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -436,6 +477,14 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
             }}
             activeCount={activeFilterCount}
           />
+          <div className="flex items-center rounded-lg border border-border p-1">
+            <Tooltip title="Grid View" arrow placement="top">
+              <button type="button" aria-label="Grid view" onClick={() => setView('card')} className={`rounded p-1.5 ${view === 'card' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><Grid2X2 size={18} /></button>
+            </Tooltip>
+            <Tooltip title="Table View" arrow placement="top">
+              <button type="button" aria-label="Table view" onClick={() => setView('table')} className={`rounded p-1.5 ${view === 'table' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
+            </Tooltip>
+          </div>
           <Can resource="lab_owners" action="create">
             <Button className="flex items-center gap-2" onClick={() => setShowAddModal(true)}>
               <Plus size={16} />
@@ -458,6 +507,14 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
           }}
           activeCount={activeFilterCount}
         />
+        <div className="flex items-center rounded-lg border border-border p-1">
+          <Tooltip title="Grid View" arrow placement="top">
+            <button type="button" aria-label="Grid view" onClick={() => setView('card')} className={`rounded p-1.5 ${view === 'card' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><Grid2X2 size={18} /></button>
+          </Tooltip>
+          <Tooltip title="Table View" arrow placement="top">
+            <button type="button" aria-label="Table view" onClick={() => setView('table')} className={`rounded p-1.5 ${view === 'table' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
+          </Tooltip>
+        </div>
       </div>
 
       {/* Stat Cards */}
@@ -520,14 +577,14 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
         <span className="w-2 h-2 rounded-full bg-border"></span>
       </div>
 
-      {/* Lab Owners Table */}
+      {/* Lab Owners Table / Grid */}
       {isLoading ? (
         <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">Loading lab owners…</div>
       ) : isError ? (
         <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-destructive">Unable to load lab owners. Please try again.</div>
       ) : filteredOwners.length === 0 ? (
         <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">No lab owners found.</div>
-      ) : (
+      ) : view === 'table' ? (
         <div className="overflow-y-auto max-h-[calc(100vh-250px)] pb-2 pr-1">
           <div className="rounded-xl border border-border bg-white">
             <table className="w-full min-w-[900px] text-sm">
@@ -625,6 +682,83 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
             </table>
           </div>
         </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {visibleOwners.map((owner) => {
+            const isActive = owner.role !== 'inactive'
+            const initials = owner.name ? owner.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2) : 'LO'
+            const avatarColors = ['bg-blue-500', 'bg-emerald-500', 'bg-violet-500', 'bg-rose-500', 'bg-amber-500', 'bg-cyan-500', 'bg-indigo-500', 'bg-pink-500']
+            let hash = 0
+            for (let i = 0; i < (owner.name || '').length; i++) hash = (hash * 31 + (owner.name || '').charCodeAt(i)) >>> 0
+            const avatarColor = avatarColors[hash % avatarColors.length]
+            return (
+              <article key={owner._id} onClick={() => handleView(owner)} className="flex flex-col rounded-xl border border-border bg-white shadow-sm transition hover:shadow-md overflow-hidden cursor-pointer">
+                <div className="p-4 pb-0">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${avatarColor} text-white font-semibold text-xs`}>
+                        {initials}
+                      </span>
+                      <div className="min-w-0">
+                        <h3 className="font-semibold text-foreground text-sm truncate" title={owner.name}>{owner.name}</h3>
+                        <p className="text-xs text-muted-foreground">{owner.email}</p>
+                      </div>
+                    </div>
+                    <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-medium ${isActive ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
+                      {isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex flex-col flex-1 p-4 pt-3">
+                  <dl className="space-y-1.5 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Phone</span>
+                      <span className="font-medium text-foreground">{owner.phone || '—'}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Location</span>
+                      <span className="text-foreground truncate max-w-[150px]" title={owner.labAddress}>{owner.labAddress || '—'}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Service Areas</span>
+                      {owner.servicePincodes?.length > 0 ? (
+                        <span className="inline-flex items-center gap-1.5 bg-primary/10 text-primary px-2 py-0.5 rounded-full text-[10px] font-semibold">
+                          {owner.servicePincodes.length} Area{owner.servicePincodes.length !== 1 ? 's' : ''}
+                        </span>
+                      ) : (
+                        <span className="text-foreground">—</span>
+                      )}
+                    </div>
+                  </dl>
+                  <div className="mt-auto pt-3 border-t border-border flex items-center justify-between">
+                    <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/><path d="M5 8l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      NABL Accredited Labs
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <Can resource="lab_owners" action="view">
+                        <Tooltip title="View" arrow placement="top">
+                          <button type="button" onClick={(e) => { e.stopPropagation(); handleView(owner) }} className="rounded p-1 text-muted-foreground hover:text-primary hover:bg-primary/5 transition"><Eye size={14} /></button>
+                        </Tooltip>
+                      </Can>
+                      <Can resource="lab_owners" action="update">
+                        <Tooltip title="Edit" arrow placement="top">
+                          <button type="button" onClick={(e) => { e.stopPropagation(); handleEdit(owner) }} className="rounded p-1 text-muted-foreground hover:text-primary hover:bg-primary/5 transition"><Pencil size={14} /></button>
+                        </Tooltip>
+                      </Can>
+                      <Can resource="lab_owners" action="delete">
+                        <Tooltip title="Delete" arrow placement="top">
+                          <button type="button" onClick={(e) => { e.stopPropagation(); handleDelete(owner) }} className="rounded p-1 text-muted-foreground hover:text-red-500 hover:bg-red-50 transition"><Trash2 size={14} /></button>
+                        </Tooltip>
+                      </Can>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            )
+          })}
+        </div>
       )}
 
       {/* Pagination */}
@@ -692,6 +826,98 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
                   </div>
                 )}
               </div>
+              {/* Document Uploads */}
+              <div className="space-y-3">
+                <p className="text-sm font-medium text-foreground">Documents</p>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="flex flex-col rounded-xl border border-border bg-white shadow-sm overflow-hidden">
+                    <div className="p-3 pb-0">
+                      <span className="text-xs font-medium text-muted-foreground">Lab Certificate *</span>
+                    </div>
+                    <div className="p-3 pt-2">
+                      <label className="flex items-center gap-2 border-2 border-dashed border-border rounded-lg p-3 cursor-pointer hover:bg-accent/50 transition">
+                        <input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png,.webp"
+                          className="hidden"
+                          onChange={(e) => setLabCertificateFile(e.target.files?.[0] || null)}
+                        />
+                        <Upload size={16} className="text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">
+                          {labCertificateFile ? labCertificateFile.name : 'Upload lab certificate'}
+                        </span>
+                      </label>
+                    </div>
+                    {labCertificateFile && (
+                      <div className="px-3 pb-3 pt-0 flex items-center justify-between border-t border-border mt-1">
+                        <span className="text-[10px] text-muted-foreground truncate">{labCertificateFile.name}</span>
+                        <button onClick={() => setLabCertificateFile(null)} className="text-[10px] text-red-500 hover:underline shrink-0">Remove</button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-col rounded-xl border border-border bg-white shadow-sm overflow-hidden">
+                    <div className="p-3 pb-0">
+                      <span className="text-xs font-medium text-muted-foreground">Lab Registration *</span>
+                    </div>
+                    <div className="p-3 pt-2">
+                      <label className="flex items-center gap-2 border-2 border-dashed border-border rounded-lg p-3 cursor-pointer hover:bg-accent/50 transition">
+                        <input
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png,.webp"
+                          className="hidden"
+                          onChange={(e) => setLabRegistrationFile(e.target.files?.[0] || null)}
+                        />
+                        <Upload size={16} className="text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">
+                          {labRegistrationFile ? labRegistrationFile.name : 'Upload lab registration'}
+                        </span>
+                      </label>
+                    </div>
+                    {labRegistrationFile && (
+                      <div className="px-3 pb-3 pt-0 flex items-center justify-between border-t border-border mt-1">
+                        <span className="text-[10px] text-muted-foreground truncate">{labRegistrationFile.name}</span>
+                        <button onClick={() => setLabRegistrationFile(null)} className="text-[10px] text-red-500 hover:underline shrink-0">Remove</button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="flex flex-col rounded-xl border border-border bg-white shadow-sm overflow-hidden">
+                  <div className="p-3 pb-0">
+                    <span className="text-xs font-medium text-muted-foreground">Other Documents (max 5)</span>
+                  </div>
+                  <div className="p-3 pt-2">
+                    <label className="flex items-center gap-2 border-2 border-dashed border-border rounded-lg p-3 cursor-pointer hover:bg-accent/50 transition">
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png,.webp"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => {
+                          const newFiles = Array.from(e.target.files || [])
+                          setOtherDocsFiles((prev) => {
+                            const combined = [...prev, ...newFiles]
+                            return combined.slice(0, 5)
+                          })
+                        }}
+                      />
+                      <Upload size={16} className="text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">
+                        {otherDocsFiles.length > 0 ? `${otherDocsFiles.length}/5 file(s) selected` : 'Upload documents'}
+                      </span>
+                    </label>
+                  </div>
+                  {otherDocsFiles.length > 0 && (
+                    <div className="px-3 pb-3 pt-0 border-t border-border mt-1 space-y-1.5">
+                      {otherDocsFiles.map((f, i) => (
+                        <div key={i} className="flex items-center justify-between">
+                          <span className="text-[10px] text-muted-foreground truncate">{f.name}</span>
+                          <button onClick={() => setOtherDocsFiles((prev) => prev.filter((_, idx) => idx !== i))} className="text-[10px] text-red-500 hover:underline shrink-0">Remove</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
             <div className="flex items-center justify-end gap-3 p-4 border-t border-border">
               <button onClick={handleCloseModal} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-accent rounded-lg transition">Cancel</button>
@@ -743,6 +969,56 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
                   <Calendar size={16} className="text-muted-foreground" />
                   <div><p className="text-[10px] text-muted-foreground">Registered On</p><p className="text-sm text-foreground">{selectedOwner.createdAt ? new Date(selectedOwner.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</p></div>
                 </div>
+                {/* Documents */}
+                {(selectedOwner.labCertificate || selectedOwner.labRegistration || selectedOwner.otherDocuments?.length > 0) && (
+                  <div className="p-3 bg-accent/50 rounded-lg">
+                    <p className="text-[10px] text-muted-foreground mb-2">Documents</p>
+                    <div className="space-y-3">
+                      {selectedOwner.labCertificate && (
+                        <div>
+                          <p className="text-[11px] font-medium text-foreground mb-1">Lab Certificate</p>
+                          {/\.(jpg|jpeg|png|webp)$/i.test(selectedOwner.labCertificate) ? (
+                            <button type="button" onClick={() => setLightbox(selectedOwner.labCertificate)} className="block">
+                              <img src={selectedOwner.labCertificate} alt="Lab Certificate" className="h-16 w-16 object-cover rounded-lg border border-border cursor-pointer hover:opacity-80 transition" />
+                            </button>
+                          ) : (
+                            <a href={selectedOwner.labCertificate} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline">
+                              <FileText size={12} /> View Document
+                            </a>
+                          )}
+                        </div>
+                      )}
+                      {selectedOwner.labRegistration && (
+                        <div>
+                          <p className="text-[11px] font-medium text-foreground mb-1">Lab Registration</p>
+                          {/\.(jpg|jpeg|png|webp)$/i.test(selectedOwner.labRegistration) ? (
+                            <button type="button" onClick={() => setLightbox(selectedOwner.labRegistration)} className="block">
+                              <img src={selectedOwner.labRegistration} alt="Lab Registration" className="h-16 w-16 object-cover rounded-lg border border-border cursor-pointer hover:opacity-80 transition" />
+                            </button>
+                          ) : (
+                            <a href={selectedOwner.labRegistration} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline">
+                              <FileText size={12} /> View Document
+                            </a>
+                          )}
+                        </div>
+                      )}
+                      {selectedOwner.otherDocuments?.map((doc, i) => (
+                        <div key={i}>
+                          <p className="text-[11px] font-medium text-foreground mb-1">{doc.name || 'Document'}</p>
+                          {/\.(jpg|jpeg|png|webp)$/i.test(doc.url) ? (
+                            <button type="button" onClick={() => setLightbox(doc.url)} className="block">
+                              <img src={doc.url} alt={doc.name || 'Document'} className="h-16 w-16 object-cover rounded-lg border border-border cursor-pointer hover:opacity-80 transition" />
+                            </button>
+                          ) : (
+                            <a href={doc.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline">
+                              <FileText size={12} /> {doc.name || 'View Document'}
+                            </a>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex items-center justify-end gap-3 p-4 border-t border-border">
@@ -761,7 +1037,7 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
                 <h3 className="font-semibold text-foreground">Edit Lab Owner</h3>
                 <p className="text-xs text-muted-foreground mt-0.5">Update laboratory owner details.</p>
               </div>
-              <button onClick={() => { setShowEditModal(false); setSelectedOwner(null); setForm(emptyForm); setErrors({}) }} className="p-1 text-muted-foreground hover:text-foreground"><X size={20} /></button>
+              <button onClick={() => { setShowEditModal(false); setSelectedOwner(null); setForm(emptyForm); setErrors({}); setEditLabCertificateFile(null); setEditLabRegistrationFile(null); setEditOtherDocsFiles([]) }} className="p-1 text-muted-foreground hover:text-foreground"><X size={20} /></button>
             </div>
             <div className="p-4 space-y-4">
               <Input label="Full Name" name="name" value={form.name} onChange={(e) => handleChange('name', e.target.value)} placeholder="e.g. John Doe" error={errors.name} required />
@@ -801,9 +1077,158 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
                   </div>
                 )}
               </div>
+              {/* Document Uploads */}
+              <div className="space-y-3">
+                <p className="text-sm font-medium text-foreground">Documents</p>
+                {selectedOwner.labCertificate && !editLabCertificateFile && (
+                  <div className="rounded-xl border border-border bg-white shadow-sm overflow-hidden">
+                    <div className="p-3 pb-0">
+                      <span className="text-xs font-medium text-muted-foreground">Lab Certificate (current)</span>
+                    </div>
+                    <div className="p-3 pt-2">
+                      {/\.(jpg|jpeg|png|webp)$/i.test(selectedOwner.labCertificate) ? (
+                        <a href={selectedOwner.labCertificate} target="_blank" rel="noreferrer">
+                          <img src={selectedOwner.labCertificate} alt="Lab Certificate" className="w-full max-h-32 object-cover rounded-lg border border-border" />
+                        </a>
+                      ) : (
+                        <a href={selectedOwner.labCertificate} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline">
+                          <FileText size={12} /> View Document
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
+                <div className="flex flex-col rounded-xl border border-border bg-white shadow-sm overflow-hidden">
+                  <div className="p-3 pb-0">
+                    <span className="text-xs font-medium text-muted-foreground">{selectedOwner.labCertificate ? 'Replace Lab Certificate' : 'Lab Certificate'}</span>
+                  </div>
+                  <div className="p-3 pt-2">
+                    <label className="flex items-center gap-2 border-2 border-dashed border-border rounded-lg p-3 cursor-pointer hover:bg-accent/50 transition">
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png,.webp"
+                        className="hidden"
+                        onChange={(e) => setEditLabCertificateFile(e.target.files?.[0] || null)}
+                      />
+                      <Upload size={16} className="text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">
+                        {editLabCertificateFile ? editLabCertificateFile.name : 'Upload lab certificate'}
+                      </span>
+                    </label>
+                  </div>
+                  {editLabCertificateFile && (
+                    <div className="px-3 pb-3 pt-0 flex items-center justify-between border-t border-border mt-1">
+                      <span className="text-[10px] text-muted-foreground truncate">{editLabCertificateFile.name}</span>
+                      <button onClick={() => setEditLabCertificateFile(null)} className="text-[10px] text-red-500 hover:underline shrink-0">Remove</button>
+                    </div>
+                  )}
+                </div>
+                {selectedOwner.labRegistration && !editLabRegistrationFile && (
+                  <div className="rounded-xl border border-border bg-white shadow-sm overflow-hidden">
+                    <div className="p-3 pb-0">
+                      <span className="text-xs font-medium text-muted-foreground">Lab Registration (current)</span>
+                    </div>
+                    <div className="p-3 pt-2">
+                      {/\.(jpg|jpeg|png|webp)$/i.test(selectedOwner.labRegistration) ? (
+                        <a href={selectedOwner.labRegistration} target="_blank" rel="noreferrer">
+                          <img src={selectedOwner.labRegistration} alt="Lab Registration" className="w-full max-h-32 object-cover rounded-lg border border-border" />
+                        </a>
+                      ) : (
+                        <a href={selectedOwner.labRegistration} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline">
+                          <FileText size={12} /> View Document
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
+                <div className="flex flex-col rounded-xl border border-border bg-white shadow-sm overflow-hidden">
+                  <div className="p-3 pb-0">
+                    <span className="text-xs font-medium text-muted-foreground">{selectedOwner.labRegistration ? 'Replace Lab Registration' : 'Lab Registration'}</span>
+                  </div>
+                  <div className="p-3 pt-2">
+                    <label className="flex items-center gap-2 border-2 border-dashed border-border rounded-lg p-3 cursor-pointer hover:bg-accent/50 transition">
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png,.webp"
+                        className="hidden"
+                        onChange={(e) => setEditLabRegistrationFile(e.target.files?.[0] || null)}
+                      />
+                      <Upload size={16} className="text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">
+                        {editLabRegistrationFile ? editLabRegistrationFile.name : 'Upload lab registration'}
+                      </span>
+                    </label>
+                  </div>
+                  {editLabRegistrationFile && (
+                    <div className="px-3 pb-3 pt-0 flex items-center justify-between border-t border-border mt-1">
+                      <span className="text-[10px] text-muted-foreground truncate">{editLabRegistrationFile.name}</span>
+                      <button onClick={() => setEditLabRegistrationFile(null)} className="text-[10px] text-red-500 hover:underline shrink-0">Remove</button>
+                    </div>
+                  )}
+                </div>
+                {selectedOwner.otherDocuments?.length > 0 && (
+                  <div className="rounded-xl border border-border bg-white shadow-sm overflow-hidden">
+                    <div className="p-3 pb-0">
+                      <span className="text-xs font-medium text-muted-foreground">Other Documents (current)</span>
+                    </div>
+                    <div className="p-3 pt-2 space-y-2">
+                      {selectedOwner.otherDocuments.map((doc, i) => (
+                        <div key={i}>
+                          <p className="text-[11px] font-medium text-foreground mb-1">{doc.name || 'Document'}</p>
+                          {/\.(jpg|jpeg|png|webp)$/i.test(doc.url) ? (
+                            <a href={doc.url} target="_blank" rel="noreferrer">
+                              <img src={doc.url} alt={doc.name || 'Document'} className="w-full max-h-32 object-cover rounded-lg border border-border" />
+                            </a>
+                          ) : (
+                            <a href={doc.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline">
+                              <FileText size={12} /> View Document
+                            </a>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="flex flex-col rounded-xl border border-border bg-white shadow-sm overflow-hidden">
+                  <div className="p-3 pb-0">
+                    <span className="text-xs font-medium text-muted-foreground">Add Other Documents (max 5)</span>
+                  </div>
+                  <div className="p-3 pt-2">
+                    <label className="flex items-center gap-2 border-2 border-dashed border-border rounded-lg p-3 cursor-pointer hover:bg-accent/50 transition">
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png,.webp"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => {
+                          const newFiles = Array.from(e.target.files || [])
+                          setEditOtherDocsFiles((prev) => {
+                            const combined = [...prev, ...newFiles]
+                            return combined.slice(0, 5)
+                          })
+                        }}
+                      />
+                      <Upload size={16} className="text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">
+                        {editOtherDocsFiles.length > 0 ? `${editOtherDocsFiles.length}/5 file(s) selected` : 'Upload documents'}
+                      </span>
+                    </label>
+                  </div>
+                  {editOtherDocsFiles.length > 0 && (
+                    <div className="px-3 pb-3 pt-0 space-y-1 border-t border-border mt-1">
+                      {editOtherDocsFiles.map((file, i) => (
+                        <div key={i} className="flex items-center justify-between">
+                          <span className="text-[10px] text-muted-foreground truncate">{file.name}</span>
+                          <button onClick={() => setEditOtherDocsFiles((prev) => prev.filter((_, idx) => idx !== i))} className="text-[10px] text-red-500 hover:underline shrink-0">Remove</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
             <div className="flex items-center justify-end gap-3 p-4 border-t border-border">
-              <button onClick={() => { setShowEditModal(false); setSelectedOwner(null); setForm(emptyForm); setErrors({}) }} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-accent rounded-lg transition">Cancel</button>
+              <button onClick={() => { setShowEditModal(false); setSelectedOwner(null); setForm(emptyForm); setErrors({}); setEditLabCertificateFile(null); setEditLabRegistrationFile(null); setEditOtherDocsFiles([]) }} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-accent rounded-lg transition">Cancel</button>
               <Button onClick={handleEditSave} disabled={saving} loading={saving}>Update</Button>
             </div>
           </div>
@@ -834,6 +1259,14 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
         loading={deleting}
         variant="danger"
       />
+
+      {/* Image Lightbox */}
+      {lightbox && (
+        <div className="fixed inset-0 bg-black/80 z-[200] flex items-center justify-center p-4" onClick={() => setLightbox(null)}>
+          <button onClick={() => setLightbox(null)} className="absolute top-4 right-4 text-white hover:text-gray-300"><X size={28} /></button>
+          <img src={lightbox} alt="Document" className="max-w-full max-h-[90vh] object-contain rounded-lg" onClick={(e) => e.stopPropagation()} />
+        </div>
+      )}
     </div>
   )
 }

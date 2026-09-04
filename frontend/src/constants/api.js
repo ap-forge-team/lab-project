@@ -26,6 +26,7 @@ export const API_ENDPOINTS = {
     UPLOAD_REPORT: (id) => `/bookings/upload-report/${id}`,
     UPDATE_LAB: (id) => `/bookings/update-booking-lab/${id}`,
     PAYMENT_STATUS: (id) => `/bookings/${id}/payment-status`,
+    ADD_TESTS: (id) => `/bookings/add-tests/${id}`,
   },
   ADMIN: {
     LAB_OWNERS: '/admin/lab-owners',

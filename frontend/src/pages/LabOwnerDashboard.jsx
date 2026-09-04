@@ -8,7 +8,7 @@ import {
   uploadReport,
 } from '@/services/booking.service'
 import { createLabAssistant } from '@/services/user.service'
-import { UserPlus } from 'lucide-react'
+import { UserPlus, Upload, FileText } from 'lucide-react'
 import { EmptyState } from '@/components/Dashboard'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
@@ -67,6 +67,8 @@ const LabOwnerDashboard = () => {
     phone: '',
     document: '',
   })
+  const [idProofFile, setIdProofFile] = useState(null)
+  const [otherDocsFiles, setOtherDocsFiles] = useState([])
 
   const buildAssistantErrors = (a) => ({
     name: !a.name.trim() ? 'Full Name is required' : '',
@@ -137,7 +139,20 @@ const LabOwnerDashboard = () => {
     if (!validateAssistant(buildAssistantErrors(assistantData))) return
     try {
       setCreatingAssistant(true)
-      const { data } = await createLabAssistant(assistantData)
+      const formData = new FormData()
+      formData.append('name', assistantData.name)
+      formData.append('email', assistantData.email)
+      formData.append('password', assistantData.password)
+      formData.append('phone', assistantData.phone)
+      if (idProofFile) {
+        formData.append('idProof', idProofFile)
+      }
+      if (otherDocsFiles.length > 0) {
+        otherDocsFiles.forEach((file) => {
+          formData.append('otherDocuments', file)
+        })
+      }
+      const { data } = await createLabAssistant(formData)
       toast.success(data?.message || 'Assistant created successfully')
       setAssistantData({
         name: '',
@@ -146,6 +161,8 @@ const LabOwnerDashboard = () => {
         phone: '',
         document: '',
       })
+      setIdProofFile(null)
+      setOtherDocsFiles([])
       setShowAssistantForm(false)
     } catch (error) {
       toast.error(error?.response?.data?.message || 'Failed to create assistant')
@@ -314,7 +331,12 @@ const LabOwnerDashboard = () => {
           {/* Activity and Assistants */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
             <LabOwnerRecentActivity data={recentActivity} />
-            <LabOwnerAssistantsTable data={assistants} />
+            <div>
+              <div className="flex items-center justify-end mb-3">
+                <ViewToggle view={view} onChange={setView} />
+              </div>
+              <LabOwnerAssistantsTable data={assistants} view={view} />
+            </div>
           </div>
           </>
         )}
@@ -368,6 +390,73 @@ const LabOwnerDashboard = () => {
               value={assistantData.document}
               onChange={handleChange}
             />
+            {/* Document Uploads */}
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-foreground">Documents</p>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="flex flex-col rounded-xl border border-border bg-white shadow-sm overflow-hidden">
+                  <div className="p-3 pb-0">
+                    <span className="text-xs font-medium text-muted-foreground">ID Proof</span>
+                  </div>
+                  <div className="p-3 pt-2">
+                    <label className="flex items-center gap-2 border-2 border-dashed border-border rounded-lg p-3 cursor-pointer hover:bg-accent/50 transition">
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png,.webp"
+                        className="hidden"
+                        onChange={(e) => setIdProofFile(e.target.files?.[0] || null)}
+                      />
+                      <Upload size={16} className="text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">
+                        {idProofFile ? idProofFile.name : 'Upload ID proof'}
+                      </span>
+                    </label>
+                  </div>
+                  {idProofFile && (
+                    <div className="px-3 pb-3 pt-0 flex items-center justify-between border-t border-border mt-1">
+                      <span className="text-[10px] text-muted-foreground truncate">{idProofFile.name}</span>
+                      <button type="button" onClick={() => setIdProofFile(null)} className="text-[10px] text-red-500 hover:underline shrink-0">Remove</button>
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-col rounded-xl border border-border bg-white shadow-sm overflow-hidden">
+                  <div className="p-3 pb-0">
+                    <span className="text-xs font-medium text-muted-foreground">Other Documents (max 5)</span>
+                  </div>
+                  <div className="p-3 pt-2">
+                    <label className="flex items-center gap-2 border-2 border-dashed border-border rounded-lg p-3 cursor-pointer hover:bg-accent/50 transition">
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png,.webp"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => {
+                          const newFiles = Array.from(e.target.files || [])
+                          setOtherDocsFiles((prev) => {
+                            const combined = [...prev, ...newFiles]
+                            return combined.slice(0, 5)
+                          })
+                        }}
+                      />
+                      <Upload size={16} className="text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">
+                        {otherDocsFiles.length > 0 ? `${otherDocsFiles.length}/5 file(s) selected` : 'Upload documents'}
+                      </span>
+                    </label>
+                  </div>
+                  {otherDocsFiles.length > 0 && (
+                    <div className="px-3 pb-3 pt-0 border-t border-border mt-1 space-y-1.5">
+                      {otherDocsFiles.map((f, i) => (
+                        <div key={i} className="flex items-center justify-between">
+                          <span className="text-[10px] text-muted-foreground truncate">{f.name}</span>
+                          <button type="button" onClick={() => setOtherDocsFiles((prev) => prev.filter((_, idx) => idx !== i))} className="text-[10px] text-red-500 hover:underline shrink-0">Remove</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
             <Input
               label="Password"
               type="password"

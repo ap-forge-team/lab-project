@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Users, UserPlus, Search, Download, ChevronRight, Eye, EyeOff, Pencil, Trash2, ChevronDown, Calendar, X, MoreVertical, Edit2, Shield, Mail, Phone, Lock, MapPin, UserCheck, UserX, ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-react'
+import { Users, UserPlus, Search, Download, ChevronRight, Eye, EyeOff, Pencil, Trash2, ChevronDown, Calendar, X, MoreVertical, Edit2, Shield, Mail, Phone, Lock, MapPin, UserCheck, UserX, ArrowDown, ArrowUp, ChevronsUpDown, Upload, FileText, List, Grid2X2 } from 'lucide-react'
+import Tooltip from '@mui/material/Tooltip'
 import { toast } from 'react-toastify'
 import Button from '@/components/ui/Button'
 import Pagination from '@/components/ui/Pagination'
@@ -11,6 +12,7 @@ import FilterButton from '@/components/ui/FilterButton'
 import { Spinner } from '@/components/ui/Loader'
 import Can from '@/components/Can'
 import { createLabOwner, createLabAssistant, updateUser, deleteUser } from '@/services/user.service'
+import useResponsiveView from '@/hooks/useResponsiveView'
 
 const PAGE_SIZE = 10
 const PAGE_SIZES = [10, 25, 50]
@@ -83,6 +85,7 @@ const UsersManagePage = ({ users, isLoading, isError, onRefresh }) => {
   const [hiddenColumns, setHiddenColumns] = useState({})
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(PAGE_SIZE)
+  const [view, setView] = useResponsiveView()
   const [showAddModal, setShowAddModal] = useState(false)
 
   const handleSort = useCallback((key, direction) => {
@@ -110,6 +113,7 @@ const UsersManagePage = ({ users, isLoading, isError, onRefresh }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [lightbox, setLightbox] = useState(null)
   const [deleting, setDeleting] = useState(false)
   const [form, setForm] = useState({
     name: '',
@@ -119,6 +123,8 @@ const UsersManagePage = ({ users, isLoading, isError, onRefresh }) => {
     role: 'patient',
   })
   const [errors, setErrors] = useState({})
+  const [idProofFile, setIdProofFile] = useState(null)
+  const [otherDocsFiles, setOtherDocsFiles] = useState([])
 
   const filterCategories = useMemo(() => {
     const nameOptions = (users || []).map((u) => ({ value: u.name, label: u.name }))
@@ -279,13 +285,28 @@ const UsersManagePage = ({ users, isLoading, isError, onRefresh }) => {
       if (form.role === 'lab_owner') {
         await createLabOwner({ ...payload, servicePincodes: [], labAddress: '' })
       } else if (form.role === 'lab_assistant') {
-        await createLabAssistant(payload)
+        const formData = new FormData()
+        formData.append('name', form.name)
+        formData.append('email', form.email)
+        formData.append('phone', form.phone)
+        formData.append('password', form.password)
+        if (idProofFile) {
+          formData.append('idProof', idProofFile)
+        }
+        if (otherDocsFiles.length > 0) {
+          otherDocsFiles.forEach((file) => {
+            formData.append('otherDocuments', file)
+          })
+        }
+        await createLabAssistant(formData)
       } else {
         await createLabOwner(payload)
       }
       toast.success('User created successfully')
       setShowAddModal(false)
       setForm({ name: '', email: '', phone: '', password: '', role: 'patient' })
+      setIdProofFile(null)
+      setOtherDocsFiles([])
       setErrors({})
       onRefresh()
     } catch (err) {
@@ -298,6 +319,8 @@ const UsersManagePage = ({ users, isLoading, isError, onRefresh }) => {
   const handleCloseModal = () => {
     setShowAddModal(false)
     setForm({ name: '', email: '', phone: '', password: '', role: 'patient' })
+    setIdProofFile(null)
+    setOtherDocsFiles([])
     setErrors({})
   }
 
@@ -444,6 +467,14 @@ const UsersManagePage = ({ users, isLoading, isError, onRefresh }) => {
             }}
             activeCount={activeFilterCount}
           />
+          <div className="flex items-center rounded-lg border border-border p-1">
+            <Tooltip title="Grid View" arrow placement="top">
+              <button type="button" aria-label="Grid view" onClick={() => setView('card')} className={`rounded p-1.5 ${view === 'card' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><Grid2X2 size={18} /></button>
+            </Tooltip>
+            <Tooltip title="Table View" arrow placement="top">
+              <button type="button" aria-label="Table view" onClick={() => setView('table')} className={`rounded p-1.5 ${view === 'table' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
+            </Tooltip>
+          </div>
           <Can resource="users" action="create">
             <Button className="flex items-center gap-2" onClick={() => setShowAddModal(true)}>
               <UserPlus size={16} />
@@ -466,6 +497,14 @@ const UsersManagePage = ({ users, isLoading, isError, onRefresh }) => {
           }}
           activeCount={activeFilterCount}
         />
+        <div className="flex items-center rounded-lg border border-border p-1">
+          <Tooltip title="Grid View" arrow placement="top">
+            <button type="button" aria-label="Grid view" onClick={() => setView('card')} className={`rounded p-1.5 ${view === 'card' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><Grid2X2 size={18} /></button>
+          </Tooltip>
+          <Tooltip title="Table View" arrow placement="top">
+            <button type="button" aria-label="Table view" onClick={() => setView('table')} className={`rounded p-1.5 ${view === 'table' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
+          </Tooltip>
+        </div>
       </div>
 
       {/* Stat Cards */}
@@ -541,14 +580,14 @@ const UsersManagePage = ({ users, isLoading, isError, onRefresh }) => {
         <span className="w-2 h-2 rounded-full bg-border"></span>
       </div>
 
-      {/* Users Table */}
+      {/* Users Table / Grid */}
       {isLoading ? (
         <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">Loading users…</div>
       ) : isError ? (
         <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-destructive">Unable to load users. Please try again.</div>
       ) : filteredUsers.length === 0 ? (
         <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">No users found.</div>
-      ) : (
+      ) : view === 'table' ? (
         <div className="overflow-y-auto max-h-[calc(100vh-250px)] pb-2 pr-1">
           <div className="rounded-xl border border-border bg-white">
             <table className="w-full min-w-[900px] text-sm">
@@ -668,6 +707,109 @@ const UsersManagePage = ({ users, isLoading, isError, onRefresh }) => {
             </table>
           </div>
         </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {visibleUsers.map((user) => {
+            const isActive = user.role !== 'inactive'
+            const roleBadgeColor = {
+              admin: 'bg-purple-100 text-purple-700',
+              lab_owner: 'bg-blue-100 text-blue-700',
+              lab_assistant: 'bg-amber-100 text-amber-700',
+              patient: 'bg-gray-100 text-gray-600',
+            }
+            const initials = user.name ? user.name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2) : 'U'
+            const avatarColors = ['bg-blue-500', 'bg-emerald-500', 'bg-violet-500', 'bg-rose-500', 'bg-amber-500', 'bg-cyan-500', 'bg-indigo-500', 'bg-pink-500']
+            let hash = 0
+            for (let i = 0; i < (user.name || '').length; i++) hash = (hash * 31 + (user.name || '').charCodeAt(i)) >>> 0
+            const avatarColor = avatarColors[hash % avatarColors.length]
+            const formatDate = (dateStr) => {
+              if (!dateStr) return '—'
+              const d = new Date(dateStr)
+              return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+            }
+            const formatLastLogin = (dateStr) => {
+              if (!dateStr) return '—'
+              const d = new Date(dateStr)
+              const now = new Date()
+              const diffMs = now.getTime() - d.getTime()
+              const diffMins = Math.floor(diffMs / 60000)
+              const diffHours = Math.floor(diffMins / 60)
+              const diffDays = Math.floor(diffHours / 24)
+              if (diffMins < 1) return 'Just now'
+              if (diffMins < 60) return `${diffMins}m ago`
+              if (diffHours < 24) return `${diffHours}h ago`
+              if (diffDays === 1) return 'Yesterday'
+              if (diffDays < 7) return `${diffDays} days ago`
+              return formatDate(dateStr)
+            }
+            return (
+              <article key={user._id} onClick={() => handleView(user)} className="flex flex-col rounded-xl border border-border bg-white shadow-sm transition hover:shadow-md overflow-hidden cursor-pointer">
+                <div className="p-4 pb-0">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${avatarColor} text-white font-semibold text-xs`}>
+                        {initials}
+                      </span>
+                      <div className="min-w-0">
+                        <h3 className="font-semibold text-foreground text-sm truncate" title={user.name}>{user.name}</h3>
+                        <p className="text-xs text-muted-foreground">{user.email}</p>
+                      </div>
+                    </div>
+                    <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-medium ${isActive ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
+                      {isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex flex-col flex-1 p-4 pt-3">
+                  <dl className="space-y-1.5 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Role</span>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold capitalize ${roleBadgeColor[user.role] || 'bg-gray-100 text-gray-600'}`}>
+                        {user.role?.replace(/_/g, ' ')}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Phone</span>
+                      <span className="font-medium text-foreground">{user.phone || '—'}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Registered</span>
+                      <span className="text-foreground">{formatDate(user.createdAt)}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Last Login</span>
+                      <span className="text-foreground">{formatLastLogin(user.updatedAt)}</span>
+                    </div>
+                  </dl>
+                  <div className="mt-auto pt-3 border-t border-border flex items-center justify-between">
+                    <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/><path d="M5 8l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      NABL Accredited Labs
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <Can resource="users" action="view">
+                        <Tooltip title="View" arrow placement="top">
+                          <button type="button" onClick={(e) => { e.stopPropagation(); handleView(user) }} className="rounded p-1 text-muted-foreground hover:text-primary hover:bg-primary/5 transition"><Eye size={14} /></button>
+                        </Tooltip>
+                      </Can>
+                      <Can resource="users" action="update">
+                        <Tooltip title="Edit" arrow placement="top">
+                          <button type="button" onClick={(e) => { e.stopPropagation(); handleEdit(user) }} className="rounded p-1 text-muted-foreground hover:text-primary hover:bg-primary/5 transition"><Pencil size={14} /></button>
+                        </Tooltip>
+                      </Can>
+                      <Can resource="users" action="delete">
+                        <Tooltip title="Delete" arrow placement="top">
+                          <button type="button" onClick={(e) => { e.stopPropagation(); handleDelete(user) }} className="rounded p-1 text-muted-foreground hover:text-red-500 hover:bg-red-50 transition"><Trash2 size={14} /></button>
+                        </Tooltip>
+                      </Can>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            )
+          })}
+        </div>
       )}
 
       {/* Pagination */}
@@ -710,6 +852,75 @@ const UsersManagePage = ({ users, isLoading, isError, onRefresh }) => {
                 </select>
                 {errors.role && <p className="text-destructive text-xs mt-1.5 font-medium">{errors.role}</p>}
               </div>
+              {/* Document Uploads - Only for Lab Assistant */}
+              {form.role === 'lab_assistant' && (
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-foreground">Documents</p>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div className="flex flex-col rounded-xl border border-border bg-white shadow-sm overflow-hidden">
+                      <div className="p-3 pb-0">
+                        <span className="text-xs font-medium text-muted-foreground">ID Proof</span>
+                      </div>
+                      <div className="p-3 pt-2">
+                        <label className="flex items-center gap-2 border-2 border-dashed border-border rounded-lg p-3 cursor-pointer hover:bg-accent/50 transition">
+                          <input
+                            type="file"
+                            accept=".pdf,.jpg,.jpeg,.png,.webp"
+                            className="hidden"
+                            onChange={(e) => setIdProofFile(e.target.files?.[0] || null)}
+                          />
+                          <Upload size={16} className="text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">
+                            {idProofFile ? idProofFile.name : 'Upload ID proof'}
+                          </span>
+                        </label>
+                      </div>
+                      {idProofFile && (
+                        <div className="px-3 pb-3 pt-0 flex items-center justify-between border-t border-border mt-1">
+                          <span className="text-[10px] text-muted-foreground truncate">{idProofFile.name}</span>
+                          <button onClick={() => setIdProofFile(null)} className="text-[10px] text-red-500 hover:underline shrink-0">Remove</button>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-col rounded-xl border border-border bg-white shadow-sm overflow-hidden">
+                      <div className="p-3 pb-0">
+                        <span className="text-xs font-medium text-muted-foreground">Other Documents (max 5)</span>
+                      </div>
+                      <div className="p-3 pt-2">
+                        <label className="flex items-center gap-2 border-2 border-dashed border-border rounded-lg p-3 cursor-pointer hover:bg-accent/50 transition">
+                          <input
+                            type="file"
+                            accept=".pdf,.jpg,.jpeg,.png,.webp"
+                            multiple
+                            className="hidden"
+                            onChange={(e) => {
+                              const newFiles = Array.from(e.target.files || [])
+                              setOtherDocsFiles((prev) => {
+                                const combined = [...prev, ...newFiles]
+                                return combined.slice(0, 5)
+                              })
+                            }}
+                          />
+                          <Upload size={16} className="text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">
+                            {otherDocsFiles.length > 0 ? `${otherDocsFiles.length}/5 file(s) selected` : 'Upload documents'}
+                          </span>
+                        </label>
+                      </div>
+                      {otherDocsFiles.length > 0 && (
+                        <div className="px-3 pb-3 pt-0 border-t border-border mt-1 space-y-1.5">
+                          {otherDocsFiles.map((f, i) => (
+                            <div key={i} className="flex items-center justify-between">
+                              <span className="text-[10px] text-muted-foreground truncate">{f.name}</span>
+                              <button onClick={() => setOtherDocsFiles((prev) => prev.filter((_, idx) => idx !== i))} className="text-[10px] text-red-500 hover:underline shrink-0">Remove</button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="flex items-center justify-end gap-3 p-4 border-t border-border">
               <button onClick={handleCloseModal} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-accent rounded-lg transition">Cancel</button>
@@ -775,6 +986,70 @@ const UsersManagePage = ({ users, isLoading, isError, onRefresh }) => {
                     </p>
                   </div>
                 </div>
+                {/* Documents */}
+                {(selectedUser.idProof || selectedUser.otherDocuments?.length > 0 || selectedUser.labCertificate || selectedUser.labRegistration) && (
+                  <div className="p-3 bg-accent/50 rounded-lg">
+                    <p className="text-[10px] text-muted-foreground mb-2">Documents</p>
+                    <div className="space-y-3">
+                      {selectedUser.idProof && (
+                        <div>
+                          <p className="text-[11px] font-medium text-foreground mb-1">ID Proof</p>
+                          {/\.(jpg|jpeg|png|webp)$/i.test(selectedUser.idProof) ? (
+                            <button type="button" onClick={() => setLightbox(selectedUser.idProof)} className="block">
+                              <img src={selectedUser.idProof} alt="ID Proof" className="h-16 w-16 object-cover rounded-lg border border-border cursor-pointer hover:opacity-80 transition" />
+                            </button>
+                          ) : (
+                            <a href={selectedUser.idProof} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline">
+                              <FileText size={12} /> View Document
+                            </a>
+                          )}
+                        </div>
+                      )}
+                      {selectedUser.labCertificate && (
+                        <div>
+                          <p className="text-[11px] font-medium text-foreground mb-1">Lab Certificate</p>
+                          {/\.(jpg|jpeg|png|webp)$/i.test(selectedUser.labCertificate) ? (
+                            <button type="button" onClick={() => setLightbox(selectedUser.labCertificate)} className="block">
+                              <img src={selectedUser.labCertificate} alt="Lab Certificate" className="h-16 w-16 object-cover rounded-lg border border-border cursor-pointer hover:opacity-80 transition" />
+                            </button>
+                          ) : (
+                            <a href={selectedUser.labCertificate} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline">
+                              <FileText size={12} /> View Document
+                            </a>
+                          )}
+                        </div>
+                      )}
+                      {selectedUser.labRegistration && (
+                        <div>
+                          <p className="text-[11px] font-medium text-foreground mb-1">Lab Registration</p>
+                          {/\.(jpg|jpeg|png|webp)$/i.test(selectedUser.labRegistration) ? (
+                            <button type="button" onClick={() => setLightbox(selectedUser.labRegistration)} className="block">
+                              <img src={selectedUser.labRegistration} alt="Lab Registration" className="h-16 w-16 object-cover rounded-lg border border-border cursor-pointer hover:opacity-80 transition" />
+                            </button>
+                          ) : (
+                            <a href={selectedUser.labRegistration} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline">
+                              <FileText size={12} /> View Document
+                            </a>
+                          )}
+                        </div>
+                      )}
+                      {selectedUser.otherDocuments?.map((doc, i) => (
+                        <div key={i}>
+                          <p className="text-[11px] font-medium text-foreground mb-1">{doc.name || 'Document'}</p>
+                          {/\.(jpg|jpeg|png|webp)$/i.test(doc.url) ? (
+                            <button type="button" onClick={() => setLightbox(doc.url)} className="block">
+                              <img src={doc.url} alt={doc.name || 'Document'} className="h-16 w-16 object-cover rounded-lg border border-border cursor-pointer hover:opacity-80 transition" />
+                            </button>
+                          ) : (
+                            <a href={doc.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline">
+                              <FileText size={12} /> {doc.name || 'View Document'}
+                            </a>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex items-center justify-end gap-3 p-4 border-t border-border">
@@ -893,6 +1168,14 @@ const UsersManagePage = ({ users, isLoading, isError, onRefresh }) => {
         loading={deleting}
         variant="danger"
       />
+
+      {/* Image Lightbox */}
+      {lightbox && (
+        <div className="fixed inset-0 bg-black/80 z-[200] flex items-center justify-center p-4" onClick={() => setLightbox(null)}>
+          <button onClick={() => setLightbox(null)} className="absolute top-4 right-4 text-white hover:text-gray-300"><X size={28} /></button>
+          <img src={lightbox} alt="Document" className="max-w-full max-h-[90vh] object-contain rounded-lg" onClick={(e) => e.stopPropagation()} />
+        </div>
+      )}
     </div>
   )
 }

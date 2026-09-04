@@ -1,27 +1,27 @@
-import React, { useMemo, useState, useCallback } from 'react'
+import React, { useMemo, useState, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { useNavigate } from 'react-router-dom'
 import {
   CheckCircle2,
   Clock,
   Download,
   Eye,
-  FileText,
+  Upload,
   Search,
-  ShoppingCart,
   CloudUpload,
+  CalendarX,
+  AlertCircle,
+  FileText,
   Grid2X2,
   List,
 } from 'lucide-react'
 import Tooltip from '@mui/material/Tooltip'
+import { toast } from 'react-toastify'
 import FilterPanel from '@/components/ui/FilterPanel'
 import FilterButton from '@/components/ui/FilterButton'
 import Pagination from '@/components/ui/Pagination'
-import Button from '@/components/ui/Button'
-import useAuth from '@/hooks/useAuth'
-import { ROLES } from '@/constants/roles'
-import { ROUTES } from '@/constants/routes'
+import Modal from '@/components/ui/Modal'
 import ReportViewerModal from '@/components/Dashboard/ReportViewerModal'
+import { uploadReport } from '@/services/booking.service'
 
 const PAGE_SIZE = 10
 const PAGE_SIZES = [10, 25, 50]
@@ -63,7 +63,7 @@ const getInitials = (name) => {
   return name.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2)
 }
 
-const StatCard = ({ icon: Icon, borderColor, iconColor, cardBg, title, value, detailTop, detailBottom }) => (
+const StatCard = ({ icon: Icon, borderColor, iconColor, cardBg, title, value, detailTop, detailBottom, detailColor }) => (
   <div className={`rounded-2xl border ${borderColor} px-4 py-3 ${cardBg}`}>
     <div className="flex items-center gap-3">
       <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border ${borderColor} ${iconColor}`}>
@@ -75,23 +75,24 @@ const StatCard = ({ icon: Icon, borderColor, iconColor, cardBg, title, value, de
       </div>
       <div className="h-8 w-px shrink-0 self-stretch my-auto bg-border" />
       <div className="shrink-0 text-right leading-tight">
-        <p className="text-xs text-muted-foreground">{detailTop}</p>
+        <p className={`text-xs ${detailColor || 'text-muted-foreground'}`}>{detailTop}</p>
         <p className="text-xs text-muted-foreground">{detailBottom}</p>
       </div>
     </div>
   </div>
 )
 
-const ReportsManagePage = ({ bookings, isLoading, isError }) => {
-  const navigate = useNavigate()
-  const { user } = useAuth()
-  const isPatient = user?.role === ROLES.PATIENT
+const UploadReportsManagePage = ({ bookings, isLoading, isError, onRefresh }) => {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(PAGE_SIZE)
   const [activeFilters, setActiveFilters] = useState({})
   const [filterPanelOpen, setFilterPanelOpen] = useState(null)
   const [reportModal, setReportModal] = useState({ open: false, booking: null })
+  const [uploadModal, setUploadModal] = useState({ open: false, booking: null })
+  const [uploadFile, setUploadFile] = useState(null)
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef(null)
   const [view, setView] = useState('grid')
 
   const list = useMemo(() => {
@@ -99,14 +100,16 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
     return bookings
   }, [bookings])
 
+  const today = new Date().toISOString().slice(0, 10)
+
   const stats = useMemo(() => {
     const total = list.length
-    const completed = list.filter((b) => b.status === 'Completed').length
-    const pending = list.filter((b) => ['Processing', 'Sample Collected', 'Assigned', 'Pending'].includes(b.status)).length
     const uploaded = list.filter((b) => b.report).length
-    const downloaded = list.filter((b) => b.report).length
-    return { total, completed, pending, uploaded, downloaded }
-  }, [list])
+    const pending = list.filter((b) => !b.report && b.status !== 'Cancelled').length
+    const todayPending = list.filter((b) => !b.report && b.bookingDate === today && b.status !== 'Cancelled').length
+    const failed = list.filter((b) => !b.report && b.status === 'Cancelled').length
+    return { total, uploaded, pending, todayPending, failed }
+  }, [list, today])
 
   const filterCategories = useMemo(() => [
     {
@@ -159,7 +162,7 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase()
     return list.filter((booking) => {
-      if (term && !`${booking.patientName || ''} ${booking.phone || ''} ${booking.test?.title || ''}`.toLowerCase().includes(term)) return false
+      if (term && !`${booking.patientName || ''} ${booking.phone || ''} ${booking.test?.title || ''} ${booking.package?.title || ''}`.toLowerCase().includes(term)) return false
       if (activeFilters.status?.length && !activeFilters.status.includes(booking.status)) return false
       if (activeFilters.paymentStatus?.length && !activeFilters.paymentStatus.includes(booking.paymentStatus)) return false
       if (activeFilters.bookingDate) {
@@ -195,23 +198,47 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
     }
   }
 
+  const openUploadModal = (booking) => {
+    setUploadFile(null)
+    setUploadModal({ open: true, booking })
+  }
+
+  const handleUpload = useCallback(async () => {
+    if (!uploadModal.booking || !uploadFile) return
+    try {
+      setUploading(true)
+      const formData = new FormData()
+      formData.append('report', uploadFile)
+      await uploadReport(uploadModal.booking._id, formData)
+      toast.success('Report uploaded successfully')
+      setUploadModal({ open: false, booking: null })
+      setUploadFile(null)
+      onRefresh?.()
+    } catch {
+      toast.error('Failed to upload report')
+    } finally {
+      setUploading(false)
+    }
+  }, [uploadModal.booking, uploadFile, onRefresh])
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '—'
+    const d = new Date(dateStr)
+    return d.toLocaleDateString('en-GB', { day: '2-digit', short: 'numeric', month: 'short', year: 'numeric' })
+  }
+
   return (
     <section className="mx-auto max-w-[1500px] space-y-4 lg:space-y-5">
       {/* Mobile Header */}
       <div className="flex items-center justify-between gap-3 sm:hidden">
-        <h1 className="text-2xl font-bold text-foreground">{isPatient ? 'My Reports' : 'Reports'}</h1>
-        {isPatient && (
-          <Button onClick={() => navigate(ROUTES.BOOKING)} className="shrink-0">
-            <ShoppingCart size={18} className="mr-2" />Book a Test
-          </Button>
-        )}
+        <h1 className="text-2xl font-bold text-foreground">Upload Reports</h1>
       </div>
 
       {/* Desktop Header */}
       <div className="hidden sm:flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">{isPatient ? 'My Reports' : 'Reports'}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{isPatient ? 'View reports for your completed bookings.' : 'Review completed bookings and uploaded reports.'}</p>
+          <h1 className="text-2xl font-bold text-foreground">Upload Reports</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Select a booking to upload its laboratory report.</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
@@ -219,7 +246,7 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
             <input
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-              placeholder="Search reports..."
+              placeholder="Search upload reports..."
               className="pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary w-64"
             />
           </div>
@@ -238,11 +265,6 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
               <button type="button" aria-label="Table view" onClick={() => setView('table')} className={`rounded p-1.5 ${view === 'table' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
             </Tooltip>
           </div>
-          {isPatient && (
-            <Button onClick={() => navigate(ROUTES.BOOKING)} className="shrink-0">
-              <ShoppingCart size={18} className="mr-2" />Book a Test
-            </Button>
-          )}
         </div>
       </div>
 
@@ -253,7 +275,7 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
           <input
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-            placeholder="Search reports..."
+            placeholder="Search upload reports..."
             className="w-full pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
           />
         </div>
@@ -283,7 +305,7 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
               borderColor="border-blue-200"
               iconColor="text-blue-500"
               cardBg="bg-blue-50"
-              title="Total Reports"
+              title="Total Bookings"
               value={stats.total.toLocaleString()}
               detailTop="All"
               detailBottom="time"
@@ -295,9 +317,9 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
               borderColor="border-emerald-200"
               iconColor="text-emerald-500"
               cardBg="bg-emerald-50"
-              title="Completed"
-              value={stats.completed.toLocaleString()}
-              detailTop={stats.total ? `${((stats.completed / stats.total) * 100).toFixed(1)}%` : '0%'}
+              title="Reports Uploaded"
+              value={stats.uploaded.toLocaleString()}
+              detailTop={stats.total ? `${((stats.uploaded / stats.total) * 100).toFixed(1)}%` : '0%'}
               detailBottom="of total"
             />
           </div>
@@ -307,7 +329,7 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
               borderColor="border-amber-200"
               iconColor="text-amber-500"
               cardBg="bg-amber-50"
-              title="Pending"
+              title="Pending Upload"
               value={stats.pending.toLocaleString()}
               detailTop={stats.total ? `${((stats.pending / stats.total) * 100).toFixed(1)}%` : '0%'}
               detailBottom="of total"
@@ -315,26 +337,27 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
           </div>
           <div className="snap-start min-w-[220px] shrink-0">
             <StatCard
-              icon={CloudUpload}
+              icon={CalendarX}
               borderColor="border-violet-200"
               iconColor="text-violet-500"
               cardBg="bg-violet-50"
-              title="Uploaded"
-              value={stats.uploaded.toLocaleString()}
-              detailTop={stats.total ? `${((stats.uploaded / stats.total) * 100).toFixed(1)}%` : '0%'}
-              detailBottom="of total"
+              title="Today's Pending"
+              value={stats.todayPending.toLocaleString()}
+              detailTop="Scheduled"
+              detailBottom="today"
             />
           </div>
           <div className="snap-start min-w-[220px] shrink-0">
             <StatCard
-              icon={Download}
-              borderColor="border-sky-200"
-              iconColor="text-sky-500"
-              cardBg="bg-sky-50"
-              title="Downloaded"
-              value={stats.downloaded.toLocaleString()}
-              detailTop={stats.total ? `${((stats.downloaded / stats.total) * 100).toFixed(1)}%` : '0%'}
-              detailBottom="of total"
+              icon={AlertCircle}
+              borderColor="border-rose-200"
+              iconColor="text-rose-500"
+              cardBg="bg-rose-50"
+              title="Failed Uploads"
+              value={stats.failed.toLocaleString()}
+              detailTop="Needs"
+              detailBottom="attention"
+              detailColor="text-rose-500"
             />
           </div>
         </div>
@@ -349,11 +372,11 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
 
       {/* Content */}
       {isLoading ? (
-        <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">Loading reports…</div>
+        <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">Loading upload reports…</div>
       ) : isError ? (
-        <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-destructive">Unable to load reports. Please try again.</div>
+        <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-destructive">Unable to load upload reports. Please try again.</div>
       ) : sorted.length === 0 ? (
-        <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">No reports match the selected filters.</div>
+        <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">No bookings match the selected filters.</div>
       ) : view === 'grid' ? (
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {visibleBookings.map((booking) => {
@@ -370,7 +393,7 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
                       </span>
                       <div className="min-w-0">
                         <h3 className="font-semibold text-foreground text-sm truncate" title={booking.patientName}>{booking.patientName}</h3>
-                        <p className="text-xs text-muted-foreground">{booking.phone}</p>
+                        <p className="text-xs text-muted-foreground">{booking.test?.title || booking.package?.title || '—'}</p>
                       </div>
                     </div>
                     <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-medium ${statusStyle.bg} ${statusStyle.text}`}>
@@ -390,8 +413,18 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
                       <span className="font-medium text-foreground">{booking.bookingDate || '—'}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Created At</span>
-                      <span className="text-foreground">{booking.createdAt ? new Date(booking.createdAt).toISOString().replace('T', ' ').slice(0, 10) : '—'}</span>
+                      <span className="text-muted-foreground">Report</span>
+                      {hasReport ? (
+                        <span className="inline-flex items-center gap-1 text-emerald-600">
+                          <FileText size={12} />
+                          <span className="text-[11px] font-medium">Uploaded</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-amber-600">
+                          <Clock size={12} />
+                          <span className="text-[11px] font-medium">Pending</span>
+                        </span>
+                      )}
                     </div>
                   </dl>
                   <div className="mt-auto pt-3 border-t border-border flex items-center justify-between">
@@ -400,7 +433,7 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
                       NABL Accredited Labs
                     </span>
                     <div className="flex items-center gap-1">
-                      {hasReport && (
+                      {hasReport ? (
                         <>
                           <Tooltip title="View Report" arrow placement="top">
                             <button type="button" onClick={() => handleViewReport(booking)} className="rounded p-1 text-muted-foreground hover:text-primary hover:bg-primary/5 transition"><Eye size={14} /></button>
@@ -409,6 +442,10 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
                             <button type="button" onClick={() => handleDownloadReport(booking)} className="rounded p-1 text-muted-foreground hover:text-primary hover:bg-primary/5 transition"><Download size={14} /></button>
                           </Tooltip>
                         </>
+                      ) : (
+                        <Tooltip title="Upload Report" arrow placement="top">
+                          <button type="button" onClick={() => openUploadModal(booking)} className="rounded p-1 text-muted-foreground hover:text-primary hover:bg-primary/5 transition"><CloudUpload size={14} /></button>
+                        </Tooltip>
                       )}
                     </div>
                   </div>
@@ -420,14 +457,15 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
       ) : (
         <div className="rounded-xl border border-border bg-white">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[800px] text-sm">
+            <table className="w-full min-w-[900px] text-sm">
               <thead className="bg-accent text-left text-muted-foreground">
                 <tr>
                   <th className="px-4 py-3 font-semibold">Patient Name</th>
+                  <th className="px-4 py-3 font-semibold">Test / Package</th>
                   <th className="px-4 py-3 font-semibold">Status</th>
                   <th className="px-4 py-3 font-semibold">Payment Status</th>
                   <th className="px-4 py-3 font-semibold">Booking Date</th>
-                  <th className="px-4 py-3 font-semibold">Created At</th>
+                  <th className="px-4 py-3 font-semibold">Report</th>
                   <th className="px-4 py-3 font-semibold text-right">Action</th>
                 </tr>
               </thead>
@@ -435,12 +473,11 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
                 {visibleBookings.map((booking) => {
                   const statusStyle = STATUS_STYLES[booking.status] || STATUS_STYLES.Pending
                   const paymentStyle = PAYMENT_STYLES[booking.paymentStatus] || PAYMENT_STYLES.Pending
-                  const createdAt = booking.createdAt
-                    ? new Date(booking.createdAt).toISOString().replace('T', ' ').slice(0, 23) + 'Z'
-                    : '—'
+                  const hasReport = !!booking.report
                   return (
                     <tr key={booking._id || booking.id} className="border-t border-border hover:bg-accent/30 transition">
                       <td className="px-4 py-3 font-medium text-foreground">{booking.patientName || '—'}</td>
+                      <td className="px-4 py-3 text-foreground">{booking.test?.title || booking.package?.title || '—'}</td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-medium ${statusStyle.bg} ${statusStyle.text}`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${statusStyle.dot}`}></span>
@@ -453,27 +490,56 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-foreground">{booking.bookingDate || '—'}</td>
-                      <td className="px-4 py-3 text-muted-foreground text-xs">{createdAt}</td>
+                      <td className="px-4 py-3">
+                        {hasReport ? (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-emerald-500"><FileText size={14} /></span>
+                            <div>
+                              <p className="text-xs font-medium text-emerald-600">Uploaded</p>
+                              <p className="text-[10px] text-muted-foreground">{formatDate(booking.updatedAt || booking.createdAt)}</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-amber-500"><Clock size={14} /></span>
+                            <div>
+                              <p className="text-xs font-medium text-amber-600">Pending</p>
+                              <p className="text-[10px] text-muted-foreground">Upload pending</p>
+                            </div>
+                          </div>
+                        )}
+                      </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1">
-                          <button
-                            type="button"
-                            onClick={() => handleViewReport(booking)}
-                            disabled={!booking.report}
-                            className="rounded p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/5 transition disabled:opacity-30 disabled:cursor-not-allowed"
-                            title="View Report"
-                          >
-                            <Eye size={16} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDownloadReport(booking)}
-                            disabled={!booking.report}
-                            className="rounded p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/5 transition disabled:opacity-30 disabled:cursor-not-allowed"
-                            title="Download Report"
-                          >
-                            <Download size={16} />
-                          </button>
+                          {hasReport ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleViewReport(booking)}
+                                className="rounded p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/5 transition"
+                                title="View Report"
+                              >
+                                <Eye size={16} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDownloadReport(booking)}
+                                className="rounded p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/5 transition"
+                                title="Download Report"
+                              >
+                                <Download size={16} />
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => openUploadModal(booking)}
+                              className="rounded p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/5 transition"
+                              title="Upload Report"
+                            >
+                              <CloudUpload size={16} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -498,12 +564,78 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
         />
       </div>
 
+      {/* Report Viewer Modal */}
       <ReportViewerModal
         isOpen={reportModal.open}
         onClose={() => setReportModal({ open: false, booking: null })}
         reportUrl={reportModal.booking?.report}
         title={`Report - ${reportModal.booking?.patientName || ''}`}
       />
+
+      {/* Upload Modal */}
+      <Modal
+        open={uploadModal.open}
+        onClose={() => { setUploadModal({ open: false, booking: null }); setUploadFile(null) }}
+        title="Upload Report"
+        subtitle={uploadModal.booking ? `For ${uploadModal.booking.patientName}` : ''}
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={(e) => { e.preventDefault(); e.stopPropagation() }}
+            onDrop={(e) => { e.preventDefault(); e.stopPropagation(); if (e.dataTransfer.files?.[0]) setUploadFile(e.dataTransfer.files[0]) }}
+            className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border p-8 text-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition"
+          >
+            <CloudUpload size={36} className="text-muted-foreground" />
+            {uploadFile ? (
+              <div>
+                <p className="text-sm font-medium text-foreground">{uploadFile.name}</p>
+                <p className="text-xs text-muted-foreground mt-1">{(uploadFile.size / 1024 / 1024).toFixed(2)} MB</p>
+              </div>
+            ) : (
+              <div>
+                <p className="text-sm text-foreground">Click to upload or drag and drop</p>
+                <p className="text-xs text-muted-foreground mt-1">PDF, JPG, PNG up to 10MB</p>
+              </div>
+            )}
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png"
+            onChange={(e) => { if (e.target.files?.[0]) setUploadFile(e.target.files[0]) }}
+            className="hidden"
+          />
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => { setUploadModal({ open: false, booking: null }); setUploadFile(null) }}
+              className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-accent transition"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleUpload}
+              disabled={!uploadFile || uploading}
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {uploading ? (
+                <>
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Upload size={16} />
+                  Upload
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       {filterPanelOpen && createPortal(
         <FilterPanel
@@ -521,4 +653,4 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
   )
 }
 
-export default ReportsManagePage
+export default UploadReportsManagePage
