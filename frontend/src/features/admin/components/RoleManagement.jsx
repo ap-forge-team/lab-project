@@ -44,6 +44,7 @@ import Button from '@/components/ui/Button'
 import ConfirmModal from '@/components/ui/ConfirmModal'
 import SearchInput from '@/components/ui/SearchInput'
 import { ROUTES } from '@/constants/routes'
+import EmptyState from '@/components/ui/EmptyState'
 
 const RESOURCES_CONFIG = {
   users: { label: 'Users', icon: Users, color: 'text-blue-600', bg: 'bg-blue-100' },
@@ -268,7 +269,12 @@ const RoleManagement = () => {
           {loading ? (
             <div className="p-8 text-center text-muted-foreground text-sm">Loading...</div>
           ) : paginatedRoles.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground text-sm">No roles found</div>
+            <EmptyState
+              title="No roles found"
+              description="You haven't added any roles yet. Start by creating a new role."
+              actionLabel="+ Add Role"
+              onAction={() => setShowAddModal(true)}
+            />
           ) : (
             paginatedRoles.map((role, idx) => {
               const colorSet = getRoleColor((currentPage - 1) * ITEMS_PER_PAGE + idx)

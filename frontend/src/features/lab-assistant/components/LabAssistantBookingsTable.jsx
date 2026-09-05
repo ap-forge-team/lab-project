@@ -3,6 +3,7 @@ import { ArrowDown, ArrowUp, ChevronsUpDown, EyeOff, MapPin, Route, MapPinCheck,
 import Tooltip from '@mui/material/Tooltip'
 import Pagination from '@/components/ui/Pagination'
 import { BOOKING_STATUS, PAYMENT_STATUS } from '@/constants/status'
+import EmptyState from '@/components/ui/EmptyState'
 
 const PAGE_SIZE = 10
 const PAGE_SIZES = [10, 25, 50]
@@ -213,7 +214,10 @@ const LabAssistantBookingsTable = ({
   return (
     <div className="space-y-4">
       {filteredBookings.length === 0 ? (
-        <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">No bookings found.</div>
+        <EmptyState
+          title="No bookings found"
+          description="You don't have any bookings yet. Bookings will appear here once assigned."
+        />
       ) : (
         <>
           {/* Mobile Card View */}

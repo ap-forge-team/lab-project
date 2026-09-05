@@ -11,6 +11,7 @@ import FilterPanel from '@/components/ui/FilterPanel'
 import FilterButton from '@/components/ui/FilterButton'
 import SearchInput from '@/components/ui/SearchInput'
 import ViewToggle from '@/components/ui/ViewToggle'
+import EmptyState from '@/components/ui/EmptyState'
 import LocationPicker from '@/components/LocationPicker'
 import { Spinner } from '@/components/ui/Loader'
 import Can from '@/components/Can'
@@ -565,7 +566,12 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
       ) : isError ? (
         <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-destructive">Unable to load lab owners. Please try again.</div>
       ) : filteredOwners.length === 0 ? (
-        <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">No lab owners found.</div>
+        <EmptyState
+          title="No lab owners found"
+          description="You haven't added any lab owners yet. Start by adding a new lab owner."
+          actionLabel="+ Add Lab Owner"
+          onAction={() => setShowAddModal(true)}
+        />
       ) : view === 'table' ? (
         <div className="overflow-y-auto max-h-[calc(100vh-250px)] pb-2 pr-1">
           <div className="rounded-xl border border-border bg-white">

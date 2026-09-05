@@ -16,6 +16,7 @@ import { createLabAssistant, updateUser, deleteUser } from '@/services/user.serv
 import useResponsiveView from '@/hooks/useResponsiveView'
 import SearchInput from '@/components/ui/SearchInput'
 import ViewToggle from '@/components/ui/ViewToggle'
+import EmptyState from '@/components/ui/EmptyState'
 
 const StatCard = ({ icon: Icon, borderColor, iconColor, cardBg, title, value, detailTop, detailBottom }) => (
   <div className={`rounded-2xl border ${borderColor} px-4 py-3 ${cardBg}`}>
@@ -437,7 +438,12 @@ const AssistantsManagePage = ({ assistants, isLoading, isError, onRefresh }) => 
       ) : isError ? (
         <div className="bg-white border border-border rounded-xl p-8 text-center text-sm text-destructive">Unable to load assistants. Please try again.</div>
       ) : filteredAssistants.length === 0 ? (
-        <div className="bg-white border border-border rounded-xl p-12 text-center text-sm text-muted-foreground">No assistants found.</div>
+        <EmptyState
+          title="No assistants found"
+          description="You haven't added any assistants yet. Start by adding a new assistant."
+          actionLabel="+ Add Assistant"
+          onAction={() => setShowAddModal(true)}
+        />
       ) : view === 'table' ? (
         <>
           <div className="bg-white border border-border rounded-xl">

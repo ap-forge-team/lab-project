@@ -12,6 +12,7 @@ import FilterButton from '@/components/ui/FilterButton'
 import Pagination from '@/components/ui/Pagination'
 import SearchInput from '@/components/ui/SearchInput'
 import ViewToggle from '@/components/ui/ViewToggle'
+import EmptyState from '@/components/ui/EmptyState'
 
 const ICON_STYLES = {
   blood: { bg: 'bg-red-50', text: 'text-red-500' },
@@ -340,7 +341,12 @@ const TestsPage = () => {
               ))}
             </div>
           ) : filteredTests.length === 0 ? (
-            <div className="text-center text-muted-foreground text-sm py-20">No Tests Found</div>
+            <EmptyState
+              title="No tests found"
+              description="You haven't added any tests yet. Start by creating a new test to make it available for bookings."
+              actionLabel="+ Add Test"
+              onAction={() => navigate('/admin/tests/new')}
+            />
           ) : viewMode === 'grid' ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {currentItems.map((item) => {

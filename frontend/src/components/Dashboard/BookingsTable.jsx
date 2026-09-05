@@ -5,6 +5,7 @@ import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import CopyIcon from '@/components/ui/CopyIcon'
 import ReportViewerModal from './ReportViewerModal'
+import EmptyState from '@/components/ui/EmptyState'
 
 const BookingsTable = ({
   bookings,
@@ -210,8 +211,11 @@ const BookingsTable = ({
             
             {sortedBookings.length === 0 && (
               <tr>
-                <td colSpan={10} className="px-5 py-10 text-center text-muted-foreground">
-                  No bookings found.
+                <td colSpan={10} className="px-5 py-10">
+                  <EmptyState
+                    title="No bookings found"
+                    description="You don't have any bookings yet. Bookings will appear here once created."
+                  />
                 </td>
               </tr>
             )}

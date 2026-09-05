@@ -36,6 +36,7 @@ import Can from '@/components/Can'
 import { getIconById } from '@/components/icons/MedicalIcons'
 import { ROUTES } from '@/constants/routes'
 import SearchInput from '@/components/ui/SearchInput'
+import EmptyState from '@/components/ui/EmptyState'
 
 const ITEMS_PER_PAGE = 6
 
@@ -303,7 +304,12 @@ const CategoryManagement = () => {
               {loading ? (
                 <div className="p-8 text-center text-muted-foreground text-sm">Loading...</div>
               ) : filteredCategories.length === 0 ? (
-                <div className="p-8 text-center text-muted-foreground text-sm">No categories found</div>
+                <EmptyState
+                  title="No categories found"
+                  description="You haven't added any categories yet. Start by creating a new category."
+                  actionLabel="+ Add Category"
+                  onAction={() => setShowAddModal(true)}
+                />
               ) : (
                 filteredCategories.map((category) => (
                   <div
