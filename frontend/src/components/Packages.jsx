@@ -501,12 +501,9 @@ const Packages = ({ showAllPackages = false }) => {
       <div className="enterprise-container">
         {/* Search and Filters Bar */}
         {showAllPackages && (
-          <div className="bg-white border border-border rounded-xl p-4 shadow-sm mb-6">
-            <div className="flex flex-wrap items-center gap-4">
-              {/* Search Bar */}
-              <SearchInput value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search packages by name..." className="flex-1 min-w-[200px]" width="w-full" />
-
-              {/* Filter Button */}
+          <div className="hidden sm:flex items-center justify-end gap-2">
+            <div className="flex items-center gap-2">
+              <SearchInput value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search packages by name..." />
               <FilterButton
                 onClick={(e) => {
                   const rect = e.currentTarget.getBoundingClientRect()
@@ -514,8 +511,6 @@ const Packages = ({ showAllPackages = false }) => {
                 }}
                 activeCount={activeFilterCount}
               />
-
-              {/* Clear Filters */}
               {activeFilterCount > 0 && (
                 <button
                   onClick={clearFilters}
@@ -525,16 +520,29 @@ const Packages = ({ showAllPackages = false }) => {
                   <span>Clear</span>
                 </button>
               )}
-
-              {/* View Toggle */}
               <ViewToggle value={viewMode} onChange={setViewMode} tooltips={false} />
             </div>
           </div>
         )}
 
+        {/* Mobile: Search + Filter + View Toggle */}
+        {showAllPackages && (
+          <div className="flex sm:hidden items-center gap-2">
+            <SearchInput value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search packages by name..." className="flex-1" width="w-full" />
+            <FilterButton
+              onClick={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect()
+                setFilterPanelOpen({ top: rect.bottom + 8, left: Math.max(16, rect.right - 680) })
+              }}
+              activeCount={activeFilterCount}
+            />
+            <ViewToggle value={viewMode} onChange={setViewMode} tooltips={false} />
+          </div>
+        )}
+
         {/* Loading */}
         {loading ? (
-          <div className={`${showAllPackages && viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6' : 'relative group/scroll'}`}>
+          <div className={`mt-6 ${showAllPackages && viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6' : 'relative group/scroll'}`}>
             {showAllPackages ? (
               viewMode === 'grid' ? (
                 [1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
@@ -570,6 +578,7 @@ const Packages = ({ showAllPackages = false }) => {
             )}
           </div>
         ) : showAllPackages ? (<>
+          <div className="mt-6">
           {sortedPackages.length === 0 ? (
             <div className="bg-white/50 border border-border rounded-xl p-8 text-center text-muted-foreground">
               <p className="text-sm">No health packages found matching your criteria.</p>
@@ -631,6 +640,7 @@ const Packages = ({ showAllPackages = false }) => {
               />
             </div>
           )}
+          </div>
         </>) : validPackages.length === 0 ? (
           <div className="bg-white/50 border border-border rounded-xl p-8 text-center text-muted-foreground">
             <p className="text-sm">No health packages are currently available.</p>

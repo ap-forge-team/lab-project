@@ -1,6 +1,6 @@
-import React from 'react'
+import React, { useRef, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Package, ListChecks } from 'lucide-react'
+import { Package, ListChecks, ChevronLeft, ChevronRight } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
 import { usePackages } from '@/hooks/usePackages'
 
@@ -32,7 +32,7 @@ const HomePackageCard = ({ pkg, onClick }) => {
   return (
     <article
       onClick={onClick}
-      className="flex flex-col rounded-xl border border-border bg-white shadow-sm transition hover:shadow-md cursor-pointer overflow-hidden"
+      className="flex-shrink-0 w-[300px] flex flex-col rounded-xl border border-border bg-white shadow-sm transition hover:shadow-md cursor-pointer overflow-hidden"
     >
       {/* Header */}
       <div className="relative h-44 bg-gradient-to-br from-blue-50 to-blue-100 overflow-hidden">
@@ -59,47 +59,36 @@ const HomePackageCard = ({ pkg, onClick }) => {
           </span>
         </div>
 
-        <div className="mt-2">
-          <span className="font-mono text-sm font-bold text-primary">
-            {pkg.price != null ? `₹${Number(pkg.price).toLocaleString('en-IN')}` : '—'}
-          </span>
+        <div className="mt-2 flex items-baseline gap-1">
+          <span className="text-lg font-bold text-foreground">₹</span>
+          <span className="text-xl font-bold text-foreground">{pkg.price?.toLocaleString('en-IN') || '0'}</span>
         </div>
 
         <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
-          <ListChecks size={12} className="shrink-0" />
-          <span>{testCount} Test{testCount !== 1 ? 's' : ''} Included</span>
+          <ListChecks size={14} className="text-primary" />
+          <span>{testCount} Tests Included</span>
         </div>
 
         {testsList.length > 0 && (
-          <ul className="mt-3 space-y-1.5">
-            {testsList.map((t) => {
-              const testName = typeof t === 'object' ? (t.title || t.name) : ''
-              if (!testName) return null
-              return (
-                <li key={typeof t === 'object' ? t._id : t} className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="w-4 h-4 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                    <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  </span>
-                  <span className="truncate">{testName}</span>
-                </li>
-              )
-            })}
+          <ul className="mt-3 space-y-1.5 flex-1">
+            {testsList.map((test, i) => (
+              <li key={test?._id || i} className="flex items-center gap-2 text-xs text-foreground">
+                <span className="w-4 h-4 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="currentColor" strokeWidth="1.5" className="text-primary" /></svg>
+                </span>
+                <span className="truncate">{test?.name || test?.title || 'Test'}</span>
+              </li>
+            ))}
             {testCount > 4 && (
-              <li className="text-[11px] text-primary font-medium pl-6">+{testCount - 4} more tests</li>
+              <li className="text-xs text-primary font-medium pl-6">+{testCount - 4} more tests</li>
             )}
           </ul>
         )}
-      </div>
 
-      {/* Footer */}
-      <div className="mt-auto pt-3 border-t border-border px-4 pb-4">
-        <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-            <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/>
-            <path d="M5 8l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
+        <div className="mt-3 pt-3 border-t border-border flex items-center gap-1.5 text-xs text-muted-foreground">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
           NABL Accredited Labs
-        </span>
+        </div>
       </div>
     </article>
   )
@@ -107,6 +96,9 @@ const HomePackageCard = ({ pkg, onClick }) => {
 
 const PopularPackages = () => {
   const navigate = useNavigate()
+  const scrollRef = useRef(null)
+  const [canScrollRight, setCanScrollRight] = useState(true)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
 
   const { data: packagesData, isLoading, isError } = usePackages()
 
@@ -119,6 +111,35 @@ const PopularPackages = () => {
     navigate(`${ROUTES.PACKAGES}?pkg=${pkg._id}`)
   }
 
+  const checkScroll = () => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current
+      setCanScrollLeft(scrollLeft > 0)
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10)
+    }
+  }
+
+  useEffect(() => {
+    const scrollElement = scrollRef.current
+    if (scrollElement) {
+      scrollElement.addEventListener('scroll', checkScroll)
+      checkScroll()
+      return () => scrollElement.removeEventListener('scroll', checkScroll)
+    }
+  }, [activePackages])
+
+  const scrollRight = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: 320, behavior: 'smooth' })
+    }
+  }
+
+  const scrollLeft = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: -320, behavior: 'smooth' })
+    }
+  }
+
   if (isLoading) {
     return (
       <section className="bg-white py-12">
@@ -126,9 +147,9 @@ const PopularPackages = () => {
           <h2 className="text-3xl md:text-4xl font-bold text-foreground text-center mb-10">
             Popular Health Packages
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="flex gap-6 overflow-x-auto pb-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="bg-gray-50 border border-gray-100 rounded-xl overflow-hidden animate-pulse">
+              <div key={i} className="flex-shrink-0 w-[300px] bg-gray-50 border border-gray-100 rounded-xl overflow-hidden animate-pulse">
                 <div className="h-44 bg-gray-200"></div>
                 <div className="p-4 space-y-3">
                   <div className="h-4 bg-gray-200 rounded w-3/4"></div>
@@ -154,14 +175,37 @@ const PopularPackages = () => {
           Popular Health Packages
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {activePackages.map((pkg) => (
-            <HomePackageCard
-              key={pkg._id}
-              pkg={pkg}
-              onClick={() => handlePackageClick(pkg)}
-            />
-          ))}
+        <div className="relative group/scroll">
+          <div
+            ref={scrollRef}
+            className="flex gap-6 overflow-x-auto pb-4 justify-center"
+          >
+            {activePackages.map((pkg) => (
+              <HomePackageCard
+                key={pkg._id}
+                pkg={pkg}
+                onClick={() => handlePackageClick(pkg)}
+              />
+            ))}
+          </div>
+
+          {canScrollLeft && (
+            <button
+              onClick={scrollLeft}
+              className="absolute left-0 top-1/2 -translate-y-1/2 w-10 h-10 bg-white border border-border rounded-full flex items-center justify-center shadow-md hover:bg-accent transition hidden md:flex opacity-0 group-hover/scroll:opacity-100"
+            >
+              <ChevronLeft size={20} className="text-foreground" />
+            </button>
+          )}
+
+          {canScrollRight && (
+            <button
+              onClick={scrollRight}
+              className="absolute right-0 top-1/2 -translate-y-1/2 w-10 h-10 bg-white border border-border rounded-full flex items-center justify-center shadow-md hover:bg-accent transition hidden md:flex"
+            >
+              <ChevronRight size={20} className="text-foreground" />
+            </button>
+          )}
         </div>
       </div>
     </section>
