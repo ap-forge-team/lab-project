@@ -70,7 +70,7 @@ const Hero = () => {
 
   return (
     <section
-      className="relative pt-0 pb-6 lg:pb-10 overflow-hidden"
+      className="relative pt-6 lg:pt-8 pb-6 overflow-hidden"
       style={{
         backgroundImage: `url(${heroBg})`,
         backgroundSize: 'cover',
