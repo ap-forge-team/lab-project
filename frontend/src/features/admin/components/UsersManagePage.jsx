@@ -15,6 +15,7 @@ import { createLabOwner, createLabAssistant, updateUser, deleteUser } from '@/se
 import useResponsiveView from '@/hooks/useResponsiveView'
 import SearchInput from '@/components/ui/SearchInput'
 import ViewToggle from '@/components/ui/ViewToggle'
+import EmptyState from '@/components/ui/EmptyState'
 
 const PAGE_SIZE = 10
 const PAGE_SIZES = [10, 25, 50]
@@ -568,7 +569,12 @@ const UsersManagePage = ({ users, isLoading, isError, onRefresh }) => {
       ) : isError ? (
         <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-destructive">Unable to load users. Please try again.</div>
       ) : filteredUsers.length === 0 ? (
-        <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">No users found.</div>
+        <EmptyState
+          title="No users found"
+          description="You haven't added any users yet. Start by adding a new user."
+          actionLabel="+ Add User"
+          onAction={() => setShowAddModal(true)}
+        />
       ) : view === 'table' ? (
         <div className="overflow-y-auto max-h-[calc(100vh-250px)] pb-2 pr-1">
           <div className="rounded-xl border border-border bg-white">

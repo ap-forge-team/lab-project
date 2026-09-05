@@ -3,6 +3,7 @@ import { ArrowDown, ArrowUp, ChevronsUpDown, Eye, CheckSquare, Send, CheckCircle
 import Tooltip from '@mui/material/Tooltip'
 import Pagination from '@/components/ui/Pagination'
 import Button from '@/components/ui/Button'
+import EmptyState from '@/components/ui/EmptyState'
 
 const PAGE_SIZE = 10
 const PAGE_SIZES = [5, 10, 25, 50]
@@ -165,7 +166,10 @@ const SettlementPendingTable = ({
 
       {/* Table */}
       {sortedBookings.length === 0 ? (
-        <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">No pending settlements found.</div>
+        <EmptyState
+          title="No pending settlements found"
+          description="You don't have any pending settlements yet. Settlements will appear here when ready to process."
+        />
       ) : (
         <div className="rounded-xl border border-border bg-white">
           <div className="overflow-y-auto max-h-[calc(100vh-250px)] pb-2 pr-1">
