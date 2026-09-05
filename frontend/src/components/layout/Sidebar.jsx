@@ -29,7 +29,7 @@ const Sidebar = ({ isOpen, isCollapsed, onClose }) => {
   }, [location.pathname, menuItems])
 
   const isActive = (route) => {
-    if (route === '/admin' || route === '/lab-owner' || route === '/lab-assistant' || route === '/booking') {
+    if (route === '/admin' || route === '/lab-owner' || route === '/lab-assistant' || route === '/booking/bookings') {
       return location.pathname === route
     }
     return location.pathname.startsWith(route)

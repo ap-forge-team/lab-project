@@ -232,6 +232,11 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
       searchParams.delete('modal')
       setSearchParams(searchParams, { replace: true })
     }
+    if (searchParams.get('book') === 'true') {
+      setBookModal({ open: true, test: null })
+      searchParams.delete('book')
+      setSearchParams(searchParams, { replace: true })
+    }
   }, [searchParams, setSearchParams])
 
   const categories = useMemo(() => [...new Set(tests.map(getCategory))].sort(), [tests])

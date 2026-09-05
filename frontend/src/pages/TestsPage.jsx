@@ -202,18 +202,11 @@ const TestsPage = () => {
       navigate(ROUTES.LOGIN, {
         state: {
           message: 'Please login to continue booking',
-          redirectTo: ROUTES.BOOKING,
-          selectedItem: item,
-          bookingType: type,
+          redirectTo: '/booking/bookings',
         },
       })
     } else {
-      navigate(ROUTES.BOOKING, {
-        state: {
-          selectedItem: item,
-          bookingType: type,
-        },
-      })
+      navigate('/booking/bookings')
     }
   }
 

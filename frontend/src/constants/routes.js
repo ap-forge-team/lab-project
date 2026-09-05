@@ -5,7 +5,7 @@ export const ROUTES = {
   ABOUT: '/about',
   TESTS: '/tests',
   PACKAGES: '/packages',
-  BOOKING: '/booking',
+  BOOKING: '/booking/bookings',
   DASHBOARD: '/dashboard',
   ADMIN: '/admin',
   ADMIN_TESTS: '/admin/tests',

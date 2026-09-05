@@ -22,6 +22,7 @@ import useAuth from '@/hooks/useAuth'
 import { ROLES } from '@/constants/roles'
 import { ROUTES } from '@/constants/routes'
 import ReportViewerModal from '@/components/Dashboard/ReportViewerModal'
+import BookTestModal from '@/features/booking/components/BookTestModal'
 
 const PAGE_SIZE = 10
 const PAGE_SIZES = [10, 25, 50]
@@ -92,6 +93,7 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
   const [activeFilters, setActiveFilters] = useState({})
   const [filterPanelOpen, setFilterPanelOpen] = useState(null)
   const [reportModal, setReportModal] = useState({ open: false, booking: null })
+  const [bookModal, setBookModal] = useState({ open: false, test: null })
   const [view, setView] = useState('grid')
 
   const list = useMemo(() => {
@@ -201,7 +203,7 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
       <div className="flex items-center justify-between gap-3 sm:hidden">
         <h1 className="text-2xl font-bold text-foreground">{isPatient ? 'My Reports' : 'Reports'}</h1>
         {isPatient && (
-          <Button onClick={() => navigate(ROUTES.BOOKING)} className="shrink-0">
+          <Button onClick={() => setBookModal({ open: true, test: null })} className="shrink-0">
             <ShoppingCart size={18} className="mr-2" />Book a Test
           </Button>
         )}
@@ -239,7 +241,7 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
             </Tooltip>
           </div>
           {isPatient && (
-            <Button onClick={() => navigate(ROUTES.BOOKING)} className="shrink-0">
+            <Button onClick={() => setBookModal({ open: true, test: null })} className="shrink-0">
               <ShoppingCart size={18} className="mr-2" />Book a Test
             </Button>
           )}
@@ -504,6 +506,15 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
         reportUrl={reportModal.booking?.report}
         title={`Report - ${reportModal.booking?.patientName || ''}`}
       />
+
+      {isPatient && (
+        <BookTestModal
+          open={bookModal.open}
+          onClose={() => setBookModal({ open: false, test: null })}
+          preselectedTest={bookModal.test}
+          onBooked={() => {}}
+        />
+      )}
 
       {filterPanelOpen && createPortal(
         <FilterPanel

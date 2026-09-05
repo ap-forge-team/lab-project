@@ -213,7 +213,7 @@ const Signup = () => {
           },
         })
       } else {
-        navigate(ROUTES.BOOKING)
+        navigate(ROUTES.DASHBOARD)
       }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Signup Failed')

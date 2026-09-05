@@ -20,7 +20,7 @@ const roleConfig = {
     dashboardLabel: 'Patient Dashboard',
     menuItems: [
       { label: 'Dashboard', description: 'View your health overview', icon: LayoutDashboard, route: ROUTES.DASHBOARD },
-      { label: 'Book a Test', description: 'Book lab tests at home', icon: Calendar, route: ROUTES.BOOKING },
+      { label: 'Book a Test', description: 'Book lab tests at home', icon: Calendar, route: '/booking/tests' },
       { label: 'Upload Prescription', description: 'Get tests recommended', icon: FileText, route: '/upload-prescription' },
       { label: 'Account Settings', description: 'Manage your preferences', icon: Settings, route: ROUTES.ADMIN_SETTINGS },
     ],

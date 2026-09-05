@@ -35,6 +35,7 @@ import Pagination from '@/components/ui/Pagination'
 import CreatePackageModal from './CreatePackageModal'
 import { deletePackage } from '@/services/package.service'
 import { PackageCard } from './PackageCard'
+import BookTestModal from '@/features/booking/components/BookTestModal'
 
 const PAGE_SIZE = 12
 const PAGE_SIZES = [12, 24, 48]
@@ -178,6 +179,7 @@ const PackagesManagePage = ({ packages, isLoading, isError, onRefresh }) => {
   const [filterPanelOpen, setFilterPanelOpen] = useState(null)
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null })
   const [hiddenColumns, setHiddenColumns] = useState({})
+  const [bookModal, setBookModal] = useState({ open: false, test: null })
 
   const handleSort = useCallback((key, direction) => {
     setSortConfig((prev) => {
@@ -319,7 +321,7 @@ const PackagesManagePage = ({ packages, isLoading, isError, onRefresh }) => {
       <div className="flex items-center justify-between gap-3 sm:hidden">
         <h1 className="text-2xl font-bold text-foreground">Packages</h1>
         {isPatient ? (
-          <Button onClick={() => navigate(ROUTES.BOOKING)} className="shrink-0">
+          <Button onClick={() => setBookModal({ open: true, test: null })} className="shrink-0">
             <ShoppingCart size={18} className="mr-2" />Book a Test
           </Button>
         ) : (
@@ -358,7 +360,7 @@ const PackagesManagePage = ({ packages, isLoading, isError, onRefresh }) => {
             </Tooltip>
           </div>
           {isPatient ? (
-            <Button onClick={() => navigate(ROUTES.BOOKING)}>
+            <Button onClick={() => setBookModal({ open: true, test: null })}>
               <ShoppingCart size={18} className="mr-2" />Book a Test
             </Button>
           ) : (
@@ -598,6 +600,15 @@ const PackagesManagePage = ({ packages, isLoading, isError, onRefresh }) => {
             </Can>
           </div>
         </>
+      )}
+
+      {isPatient && (
+        <BookTestModal
+          open={bookModal.open}
+          onClose={() => setBookModal({ open: false, test: null })}
+          preselectedTest={bookModal.test}
+          onBooked={onRefresh}
+        />
       )}
     </section>
   )

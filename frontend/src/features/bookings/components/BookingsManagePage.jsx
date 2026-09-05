@@ -48,6 +48,7 @@ import LabAssistantSampleModal from '@/features/lab-assistant/components/LabAssi
 import AddTestsToBookingModal from '@/features/lab-assistant/components/AddTestsToBookingModal'
 import ReportViewerModal from '@/components/Dashboard/ReportViewerModal'
 import ManageBookingModal from '@/features/patient/components/ManageBookingModal'
+import BookTestModal from '@/features/booking/components/BookTestModal'
 import { BookingCard } from './BookingCard'
 
 const PAGE_SIZE = 12
@@ -326,6 +327,7 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
   const [rescheduleData, setRescheduleData] = useState({ bookingDate: '', bookingTime: '' })
   const [cancelling, setCancelling] = useState(false)
   const [rescheduling, setRescheduling] = useState(false)
+  const [bookModal, setBookModal] = useState({ open: false, test: null })
 
   const completedBookings = useMemo(() => bookings.filter((b) => b.status === 'Completed'), [bookings])
   const inProgressBookings = useMemo(() => bookings.filter((b) => !['Completed', 'Cancelled'].includes(b.status)), [bookings])
@@ -641,7 +643,7 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
       <div className="flex items-center justify-between gap-3 sm:hidden">
         <h1 className="text-2xl font-bold text-foreground">{isPatient ? 'My Bookings' : 'Bookings'}</h1>
         {isPatient && (
-          <Button onClick={() => navigate(ROUTES.BOOKING)} className="shrink-0">
+          <Button onClick={() => setBookModal({ open: true, test: null })} className="shrink-0">
             <ShoppingCart size={18} className="mr-2" />Book a Test
           </Button>
         )}
@@ -674,7 +676,7 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
             </Tooltip>
           </div>
           {isPatient && (
-            <Button onClick={() => navigate(ROUTES.BOOKING)} className="shrink-0">
+            <Button onClick={() => setBookModal({ open: true, test: null })} className="shrink-0">
               <ShoppingCart size={18} className="mr-2" />Book a Test
             </Button>
           )}
@@ -1559,6 +1561,16 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
           handleReschedule={handleRescheduleBooking}
           cancelling={cancelling}
           rescheduling={rescheduling}
+        />
+      )}
+
+      {/* Book Test Modal */}
+      {isPatient && (
+        <BookTestModal
+          open={bookModal.open}
+          onClose={() => setBookModal({ open: false, test: null })}
+          preselectedTest={bookModal.test}
+          onBooked={onRefresh}
         />
       )}
     </section>
