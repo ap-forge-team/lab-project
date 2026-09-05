@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import {
-  Search,
   Plus,
   Edit2,
   Trash2,
@@ -43,6 +42,7 @@ import Input from '@/components/ui/Input'
 import Textarea from '@/components/ui/Textarea'
 import Button from '@/components/ui/Button'
 import ConfirmModal from '@/components/ui/ConfirmModal'
+import SearchInput from '@/components/ui/SearchInput'
 import { ROUTES } from '@/constants/routes'
 
 const RESOURCES_CONFIG = {
@@ -260,16 +260,7 @@ const RoleManagement = () => {
               {roles.length} Total
             </span>
           </div>
-          <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search roles..."
-              value={searchQuery}
-              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1) }}
-              className="w-full pl-9 pr-3 py-2 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-            />
-          </div>
+          <SearchInput value={searchQuery} onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1) }} placeholder="Search roles..." width="w-full" />
         </div>
 
         {/* Roles List */}

@@ -11,11 +11,8 @@ import {
   Eye,
   EyeOff,
   FlaskConical,
-  Grid2X2,
-  List,
   MapPin,
   Pencil,
-  Search,
   ShoppingCart,
   User,
   XCircle,
@@ -30,7 +27,8 @@ import {
   Settings,
   CalendarDays,
 } from 'lucide-react'
-import Tooltip from '@mui/material/Tooltip'
+import SearchInput from '@/components/ui/SearchInput'
+import ViewToggle from '@/components/ui/ViewToggle'
 import { toast } from 'react-toastify'
 import Can from '@/components/Can'
 import Button from '@/components/ui/Button'
@@ -656,10 +654,7 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
           <p className="mt-1 text-sm text-muted-foreground">{isPatient ? 'Review your upcoming and previous bookings.' : 'Manage all test bookings and their status'}</p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} placeholder="Search by patient, phone, test..." className="pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary w-72" />
-          </div>
+          <SearchInput value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} placeholder="Search by patient, phone, test..." width="w-72" />
           <FilterButton
             onClick={(e) => {
               const rect = e.currentTarget.getBoundingClientRect()
@@ -667,14 +662,7 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
             }}
             activeCount={activeFilterCount}
           />
-          <div className="flex items-center rounded-lg border border-border p-1">
-            <Tooltip title="Grid View" arrow placement="top">
-              <button type="button" aria-label="Grid view" onClick={() => { setView('grid'); setSelectedBookingId(null) }} className={`rounded p-1.5 ${view === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><Grid2X2 size={18} /></button>
-            </Tooltip>
-            <Tooltip title="List View" arrow placement="top">
-              <button type="button" aria-label="List view" onClick={() => setView('list')} className={`rounded p-1.5 ${view === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
-            </Tooltip>
-          </div>
+          <ViewToggle value={view} onChange={setView} onGridClick={() => setSelectedBookingId(null)} />
           {isPatient && (
             <Button onClick={() => setBookModal({ open: true, test: null })} className="shrink-0">
               <ShoppingCart size={18} className="mr-2" />Book a Test
@@ -685,10 +673,7 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
 
       {/* Mobile Search */}
       <div className="flex sm:hidden items-center gap-2">
-        <div className="relative flex-1">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} placeholder="Search by patient, phone, test..." className="w-full pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
-        </div>
+        <SearchInput value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} placeholder="Search by patient, phone, test..." className="flex-1" width="w-full" />
         <FilterButton
           onClick={(e) => {
             const rect = e.currentTarget.getBoundingClientRect()
@@ -696,14 +681,7 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
           }}
           activeCount={activeFilterCount}
         />
-        <div className="flex items-center rounded-lg border border-border p-1">
-          <Tooltip title="Grid View" arrow placement="top">
-            <button type="button" aria-label="Grid view" onClick={() => { setView('grid'); setSelectedBookingId(null) }} className={`rounded p-1.5 ${view === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><Grid2X2 size={18} /></button>
-          </Tooltip>
-          <Tooltip title="List View" arrow placement="top">
-            <button type="button" aria-label="List view" onClick={() => setView('list')} className={`rounded p-1.5 ${view === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
-          </Tooltip>
-        </div>
+        <ViewToggle value={view} onChange={setView} onGridClick={() => setSelectedBookingId(null)} />
       </div>
 
       {/* Stat Cards */}

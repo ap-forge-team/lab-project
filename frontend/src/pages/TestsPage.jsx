@@ -2,13 +2,16 @@ import React, { useEffect, useState, useMemo, useCallback } from 'react'
 import PublicLayout from '@/components/layout/PublicLayout'
 import { getAllTests } from '@/services/test.service'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Search, Clock, Droplet, Grid, List, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Clock, Droplet, RefreshCw, ArrowUp, ArrowDown, ChevronsUpDown } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
 import useAuth from '@/hooks/useAuth'
 import testsHeroImage from '@/assets/image/tests.png'
 import { getIconById } from '@/components/icons/MedicalIcons'
 import FilterPanel from '@/components/ui/FilterPanel'
 import FilterButton from '@/components/ui/FilterButton'
+import Pagination from '@/components/ui/Pagination'
+import SearchInput from '@/components/ui/SearchInput'
+import ViewToggle from '@/components/ui/ViewToggle'
 
 const ICON_STYLES = {
   blood: { bg: 'bg-red-50', text: 'text-red-500' },
@@ -91,10 +94,11 @@ const TestsPage = () => {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [viewMode, setViewMode] = useState('grid')
-  const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(12)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(12)
   const [activeFilters, setActiveFilters] = useState({})
   const [filterPanelOpen, setFilterPanelOpen] = useState(null)
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: null })
 
   const categories = useMemo(() => [...new Set(tests.map(t => typeof t.category === 'object' ? t.category?.name : t.category).filter(Boolean))], [tests])
   const sampleTypes = useMemo(() => [...new Set(tests.map(t => t.sampleType || 'Blood').filter(Boolean))], [tests])
@@ -133,7 +137,7 @@ const TestsPage = () => {
 
   const handleApplyFilters = useCallback((filters) => {
     setActiveFilters(filters)
-    setCurrentPage(1)
+    setPage(1)
   }, [])
 
   const applyFilters = (searchTerm, filters) => {
@@ -214,22 +218,51 @@ const TestsPage = () => {
     const value = e.target.value
     setSearch(value)
     applyFilters(value, activeFilters)
-    setCurrentPage(1)
+    setPage(1)
   }
 
   const clearFilters = () => {
     setSearch('')
     setActiveFilters({})
     setFilteredTests(tests)
-    setCurrentPage(1)
+    setSortConfig({ key: null, direction: null })
+    setPage(1)
   }
 
-  const indexOfLastItem = currentPage * itemsPerPage
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage
-  const currentItems = filteredTests.slice(indexOfFirstItem, indexOfLastItem)
-  const totalPages = Math.ceil(filteredTests.length / itemsPerPage)
+  const handleSort = (key) => {
+    setSortConfig((prev) => {
+      if (prev.key === key) {
+        if (prev.direction === 'asc') return { key, direction: 'desc' }
+        if (prev.direction === 'desc') return { key: null, direction: null }
+      }
+      return { key, direction: 'asc' }
+    })
+  }
 
-  const paginate = (pageNumber) => setCurrentPage(pageNumber)
+  const sortedTests = useMemo(() => {
+    if (!sortConfig.key) return filteredTests
+    return [...filteredTests].sort((a, b) => {
+      let aVal, bVal
+      switch (sortConfig.key) {
+        case 'name': aVal = a.title || ''; bVal = b.title || ''; break
+        case 'code': aVal = a.code || a.testCode || ''; bVal = b.code || b.testCode || ''; break
+        case 'category': aVal = typeof a.category === 'object' ? a.category?.name || '' : a.category || ''; bVal = typeof b.category === 'object' ? b.category?.name || '' : b.category || ''; break
+        case 'sampleType': aVal = a.sampleType || ''; bVal = b.sampleType || ''; break
+        case 'price': aVal = a.price || 0; bVal = b.price || 0; break
+        case 'tat': aVal = a.reportTime || ''; bVal = b.reportTime || ''; break
+        case 'status': aVal = a.isActive ? 'active' : 'inactive'; bVal = b.isActive ? 'active' : 'inactive'; break
+        default: return 0
+      }
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal
+      }
+      const cmp = String(aVal).localeCompare(String(bVal))
+      return sortConfig.direction === 'asc' ? cmp : -cmp
+    })
+  }, [filteredTests, sortConfig])
+
+  const currentItems = sortedTests.slice((page - 1) * pageSize, page * pageSize)
+  const totalPages = Math.max(1, Math.ceil(sortedTests.length / pageSize))
 
   return (
     <PublicLayout>
@@ -259,23 +292,10 @@ const TestsPage = () => {
 
         {/* Filters Section */}
         <div className="enterprise-container mt-6">
-          <div className="bg-white border border-border rounded-xl p-4 shadow-sm">
-            <div className="flex flex-wrap items-center gap-4">
-              {/* Search Bar */}
-              <div className="flex-1 min-w-[200px]">
-                <div className="bg-gray-50 border border-border rounded-lg px-4 py-2.5 flex items-center gap-3 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition">
-                  <Search size={18} className="text-muted-foreground flex-shrink-0" />
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={handleSearch}
-                    placeholder="Search tests by name or code..."
-                    className="w-full outline-none text-sm text-foreground bg-transparent placeholder:text-muted-foreground/60"
-                  />
-                </div>
-              </div>
-
-              {/* Filter Button */}
+          {/* Desktop: Toolbar */}
+          <div className="hidden sm:flex items-center justify-end gap-2">
+            <div className="flex items-center gap-2">
+              <SearchInput value={search} onChange={handleSearch} placeholder="Search tests by name or code..." />
               <FilterButton
                 onClick={(e) => {
                   const rect = e.currentTarget.getBoundingClientRect()
@@ -283,35 +303,33 @@ const TestsPage = () => {
                 }}
                 activeCount={activeFilterCount}
               />
-
-              {/* Clear Filters */}
-              {activeFilterCount > 0 && (
-                <button
-                  onClick={clearFilters}
-                  className="flex items-center gap-2 px-4 py-2.5 text-sm text-primary hover:bg-primary/5 rounded-lg transition"
-                >
-                  <RefreshCw size={16} />
-                  <span>Clear</span>
-                </button>
-              )}
-
-              {/* View Toggle */}
-              <div className="flex items-center border border-border rounded-lg overflow-hidden">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2.5 transition ${viewMode === 'grid' ? 'bg-primary text-white' : 'bg-gray-50 text-muted-foreground hover:bg-gray-100'}`}
-                >
-                  <Grid size={18} />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-2.5 transition ${viewMode === 'list' ? 'bg-primary text-white' : 'bg-gray-50 text-muted-foreground hover:bg-gray-100'}`}
-                >
-                  <List size={18} />
-                </button>
-              </div>
+              <ViewToggle value={viewMode} onChange={setViewMode} tooltips={false} />
             </div>
           </div>
+
+          {/* Mobile: Search + Filter + View Toggle */}
+          <div className="flex sm:hidden items-center gap-2">
+            <SearchInput value={search} onChange={handleSearch} placeholder="Search tests by name or code..." className="flex-1" width="w-full" />
+            <FilterButton
+              onClick={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect()
+                setFilterPanelOpen({ top: rect.bottom + 8, left: Math.max(16, rect.right - 680) })
+              }}
+              activeCount={activeFilterCount}
+            />
+            <ViewToggle value={viewMode} onChange={setViewMode} tooltips={false} />
+          </div>
+
+          {/* Clear Filters */}
+          {activeFilterCount > 0 && (
+            <button
+              onClick={clearFilters}
+              className="flex items-center gap-2 px-4 py-2 text-sm text-primary hover:bg-primary/5 rounded-lg transition mb-4"
+            >
+              <RefreshCw size={16} />
+              <span>Clear Filters</span>
+            </button>
+          )}
         </div>
 
         {/* Tests Grid */}
@@ -408,18 +426,35 @@ const TestsPage = () => {
             </div>
           ) : (
             /* Table View */
-            <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+            <div className="rounded-xl border border-border bg-white">
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[800px] text-sm">
-                  <thead className="bg-gray-50 border-b border-border">
+                <table className="w-full min-w-[820px] text-sm">
+                  <thead className="bg-accent text-left text-muted-foreground">
                     <tr>
-                      <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground">Test Name</th>
-                      <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground">Code</th>
-                      <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground">Category</th>
-                      <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground">Sample Type</th>
-                      <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground">Price</th>
-                      <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground">TAT</th>
-                      <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground">Status</th>
+                      {[
+                        { key: 'name', label: 'Test Name' },
+                        { key: 'code', label: 'Test Code' },
+                        { key: 'category', label: 'Category' },
+                        { key: 'sampleType', label: 'Sample Type' },
+                        { key: 'price', label: 'Price (₹)' },
+                        { key: 'tat', label: 'TAT' },
+                        { key: 'status', label: 'Status' },
+                      ].map((col) => (
+                        <th key={col.key} className="px-4 py-3">
+                          <button
+                            type="button"
+                            onClick={() => handleSort(col.key)}
+                            className="flex items-center gap-1 text-xs font-semibold hover:text-foreground transition"
+                          >
+                            {col.label}
+                            {sortConfig.key === col.key ? (
+                              sortConfig.direction === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />
+                            ) : (
+                              <ChevronsUpDown size={14} className="text-muted-foreground" />
+                            )}
+                          </button>
+                        </th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
@@ -431,45 +466,23 @@ const TestsPage = () => {
                       return (
                         <tr
                           key={item._id}
-                          className="border-b border-border last:border-0 hover:bg-gray-50 transition cursor-pointer"
+                          className="cursor-pointer border-t border-border transition hover:bg-accent/40"
                           onClick={() => handleBookNow(item, 'test')}
                         >
-                          <td className="px-5 py-4">
-                            <div className="flex items-center gap-3">
-                              {item.image ? (
-                                <img 
-                                  src={item.image} 
-                                  alt={item.title}
-                                  className="w-10 h-10 rounded-lg object-cover border border-border"
-                                />
-                              ) : (() => {
-                                const TestIcon = getTestIcon(item)
-                                const iconStyle = getTestIconStyle(item)
-                                return (
-                                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${iconStyle.bg}`}>
-                                    <TestIcon size={20} className={iconStyle.text} />
-                                  </div>
-                                )
-                              })()}
-                              <span className="font-medium text-foreground">{item.title}</span>
-                            </div>
-                          </td>
-                          <td className="px-5 py-4 text-muted-foreground">{item.code || '—'}</td>
-                          <td className="px-5 py-4">
-                            <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${catColor.bg} ${catColor.text}`}>
+                          <td className="px-4 py-3 font-medium text-foreground">{item.title}</td>
+                          <td className="px-4 py-3 text-muted-foreground">{item.code || item.testCode || '—'}</td>
+                          <td className="px-4 py-3">
+                            <span className={`rounded-md px-2 py-1 text-xs font-medium ${catColor.bg} ${catColor.text}`}>
                               {category}
                             </span>
                           </td>
-                          <td className="px-5 py-4 text-muted-foreground">{item.sampleType || 'Blood'}</td>
-                          <td className="px-5 py-4 font-medium text-foreground">₹{item.price}</td>
-                          <td className="px-5 py-4 text-muted-foreground">{item.reportTime || '24 hrs'}</td>
-                          <td className="px-5 py-4">
-                            <div className="flex items-center gap-2">
-                              <span className={`w-2 h-2 rounded-full ${status === 'Active' ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                              <span className={`text-xs font-medium ${status === 'Active' ? 'text-green-600' : 'text-red-600'}`}>
-                                {status}
-                              </span>
-                            </div>
+                          <td className="px-4 py-3">{item.sampleType || 'Blood'}</td>
+                          <td className="px-4 py-3">{item.price != null ? Number(item.price).toLocaleString('en-IN') : '—'}</td>
+                          <td className="px-4 py-3">{item.reportTime || '24 hrs'}</td>
+                          <td className="px-4 py-3">
+                            <span className={`rounded-md px-2 py-1 text-xs ${status === 'Active' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                              {status}
+                            </span>
                           </td>
                         </tr>
                       )
@@ -480,73 +493,19 @@ const TestsPage = () => {
             </div>
           )}
 
-          {/* Pagination - Always show when there are results */}
-          {!loading && filteredTests.length > 0 && (
-            <div className="flex items-center justify-between mt-8">
-              <p className="text-sm text-muted-foreground">
-                Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredTests.length)} of {filteredTests.length} tests
-              </p>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => paginate(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className="px-3 py-2 text-sm border border-border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                >
-                  &lt;
-                </button>
-                {[...Array(Math.min(totalPages, 5))].map((_, index) => {
-                  let pageNumber
-                  if (totalPages <= 5) {
-                    pageNumber = index + 1
-                  } else if (currentPage <= 3) {
-                    pageNumber = index + 1
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNumber = totalPages - 4 + index
-                  } else {
-                    pageNumber = currentPage - 2 + index
-                  }
-                  return (
-                    <button
-                      key={pageNumber}
-                      onClick={() => paginate(pageNumber)}
-                      className={`w-10 h-10 text-sm font-medium rounded-lg transition ${currentPage === pageNumber ? 'bg-primary text-white' : 'border border-border hover:bg-gray-50'}`}
-                    >
-                      {pageNumber}
-                    </button>
-                  )
-                })}
-                {totalPages > 5 && (
-                  <>
-                    <span className="text-muted-foreground">...</span>
-                    <button
-                      onClick={() => paginate(totalPages)}
-                      className={`w-10 h-10 text-sm font-medium rounded-lg transition ${currentPage === totalPages ? 'bg-primary text-white' : 'border border-border hover:bg-gray-50'}`}
-                    >
-                      {totalPages}
-                    </button>
-                  </>
-                )}
-                <button
-                  onClick={() => paginate(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className="px-3 py-2 text-sm border border-border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                >
-                  &gt;
-                </button>
-                <select
-                  value={itemsPerPage}
-                  onChange={(e) => {
-                    setItemsPerPage(Number(e.target.value))
-                    setCurrentPage(1)
-                  }}
-                  className="ml-4 px-3 py-2 text-sm border border-border rounded-lg bg-white cursor-pointer focus:border-primary focus:ring-1 focus:ring-primary"
-                >
-                  <option value={8}>8 per page</option>
-                  <option value={12}>12 per page</option>
-                  <option value={24}>24 per page</option>
-                  <option value={48}>48 per page</option>
-                </select>
-              </div>
+          {/* Pagination */}
+          {!loading && sortedTests.length > 0 && (
+            <div className="mt-8">
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                pageSize={pageSize}
+                totalItems={sortedTests.length}
+                onPageChange={setPage}
+                onPageSizeChange={(size) => { setPageSize(size); setPage(1) }}
+                pageSizes={[8, 12, 24, 48]}
+                itemName="tests"
+              />
             </div>
           )}
         </div>

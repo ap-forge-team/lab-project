@@ -1,38 +1,49 @@
 import React from 'react'
-import { Table as TableIcon, LayoutGrid } from 'lucide-react'
+import { Grid2X2, List } from 'lucide-react'
+import Tooltip from '@mui/material/Tooltip'
 
-const ViewToggle = ({ view, onChange, className = '' }) => {
-  const options = [
-    { key: 'table', label: 'Table', icon: <TableIcon size={14} /> },
-    { key: 'card', label: 'Card', icon: <LayoutGrid size={14} /> },
-  ]
+const ViewToggle = ({ value, onChange, onGridClick, tooltips = true, className = '' }) => {
+  const isActive = (v) => value === v || (v === 'grid' && value === 'card') || (v === 'list' && value === 'table')
+
+  const GridButton = () => (
+    <button
+      type="button"
+      aria-label="Grid view"
+      onClick={() => onGridClick ? onGridClick() : onChange('grid')}
+      className={`rounded p-1.5 transition ${isActive('grid') ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}
+    >
+      <Grid2X2 size={18} />
+    </button>
+  )
+
+  const ListButton = () => (
+    <button
+      type="button"
+      aria-label="List view"
+      onClick={() => onChange('list')}
+      className={`rounded p-1.5 transition ${isActive('list') ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}
+    >
+      <List size={18} />
+    </button>
+  )
 
   return (
-    <div
-      className={`inline-flex items-center bg-accent rounded-lg p-1 gap-1 h-11 ${className}`}
-      role="tablist"
-      aria-label="Toggle view"
-    >
-      {options.map((option) => {
-        const isActive = view === option.key
-        return (
-          <button
-            key={option.key}
-            type="button"
-            role="tab"
-            aria-selected={isActive}
-            onClick={() => onChange(option.key)}
-            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
-              isActive
-                ? 'bg-white text-primary shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {option.icon}
-            {option.label}
-          </button>
-        )
-      })}
+    <div className={`flex items-center rounded-lg border border-border p-1 ${className}`}>
+      {tooltips ? (
+        <>
+          <Tooltip title="Grid View" arrow placement="top">
+            <span><GridButton /></span>
+          </Tooltip>
+          <Tooltip title="List View" arrow placement="top">
+            <span><ListButton /></span>
+          </Tooltip>
+        </>
+      ) : (
+        <>
+          <GridButton />
+          <ListButton />
+        </>
+      )}
     </div>
   )
 }

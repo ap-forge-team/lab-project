@@ -9,11 +9,9 @@ import {
   Eye,
   EyeOff,
   FlaskConical,
-  Grid2X2,
   List,
   Pencil,
   Plus,
-  Search,
   ShoppingCart,
   MoreVertical,
   Trash2,
@@ -23,6 +21,8 @@ import Tooltip from '@mui/material/Tooltip'
 import { toast } from 'react-toastify'
 import { useSearchParams } from 'react-router-dom'
 import Can from '@/components/Can'
+import SearchInput from '@/components/ui/SearchInput'
+import ViewToggle from '@/components/ui/ViewToggle'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
 import ConfirmModal from '@/components/ui/ConfirmModal'
@@ -394,10 +394,7 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
           <p className="mt-1 text-sm text-muted-foreground">Manage and view all laboratory tests</p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} placeholder="Search tests by name or code..." className="pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary w-64" />
-          </div>
+          <SearchInput value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} placeholder="Search tests by name or code..." />
           <FilterButton
             onClick={(e) => {
               const rect = e.currentTarget.getBoundingClientRect()
@@ -405,14 +402,7 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
             }}
             activeCount={activeFilterCount}
           />
-          <div className="flex items-center rounded-lg border border-border p-1">
-            <Tooltip title="Grid View" arrow placement="top">
-              <button type="button" aria-label="Grid view" onClick={() => { setView('grid'); setSelectedTestId(null) }} className={`rounded p-1.5 ${view === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><Grid2X2 size={18} /></button>
-            </Tooltip>
-            <Tooltip title="List View" arrow placement="top">
-              <button type="button" aria-label="List view" onClick={() => setView('list')} className={`rounded p-1.5 ${view === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
-            </Tooltip>
-          </div>
+          <ViewToggle value={view} onChange={setView} onGridClick={() => setSelectedTestId(null)} />
           {isPatient ? (
             <Button onClick={() => setBookModal({ open: true, test: null })} className="shrink-0">
               <ShoppingCart size={18} className="mr-2" />Book a Test
@@ -428,10 +418,7 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
       </div>
 
       <div className="flex sm:hidden items-center gap-2">
-        <div className="relative flex-1">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} placeholder="Search tests by name or code..." className="w-full pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
-        </div>
+        <SearchInput value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} placeholder="Search tests by name or code..." className="flex-1" width="w-full" />
         <FilterButton
           onClick={(e) => {
             const rect = e.currentTarget.getBoundingClientRect()
@@ -439,14 +426,7 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
           }}
           activeCount={activeFilterCount}
         />
-        <div className="flex items-center rounded-lg border border-border p-1">
-          <Tooltip title="Grid View" arrow placement="top">
-            <button type="button" aria-label="Grid view" onClick={() => { setView('grid'); setSelectedTestId(null) }} className={`rounded p-1.5 ${view === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><Grid2X2 size={18} /></button>
-          </Tooltip>
-          <Tooltip title="List View" arrow placement="top">
-            <button type="button" aria-label="List view" onClick={() => setView('list')} className={`rounded p-1.5 ${view === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
-          </Tooltip>
-        </div>
+        <ViewToggle value={view} onChange={setView} onGridClick={() => setSelectedTestId(null)} />
       </div>
 
       <div className="overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
