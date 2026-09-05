@@ -62,22 +62,21 @@ const getCategoryColor = (name) => {
 }
 
 const TestCardSkeleton = () => (
-  <div className="bg-card border border-border rounded-xl overflow-hidden animate-pulse shadow-sm">
+  <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden animate-pulse">
     <div className="p-5">
       <div className="flex items-start gap-4 mb-4">
-        <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+        <div className="w-16 h-16 bg-gray-200 rounded-xl"></div>
         <div className="flex-1">
           <div className="h-5 bg-gray-200 rounded w-3/4 mb-2"></div>
           <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
-          <div className="h-5 bg-gray-200 rounded w-20"></div>
+          <div className="h-6 bg-gray-200 rounded w-20 mt-2"></div>
         </div>
-        <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
       </div>
       <div className="flex items-center gap-6 mb-4">
         <div className="h-4 bg-gray-200 rounded w-20"></div>
         <div className="h-4 bg-gray-200 rounded w-24"></div>
       </div>
-      <div className="flex justify-between items-center pt-4 border-t border-border/50">
+      <div className="flex justify-between items-center pt-4 border-t border-gray-100">
         <div className="h-6 bg-gray-200 rounded w-16"></div>
         <div className="h-5 bg-gray-200 rounded w-16"></div>
       </div>
@@ -351,67 +350,63 @@ const TestsPage = () => {
                 return (
                   <div
                     key={item._id}
-                    className="bg-card border border-border rounded-xl overflow-hidden hover:shadow-md transition-all duration-200 cursor-pointer group"
+                    className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-md transition-all duration-200 cursor-pointer group"
                     onClick={() => handleBookNow(item, 'test')}
                   >
                     <div className="p-5">
                       {/* Header */}
-                      <div className="flex items-start gap-3 mb-4">
+                      <div className="flex items-start gap-4 mb-4">
                         {item.image ? (
                           <img 
                             src={item.image} 
                             alt={item.title}
-                            className="w-12 h-12 rounded-full object-cover border-2 border-border"
+                            className="w-16 h-16 rounded-xl object-cover border border-gray-100"
                           />
                         ) : (() => {
                           const TestIcon = getTestIcon(item)
                           const iconStyle = getTestIconStyle(item)
                           return (
-                            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${iconStyle.bg}`}>
-                              <TestIcon size={24} className={iconStyle.text} />
+                            <div className={`w-16 h-16 rounded-xl flex items-center justify-center ${iconStyle.bg}`}>
+                              <TestIcon size={28} className={iconStyle.text} />
                             </div>
                           )
                         })()}
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-heading font-semibold text-base text-foreground truncate">{item.title}</h3>
-                          <p className="text-xs text-muted-foreground mt-0.5">{item.code}</p>
+                          <h3 className="font-heading font-bold text-base text-gray-900 truncate">{item.title}</h3>
+                          <p className="text-xs text-gray-400 mt-0.5">{item.code || item.testCode}</p>
                           {(() => {
                             const catColor = getCategoryColor(category)
                             return (
-                              <span className={`inline-block mt-2 px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${catColor.bg} ${catColor.text}`}>
+                              <span className={`inline-block mt-2 px-3 py-1 rounded-sm text-xs font-medium ${catColor.bg} ${catColor.text}`}>
                                 {category}
                               </span>
                             )
                           })()}
                         </div>
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M9 5l7 7-7 7" />
-                          </svg>
-                        </div>
                       </div>
 
                       {/* Info Row */}
-                      <div className="flex items-center gap-5 mb-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-6 mb-4 text-sm">
                         <div className="flex items-center gap-2">
-                          <Droplet size={14} className="text-blue-500" />
+                          <Droplet size={16} className="text-blue-400" />
                           <div>
-                            <p className="font-medium text-foreground">{item.sampleType || 'Blood'}</p>
-                            <p className="text-[10px]">Sample Type</p>
+                            <p className="font-medium text-gray-900">{item.sampleType || 'Blood'}</p>
+                            <p className="text-[10px] text-gray-400">Sample Type</p>
                           </div>
                         </div>
+                        <div className="w-px h-8 bg-gray-200" />
                         <div className="flex items-center gap-2">
-                          <Clock size={14} className="text-orange-500" />
+                          <Clock size={16} className="text-orange-400" />
                           <div>
-                            <p className="font-medium text-foreground">{item.reportTime || '24 hrs'}</p>
-                            <p className="text-[10px]">TAT</p>
+                            <p className="font-medium text-gray-900">{item.reportTime || '24 hrs'}</p>
+                            <p className="text-[10px] text-gray-400">TAT</p>
                           </div>
                         </div>
                       </div>
 
                       {/* Price and Status */}
-                      <div className="flex items-center justify-between pt-4 border-t border-border/50">
-                        <p className="text-lg font-bold text-foreground">₹{item.price}</p>
+                      <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                        <p className="text-lg font-bold text-gray-900">₹{item.price}</p>
                         <div className="flex items-center gap-2">
                           <span className={`w-2 h-2 rounded-full ${status === 'Active' ? 'bg-green-500' : 'bg-red-500'}`}></span>
                           <span className={`text-sm font-medium ${status === 'Active' ? 'text-green-600' : 'text-red-600'}`}>
