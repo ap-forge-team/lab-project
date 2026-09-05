@@ -8,18 +8,15 @@ import {
   Copy,
   Eye,
   EyeOff,
-  Grid2X2,
   List,
   Package,
   Pencil,
   Plus,
-  Search,
   ShoppingCart,
   Trash2,
   XCircle,
   MoreVertical,
 } from 'lucide-react'
-import Tooltip from '@mui/material/Tooltip'
 import { toast } from 'react-toastify'
 import { useSearchParams } from 'react-router-dom'
 import Can from '@/components/Can'
@@ -32,9 +29,12 @@ import ConfirmModal from '@/components/ui/ConfirmModal'
 import FilterPanel from '@/components/ui/FilterPanel'
 import FilterButton from '@/components/ui/FilterButton'
 import Pagination from '@/components/ui/Pagination'
+import SearchInput from '@/components/ui/SearchInput'
+import ViewToggle from '@/components/ui/ViewToggle'
 import CreatePackageModal from './CreatePackageModal'
 import { deletePackage } from '@/services/package.service'
 import { PackageCard } from './PackageCard'
+import BookTestModal from '@/features/booking/components/BookTestModal'
 
 const PAGE_SIZE = 12
 const PAGE_SIZES = [12, 24, 48]
@@ -178,6 +178,7 @@ const PackagesManagePage = ({ packages, isLoading, isError, onRefresh }) => {
   const [filterPanelOpen, setFilterPanelOpen] = useState(null)
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null })
   const [hiddenColumns, setHiddenColumns] = useState({})
+  const [bookModal, setBookModal] = useState({ open: false, test: null })
 
   const handleSort = useCallback((key, direction) => {
     setSortConfig((prev) => {
@@ -319,7 +320,7 @@ const PackagesManagePage = ({ packages, isLoading, isError, onRefresh }) => {
       <div className="flex items-center justify-between gap-3 sm:hidden">
         <h1 className="text-2xl font-bold text-foreground">Packages</h1>
         {isPatient ? (
-          <Button onClick={() => navigate(ROUTES.BOOKING)} className="shrink-0">
+          <Button onClick={() => setBookModal({ open: true, test: null })} className="shrink-0">
             <ShoppingCart size={18} className="mr-2" />Book a Test
           </Button>
         ) : (
@@ -338,10 +339,7 @@ const PackagesManagePage = ({ packages, isLoading, isError, onRefresh }) => {
           <p className="mt-1 text-sm text-muted-foreground">Manage and view all health-check packages</p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} placeholder="Search packages by name..." className="pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary w-64" />
-          </div>
+          <SearchInput value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} placeholder="Search packages by name..." />
           <FilterButton
             onClick={(e) => {
               const rect = e.currentTarget.getBoundingClientRect()
@@ -349,16 +347,9 @@ const PackagesManagePage = ({ packages, isLoading, isError, onRefresh }) => {
             }}
             activeCount={activeFilterCount}
           />
-          <div className="flex items-center rounded-lg border border-border p-1">
-            <Tooltip title="Grid View" arrow placement="top">
-              <button type="button" aria-label="Grid view" onClick={() => { setView('grid'); setSelectedPackageId(null) }} className={`rounded p-1.5 ${view === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><Grid2X2 size={18} /></button>
-            </Tooltip>
-            <Tooltip title="List View" arrow placement="top">
-              <button type="button" aria-label="List view" onClick={() => setView('list')} className={`rounded p-1.5 ${view === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
-            </Tooltip>
-          </div>
+          <ViewToggle value={view} onChange={setView} onGridClick={() => setSelectedPackageId(null)} />
           {isPatient ? (
-            <Button onClick={() => navigate(ROUTES.BOOKING)}>
+            <Button onClick={() => setBookModal({ open: true, test: null })}>
               <ShoppingCart size={18} className="mr-2" />Book a Test
             </Button>
           ) : (
@@ -373,10 +364,7 @@ const PackagesManagePage = ({ packages, isLoading, isError, onRefresh }) => {
 
       {/* Mobile Search */}
       <div className="flex sm:hidden items-center gap-2">
-        <div className="relative flex-1">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} placeholder="Search packages by name..." className="w-full pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
-        </div>
+        <SearchInput value={search} onChange={(event) => { setSearch(event.target.value); setPage(1) }} placeholder="Search packages by name..." className="flex-1" width="w-full" />
         <FilterButton
           onClick={(e) => {
             const rect = e.currentTarget.getBoundingClientRect()
@@ -384,14 +372,7 @@ const PackagesManagePage = ({ packages, isLoading, isError, onRefresh }) => {
           }}
           activeCount={activeFilterCount}
         />
-        <div className="flex items-center rounded-lg border border-border p-1">
-          <Tooltip title="Grid View" arrow placement="top">
-            <button type="button" aria-label="Grid view" onClick={() => { setView('grid'); setSelectedPackageId(null) }} className={`rounded p-1.5 ${view === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><Grid2X2 size={18} /></button>
-          </Tooltip>
-          <Tooltip title="List View" arrow placement="top">
-            <button type="button" aria-label="List view" onClick={() => setView('list')} className={`rounded p-1.5 ${view === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
-          </Tooltip>
-        </div>
+        <ViewToggle value={view} onChange={setView} onGridClick={() => setSelectedPackageId(null)} />
       </div>
 
       {/* Stat Cards */}
@@ -598,6 +579,15 @@ const PackagesManagePage = ({ packages, isLoading, isError, onRefresh }) => {
             </Can>
           </div>
         </>
+      )}
+
+      {isPatient && (
+        <BookTestModal
+          open={bookModal.open}
+          onClose={() => setBookModal({ open: false, test: null })}
+          preselectedTest={bookModal.test}
+          onBooked={onRefresh}
+        />
       )}
     </section>
   )

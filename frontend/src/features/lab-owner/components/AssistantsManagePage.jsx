@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Users, Plus, Search, ChevronRight, Eye, Pencil, Trash2, X, MoreVertical, Phone, Mail, Calendar, Shield, Upload, FileText, List, Grid2X2 } from 'lucide-react'
+import { Users, Plus, ChevronRight, Eye, Pencil, Trash2, X, MoreVertical, Phone, Mail, Calendar, Shield, Upload, FileText } from 'lucide-react'
 import Tooltip from '@mui/material/Tooltip'
 import { toast } from 'react-toastify'
 import { DataTable } from '@/components/ui/data-table'
@@ -14,6 +14,8 @@ import { Spinner } from '@/components/ui/Loader'
 import Can from '@/components/Can'
 import { createLabAssistant, updateUser, deleteUser } from '@/services/user.service'
 import useResponsiveView from '@/hooks/useResponsiveView'
+import SearchInput from '@/components/ui/SearchInput'
+import ViewToggle from '@/components/ui/ViewToggle'
 
 const StatCard = ({ icon: Icon, borderColor, iconColor, cardBg, title, value, detailTop, detailBottom }) => (
   <div className={`rounded-2xl border ${borderColor} px-4 py-3 ${cardBg}`}>
@@ -356,10 +358,7 @@ const AssistantsManagePage = ({ assistants, isLoading, isError, onRefresh }) => 
           <p className="mt-1 text-sm text-muted-foreground">Manage your lab assistants and their assignments.</p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input type="text" placeholder="Search assistant, email or phone..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary w-64" />
-          </div>
+          <SearchInput value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search assistant, email or phone..." />
           <FilterButton
             onClick={(e) => {
               const rect = e.currentTarget.getBoundingClientRect()
@@ -367,14 +366,7 @@ const AssistantsManagePage = ({ assistants, isLoading, isError, onRefresh }) => 
             }}
             activeCount={activeFilterCount}
           />
-          <div className="flex items-center rounded-lg border border-border p-1">
-            <Tooltip title="Grid View" arrow placement="top">
-              <button type="button" aria-label="Grid view" onClick={() => setView('card')} className={`rounded p-1.5 ${view === 'card' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><Grid2X2 size={18} /></button>
-            </Tooltip>
-            <Tooltip title="Table View" arrow placement="top">
-              <button type="button" aria-label="Table view" onClick={() => setView('table')} className={`rounded p-1.5 ${view === 'table' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
-            </Tooltip>
-          </div>
+          <ViewToggle value={view} onChange={setView} />
           <Can resource="lab_assistants" action="create">
             <Button className="flex items-center gap-2" onClick={() => setShowAddModal(true)}>
               <Plus size={16} />
@@ -386,10 +378,7 @@ const AssistantsManagePage = ({ assistants, isLoading, isError, onRefresh }) => 
 
       {/* Mobile Search */}
       <div className="flex sm:hidden items-center gap-2">
-        <div className="relative flex-1">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input type="text" placeholder="Search assistant, email or phone..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
-        </div>
+        <SearchInput value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search assistant, email or phone..." className="flex-1" width="w-full" />
         <FilterButton
           onClick={(e) => {
             const rect = e.currentTarget.getBoundingClientRect()
@@ -397,14 +386,7 @@ const AssistantsManagePage = ({ assistants, isLoading, isError, onRefresh }) => 
           }}
           activeCount={activeFilterCount}
         />
-        <div className="flex items-center rounded-lg border border-border p-1">
-          <Tooltip title="Grid View" arrow placement="top">
-            <button type="button" aria-label="Grid view" onClick={() => setView('card')} className={`rounded p-1.5 ${view === 'card' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><Grid2X2 size={18} /></button>
-          </Tooltip>
-          <Tooltip title="Table View" arrow placement="top">
-            <button type="button" aria-label="Table view" onClick={() => setView('table')} className={`rounded p-1.5 ${view === 'table' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
-          </Tooltip>
-        </div>
+        <ViewToggle value={view} onChange={setView} />
       </div>
 
       {/* Stat Cards */}

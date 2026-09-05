@@ -19,7 +19,7 @@ const ROLE_PREFIX = {
   admin: '/admin',
   lab_owner: '/lab-owner',
   lab_assistant: '/lab-assistant',
-  patient: '/booking',
+  patient: '/booking/bookings',
 }
 
 const PATIENT_DASHBOARD_ROUTE = '/dashboard'

@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Download, Search } from 'lucide-react'
+import { Download } from 'lucide-react'
 import useAuth from '@/hooks/useAuth'
 import { getSettlementStatistics, getSettlementList, getSettlementHistory, getLabSettlementStatistics, getLabSettlementPending, getLabSettlementHistory, exportSettlementHistory, exportLabSettlementHistory } from '@/services/settlement.service'
 import { getAllLabOwners } from '@/services/user.service'
@@ -16,6 +16,7 @@ import SettlementCharts from './SettlementCharts'
 import SettlementFooter from './SettlementFooter'
 import SettlementSummary from './SettlementSummary'
 import Button from '@/components/ui/Button'
+import SearchInput from '@/components/ui/SearchInput'
 import FilterButton from '@/components/ui/FilterButton'
 import FilterPanel from '@/components/ui/FilterPanel'
 
@@ -179,15 +180,7 @@ const SettlementDashboard = () => {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search Lab / Batch ID / UTR Number..."
-              className="pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary w-72"
-            />
-          </div>
+          <SearchInput value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search Lab / Batch ID / UTR Number..." width="w-72" />
           <FilterButton
             onClick={(e) => {
               const rect = e.currentTarget.getBoundingClientRect()

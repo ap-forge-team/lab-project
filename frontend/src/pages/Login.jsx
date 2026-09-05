@@ -210,7 +210,7 @@ const Login = () => {
       } else if (response.role === ROLES.LAB_OWNER) {
         navigate(ROUTES.LAB_OWNER)
       } else {
-        navigate(ROUTES.BOOKING)
+        navigate(ROUTES.DASHBOARD)
       }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Login Failed')

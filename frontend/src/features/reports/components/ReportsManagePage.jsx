@@ -7,13 +7,12 @@ import {
   Download,
   Eye,
   FileText,
-  Search,
   ShoppingCart,
   CloudUpload,
-  Grid2X2,
-  List,
 } from 'lucide-react'
 import Tooltip from '@mui/material/Tooltip'
+import SearchInput from '@/components/ui/SearchInput'
+import ViewToggle from '@/components/ui/ViewToggle'
 import FilterPanel from '@/components/ui/FilterPanel'
 import FilterButton from '@/components/ui/FilterButton'
 import Pagination from '@/components/ui/Pagination'
@@ -22,6 +21,7 @@ import useAuth from '@/hooks/useAuth'
 import { ROLES } from '@/constants/roles'
 import { ROUTES } from '@/constants/routes'
 import ReportViewerModal from '@/components/Dashboard/ReportViewerModal'
+import BookTestModal from '@/features/booking/components/BookTestModal'
 
 const PAGE_SIZE = 10
 const PAGE_SIZES = [10, 25, 50]
@@ -92,6 +92,7 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
   const [activeFilters, setActiveFilters] = useState({})
   const [filterPanelOpen, setFilterPanelOpen] = useState(null)
   const [reportModal, setReportModal] = useState({ open: false, booking: null })
+  const [bookModal, setBookModal] = useState({ open: false, test: null })
   const [view, setView] = useState('grid')
 
   const list = useMemo(() => {
@@ -201,7 +202,7 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
       <div className="flex items-center justify-between gap-3 sm:hidden">
         <h1 className="text-2xl font-bold text-foreground">{isPatient ? 'My Reports' : 'Reports'}</h1>
         {isPatient && (
-          <Button onClick={() => navigate(ROUTES.BOOKING)} className="shrink-0">
+          <Button onClick={() => setBookModal({ open: true, test: null })} className="shrink-0">
             <ShoppingCart size={18} className="mr-2" />Book a Test
           </Button>
         )}
@@ -214,15 +215,7 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
           <p className="mt-1 text-sm text-muted-foreground">{isPatient ? 'View reports for your completed bookings.' : 'Review completed bookings and uploaded reports.'}</p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-              placeholder="Search reports..."
-              className="pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary w-64"
-            />
-          </div>
+          <SearchInput value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} placeholder="Search reports..." />
           <FilterButton
             onClick={(e) => {
               const rect = e.currentTarget.getBoundingClientRect()
@@ -230,16 +223,9 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
             }}
             activeCount={activeFilterCount}
           />
-          <div className="flex items-center rounded-lg border border-border p-1">
-            <Tooltip title="Grid View" arrow placement="top">
-              <button type="button" aria-label="Grid view" onClick={() => setView('grid')} className={`rounded p-1.5 ${view === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><Grid2X2 size={18} /></button>
-            </Tooltip>
-            <Tooltip title="Table View" arrow placement="top">
-              <button type="button" aria-label="Table view" onClick={() => setView('table')} className={`rounded p-1.5 ${view === 'table' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
-            </Tooltip>
-          </div>
+          <ViewToggle value={view} onChange={setView} />
           {isPatient && (
-            <Button onClick={() => navigate(ROUTES.BOOKING)} className="shrink-0">
+            <Button onClick={() => setBookModal({ open: true, test: null })} className="shrink-0">
               <ShoppingCart size={18} className="mr-2" />Book a Test
             </Button>
           )}
@@ -248,15 +234,7 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
 
       {/* Mobile Search */}
       <div className="flex sm:hidden items-center gap-2">
-        <div className="relative flex-1">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-            placeholder="Search reports..."
-            className="w-full pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-          />
-        </div>
+        <SearchInput value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} placeholder="Search reports..." className="flex-1" width="w-full" />
         <FilterButton
           onClick={(e) => {
             const rect = e.currentTarget.getBoundingClientRect()
@@ -264,14 +242,7 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
           }}
           activeCount={activeFilterCount}
         />
-        <div className="flex items-center rounded-lg border border-border p-1">
-          <Tooltip title="Grid View" arrow placement="top">
-            <button type="button" aria-label="Grid view" onClick={() => setView('grid')} className={`rounded p-1.5 ${view === 'grid' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><Grid2X2 size={18} /></button>
-          </Tooltip>
-          <Tooltip title="Table View" arrow placement="top">
-            <button type="button" aria-label="Table view" onClick={() => setView('table')} className={`rounded p-1.5 ${view === 'table' ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}><List size={18} /></button>
-          </Tooltip>
-        </div>
+        <ViewToggle value={view} onChange={setView} />
       </div>
 
       {/* Stat Cards */}
@@ -504,6 +475,15 @@ const ReportsManagePage = ({ bookings, isLoading, isError }) => {
         reportUrl={reportModal.booking?.report}
         title={`Report - ${reportModal.booking?.patientName || ''}`}
       />
+
+      {isPatient && (
+        <BookTestModal
+          open={bookModal.open}
+          onClose={() => setBookModal({ open: false, test: null })}
+          preselectedTest={bookModal.test}
+          onBooked={() => {}}
+        />
+      )}
 
       {filterPanelOpen && createPortal(
         <FilterPanel

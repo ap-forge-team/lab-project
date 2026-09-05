@@ -12,7 +12,6 @@ import {
   Scale,
   Mail,
   Phone,
-  ChevronDown,
 } from 'lucide-react'
 import PublicLayout from '@/components/layout/PublicLayout'
 import termsImg from '@/assets/image/terms-of-service-hero.png'
@@ -85,32 +84,32 @@ export default function TermsOfService() {
     <PublicLayout>
       <div className="bg-white min-h-screen">
         {/* HERO */}
-        <section className="enterprise-container py-10 lg:py-16">
+        <section className="enterprise-container py-10">
           <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
             <div className="w-full lg:w-1/2">
-              <span className="inline-block type-primary-label-l2-medium tracking-wider uppercase text-primary bg-primary/10 border border-primary/20 rounded-full px-3 py-1 mb-4">
+              <span className="inline-block text-xs font-semibold tracking-wider uppercase text-blue-600 bg-blue-50 border border-blue-100 rounded-full px-4 py-1.5 mb-4">
                 Terms of Service
               </span>
-              <h1 className="type-primary-heading-h0-mobile md:type-primary-heading-h0 text-foreground leading-tight mb-4">
+              <h1 className="font-heading font-bold text-3xl lg:text-4xl text-gray-900 leading-tight mb-4">
                 Terms of Service
               </h1>
-              <p className="type-primary-body-b1 text-muted-foreground leading-relaxed mb-6 max-w-lg">
+              <p className="text-gray-500 text-sm leading-relaxed mb-6 max-w-lg">
                 These Terms of Service govern your use of Checked Up Lab Tests
                 website and services. By accessing or using our platform, you
                 agree to these terms and conditions.
               </p>
-              <div className="inline-flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2">
-                <Calendar size={16} className="text-muted-foreground" />
-                <span className="type-primary-body-b2-medium text-foreground">Last Updated: 12 May 2024</span>
+              <div className="inline-flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-full px-4 py-2.5">
+                <Calendar size={16} className="text-blue-500" />
+                <span className="text-sm text-gray-700 font-medium">Last Updated: 12 May 2024</span>
               </div>
             </div>
 
             <div className="w-full lg:w-1/2">
-              <div className="rounded-2xl overflow-hidden bg-blue-50">
+              <div className="rounded-2xl overflow-hidden bg-blue-50 p-6">
                 <img
                   src={termsImg}
                   alt="Checked Up terms of service"
-                  className="w-full h-[280px] md:h-[360px] object-cover"
+                  className="w-full h-[280px] md:h-[340px] object-contain"
                 />
               </div>
             </div>
@@ -118,39 +117,40 @@ export default function TermsOfService() {
         </section>
 
         {/* SECTIONS */}
-        <section className="enterprise-container py-10 lg:py-14">
-          <div className="max-w-4xl mx-auto bg-white rounded-2xl border border-gray-100 divide-y divide-gray-100">
+        <section className="enterprise-container pb-10">
+          <div className="max-w-7xl mx-auto bg-white border border-gray-200 rounded-2xl overflow-hidden">
             {sections.map((section, index) => {
               const Icon = section.icon
               return (
-                <div key={index} className="flex items-start gap-4 p-5">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Icon size={20} className="text-primary" />
+                <div
+                  key={index}
+                  className={`flex items-start gap-5 p-6 ${index < sections.length - 1 ? 'border-b border-gray-200' : ''}`}
+                >
+                  <div className="w-14 h-14 lg:w-18 lg:h-18 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+                    <Icon size={24} className="text-blue-600 lg:hidden" />
+                    <Icon size={28} className="text-blue-600 hidden lg:block" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="type-primary-heading-h3 text-foreground">
+                    <h3 className="font-heading font-bold text-xl text-gray-900 mb-2">
                       {index + 1}. {section.title}
                     </h3>
-                    <p className="type-primary-body-b2 text-muted-foreground leading-relaxed mt-1">
+                    <p className="text-sm text-gray-500 leading-relaxed">
                       {section.content}
                     </p>
                     {section.contact && (
-                      <div className="flex items-center gap-4 mt-3 flex-wrap">
-                        <a
-                          href="mailto:support@checkedup.com"
-                          className="flex items-center gap-2 text-primary hover:underline"
-                        >
+                      <div className="flex items-center gap-4 mt-4">
+                        <a href="mailto:support@checkedup.com" className="flex items-center gap-2 text-blue-600 hover:underline">
                           <Mail size={16} />
-                          <span className="type-primary-body-b2-medium">support@checkedup.com</span>
+                          <span className="text-sm font-medium">support@checkedup.com</span>
                         </a>
-                        <a href="tel:18001234567" className="flex items-center gap-2 text-primary hover:underline">
+                        <div className="w-px h-4 bg-gray-300" />
+                        <a href="tel:18001234567" className="flex items-center gap-2 text-blue-600 hover:underline">
                           <Phone size={16} />
-                          <span className="type-primary-body-b2-medium">1800-123-4567</span>
+                          <span className="text-sm font-medium">1800-123-4567</span>
                         </a>
                       </div>
                     )}
                   </div>
-                  <ChevronDown size={20} className="text-muted-foreground flex-shrink-0 mt-3" />
                 </div>
               )
             })}

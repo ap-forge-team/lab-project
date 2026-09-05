@@ -1,6 +1,6 @@
 import React, { useContext, useMemo, useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
-import { Search, ShieldAlert } from 'lucide-react'
+import { ShieldAlert } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import { AuthContext } from '@/context/AuthContext'
@@ -12,6 +12,7 @@ import { getAllBookings, getAssignedBookings, getLabOwnerBookings, getMyBookings
 import { getAllLabOwners, getAllUsers, getMyAssistants } from '@/services/user.service'
 import { getAdminPaymentStats, getLabOwnerPaymentStats, getAdminPayments } from '@/services/payment.service'
 import { Spinner } from '@/components/ui/Loader'
+import SearchInput from '@/components/ui/SearchInput'
 import TestsManagePage from '@/features/tests/components/TestsManagePage'
 import PackagesManagePage from '@/features/packages/components/PackagesManagePage'
 import BookingsManagePage from '@/features/bookings/components/BookingsManagePage'
@@ -193,10 +194,7 @@ const SidebarPage = ({ page: pageProp }) => {
             <div className="w-11 h-11 shrink-0 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><Icon size={22} /></div>
             <div><h1 className="text-2xl font-bold text-foreground">{config.title}</h1><p className="mt-1 text-sm text-muted-foreground">{config.description}</p></div>
           </div>
-          <label className="relative block w-full sm:w-72">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={`Search ${config.title.toLowerCase()}...`} className="w-full rounded-lg border border-border bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-primary" />
-          </label>
+          <SearchInput value={search} onChange={(event) => setSearch(event.target.value)} placeholder={`Search ${config.title.toLowerCase()}...`} width="w-full sm:w-72" />
         </div>
 
         <div className="bg-white border border-border rounded-xl overflow-hidden">

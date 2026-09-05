@@ -4,9 +4,12 @@ import { getAllPackages } from '@/services/package.service'
 import { ROUTES } from '@/constants/routes'
 import useAuth from '@/hooks/useAuth'
 import { toast } from 'react-toastify'
-import { ArrowRight, ChevronRight, ChevronLeft, Check, Search, ChevronDown, Shield, Grid, List, RefreshCw, Eye, X } from 'lucide-react'
+import { ArrowRight, ChevronRight, ChevronLeft, Check, Shield, RefreshCw, Eye, X, ArrowUp, ArrowDown, ChevronsUpDown } from 'lucide-react'
 import FilterPanel from '@/components/ui/FilterPanel'
 import FilterButton from '@/components/ui/FilterButton'
+import Pagination from '@/components/ui/Pagination'
+import SearchInput from '@/components/ui/SearchInput'
+import ViewToggle from '@/components/ui/ViewToggle'
 
 
 const getBadge = (item) => {
@@ -236,15 +239,11 @@ const PackageTableRow = ({ item, handleBookNow, onViewDetails }) => {
   const category = typeof item.category === 'object' ? item.category?.name : item.category
 
   return (
-    <tr className="border-b border-border last:border-0 hover:bg-gray-50 transition">
-      <td className="px-5 py-4">
+    <tr className="cursor-pointer border-t border-border transition hover:bg-accent/40" onClick={() => onViewDetails(item)}>
+      <td className="px-4 py-3">
         <div className="flex items-center gap-3">
           {item.image ? (
-            <img
-              src={item.image}
-              alt={item.title}
-              className="w-10 h-10 rounded-lg object-cover border border-border"
-            />
+            <img src={item.image} alt={item.title} className="w-10 h-10 rounded-lg object-cover border border-border" />
           ) : (
             <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
               <span className="text-lg">🩺</span>
@@ -253,32 +252,9 @@ const PackageTableRow = ({ item, handleBookNow, onViewDetails }) => {
           <span className="font-medium text-foreground">{item.title}</span>
         </div>
       </td>
-      <td className="px-5 py-4 text-muted-foreground">{category || '—'}</td>
-      <td className="px-5 py-4 font-medium text-foreground">₹{item.price}</td>
-      <td className="px-5 py-4 text-muted-foreground">{testsList.length}</td>
-      <td className="px-5 py-4">
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            onViewDetails(item)
-          }}
-          className="w-8 h-8 rounded-full bg-primary/10 hover:bg-primary/20 flex items-center justify-center text-primary transition"
-          title="View Details"
-        >
-          <Eye size={16} />
-        </button>
-      </td>
-      <td className="px-5 py-4">
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            handleBookNow(item, 'package')
-          }}
-          className="flex items-center bg-primary hover:bg-primary/90 text-white text-sm font-semibold px-4 py-2 rounded-lg transition"
-        >
-          Book Now
-        </button>
-      </td>
+      <td className="px-4 py-3 text-muted-foreground">{category || '—'}</td>
+      <td className="px-4 py-3 font-medium text-foreground">₹{Number(item.price || 0).toLocaleString('en-IN')}</td>
+      <td className="px-4 py-3 text-muted-foreground">{testsList.length}</td>
     </tr>
   )
 }
@@ -287,17 +263,15 @@ const PackageSkeleton = ({ viewMode = 'grid' }) => {
   if (viewMode === 'list') {
     return (
       <tr className="border-b border-border animate-pulse">
-        <td className="px-5 py-4">
+        <td className="px-4 py-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
             <div className="h-4 bg-gray-200 rounded w-40"></div>
           </div>
         </td>
-        <td className="px-5 py-4"><div className="h-4 bg-gray-200 rounded w-24"></div></td>
-        <td className="px-5 py-4"><div className="h-4 bg-gray-200 rounded w-16"></div></td>
-        <td className="px-5 py-4"><div className="h-4 bg-gray-200 rounded w-8"></div></td>
-        <td className="px-5 py-4"><div className="h-4 bg-gray-200 rounded w-16"></div></td>
-        <td className="px-5 py-4"><div className="h-4 bg-gray-200 rounded w-20"></div></td>
+        <td className="px-4 py-3"><div className="h-4 bg-gray-200 rounded w-24"></div></td>
+        <td className="px-4 py-3"><div className="h-4 bg-gray-200 rounded w-16"></div></td>
+        <td className="px-4 py-3"><div className="h-4 bg-gray-200 rounded w-8"></div></td>
       </tr>
     )
   }
@@ -338,14 +312,14 @@ const Packages = ({ showAllPackages = false }) => {
   const scrollRef = useRef(null)
   const [canScrollRight, setCanScrollRight] = useState(true)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [sortBy, setSortBy] = useState('Sort by Popularity')
-  const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(8)
+  const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(12)
   const [viewMode, setViewMode] = useState('grid')
   const [activeFilters, setActiveFilters] = useState({})
   const [filterPanelOpen, setFilterPanelOpen] = useState(null)
   const [selectedPackage, setSelectedPackage] = useState(null)
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: null })
 
   useEffect(() => {
     const fetchPackages = async () => {
@@ -396,18 +370,11 @@ const Packages = ({ showAllPackages = false }) => {
       navigate(ROUTES.LOGIN, {
         state: {
           message: 'Please login to continue booking',
-          redirectTo: ROUTES.BOOKING,
-          selectedItem: item,
-          bookingType: type,
+          redirectTo: '/booking/bookings',
         },
       })
     } else {
-      navigate(ROUTES.BOOKING, {
-        state: {
-          selectedItem: item,
-          bookingType: type,
-        },
-      })
+      navigate('/booking/bookings')
     }
   }
 
@@ -451,9 +418,20 @@ const Packages = ({ showAllPackages = false }) => {
   }, [])
 
   const clearFilters = () => {
-    setSearchQuery('')
+    setSearch('')
     setActiveFilters({})
-    setCurrentPage(1)
+    setSortConfig({ key: null, direction: null })
+    setPage(1)
+  }
+
+  const handleSort = (key) => {
+    setSortConfig((prev) => {
+      if (prev.key === key) {
+        if (prev.direction === 'asc') return { key, direction: 'desc' }
+        if (prev.direction === 'desc') return { key: null, direction: null }
+      }
+      return { key, direction: 'asc' }
+    })
   }
 
   const filteredPackages = useMemo(() => {
@@ -463,8 +441,8 @@ const Packages = ({ showAllPackages = false }) => {
     result = result.filter(pkg => pkg.isActive !== false)
 
     // Search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
+    if (search) {
+      const query = search.toLowerCase()
       result = result.filter(pkg =>
         pkg.title?.toLowerCase().includes(query) ||
         pkg.description?.toLowerCase().includes(query)
@@ -484,30 +462,37 @@ const Packages = ({ showAllPackages = false }) => {
       })
     }
 
-    // Sort
-    if (sortBy === 'Sort by Price: Low to High') {
-      result.sort((a, b) => (a.price || 0) - (b.price || 0))
-    } else if (sortBy === 'Sort by Price: High to Low') {
-      result.sort((a, b) => (b.price || 0) - (a.price || 0))
-    } else if (sortBy === 'Sort by Name') {
-      result.sort((a, b) => (a.title || '').localeCompare(b.title || ''))
-    }
-
     return result
-  }, [packages, searchQuery, activeFilters, sortBy])
+  }, [packages, search, activeFilters])
 
-  const totalPages = Math.ceil(filteredPackages.length / itemsPerPage)
-  const paginatedPackages = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage
-    return filteredPackages.slice(start, start + itemsPerPage)
-  }, [filteredPackages, currentPage, itemsPerPage])
+  const sortedPackages = useMemo(() => {
+    if (!sortConfig.key) return filteredPackages
+    return [...filteredPackages].sort((a, b) => {
+      let aVal, bVal
+      switch (sortConfig.key) {
+        case 'name': aVal = a.title || ''; bVal = b.title || ''; break
+        case 'category':
+          aVal = typeof a.category === 'object' ? a.category?.name || '' : a.category || ''
+          bVal = typeof b.category === 'object' ? b.category?.name || '' : b.category || ''
+          break
+        case 'price': aVal = a.price || 0; bVal = b.price || 0; break
+        case 'tests': aVal = a.testsIncluded?.length || 0; bVal = b.testsIncluded?.length || 0; break
+        default: return 0
+      }
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal
+      }
+      const cmp = String(aVal).localeCompare(String(bVal))
+      return sortConfig.direction === 'asc' ? cmp : -cmp
+    })
+  }, [filteredPackages, sortConfig])
 
-  const indexOfFirstItem = (currentPage - 1) * itemsPerPage
-  const indexOfLastItem = currentPage * itemsPerPage
+  const totalPages = Math.max(1, Math.ceil(sortedPackages.length / pageSize))
+  const currentItems = sortedPackages.slice((page - 1) * pageSize, page * pageSize)
 
   useEffect(() => {
-    setCurrentPage(1)
-  }, [searchQuery, sortBy, activeFilters])
+    setPage(1)
+  }, [search, activeFilters])
 
   const validPackages = packages
 
@@ -516,23 +501,9 @@ const Packages = ({ showAllPackages = false }) => {
       <div className="enterprise-container">
         {/* Search and Filters Bar */}
         {showAllPackages && (
-          <div className="bg-white border border-border rounded-xl p-4 shadow-sm mb-6">
-            <div className="flex flex-wrap items-center gap-4">
-              {/* Search Bar */}
-              <div className="flex-1 min-w-[200px]">
-                <div className="bg-gray-50 border border-border rounded-lg px-4 py-2.5 flex items-center gap-3 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition">
-                  <Search size={18} className="text-muted-foreground flex-shrink-0" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search packages by name..."
-                    className="w-full outline-none text-sm text-foreground bg-transparent placeholder:text-muted-foreground/60"
-                  />
-                </div>
-              </div>
-
-              {/* Filter Button */}
+          <div className="hidden sm:flex items-center justify-end gap-2">
+            <div className="flex items-center gap-2">
+              <SearchInput value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search packages by name..." />
               <FilterButton
                 onClick={(e) => {
                   const rect = e.currentTarget.getBoundingClientRect()
@@ -540,8 +511,6 @@ const Packages = ({ showAllPackages = false }) => {
                 }}
                 activeCount={activeFilterCount}
               />
-
-              {/* Clear Filters */}
               {activeFilterCount > 0 && (
                 <button
                   onClick={clearFilters}
@@ -551,60 +520,43 @@ const Packages = ({ showAllPackages = false }) => {
                   <span>Clear</span>
                 </button>
               )}
-
-              {/* Sort Dropdown */}
-              <div className="relative min-w-[180px]">
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full appearance-none px-4 py-2.5 bg-gray-50 border border-border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition cursor-pointer"
-                >
-                  <option value="Sort by Popularity">Sort by Popularity</option>
-                  <option value="Sort by Price: Low to High">Sort by Price: Low to High</option>
-                  <option value="Sort by Price: High to Low">Sort by Price: High to Low</option>
-                  <option value="Sort by Name">Sort by Name</option>
-                </select>
-                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-              </div>
-
-              {/* View Toggle */}
-              <div className="flex items-center border border-border rounded-lg overflow-hidden">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2.5 transition ${viewMode === 'grid' ? 'bg-primary text-white' : 'bg-gray-50 text-muted-foreground hover:bg-gray-100'}`}
-                >
-                  <Grid size={18} />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-2.5 transition ${viewMode === 'list' ? 'bg-primary text-white' : 'bg-gray-50 text-muted-foreground hover:bg-gray-100'}`}
-                >
-                  <List size={18} />
-                </button>
-              </div>
+              <ViewToggle value={viewMode} onChange={setViewMode} tooltips={false} />
             </div>
+          </div>
+        )}
+
+        {/* Mobile: Search + Filter + View Toggle */}
+        {showAllPackages && (
+          <div className="flex sm:hidden items-center gap-2">
+            <SearchInput value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search packages by name..." className="flex-1" width="w-full" />
+            <FilterButton
+              onClick={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect()
+                setFilterPanelOpen({ top: rect.bottom + 8, left: Math.max(16, rect.right - 680) })
+              }}
+              activeCount={activeFilterCount}
+            />
+            <ViewToggle value={viewMode} onChange={setViewMode} tooltips={false} />
           </div>
         )}
 
         {/* Loading */}
         {loading ? (
-          <div className={`${showAllPackages && viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6' : 'relative group/scroll'}`}>
+          <div className={`mt-6 ${showAllPackages && viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6' : 'relative group/scroll'}`}>
             {showAllPackages ? (
               viewMode === 'grid' ? (
                 [1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
                   <PackageSkeleton key={i} viewMode="grid" />
                 ))
               ) : (
-                <div className="bg-card border border-border rounded-xl overflow-hidden">
+                  <div className="bg-card border border-border rounded-xl overflow-hidden">
                   <table className="w-full min-w-[800px] text-sm">
-                    <thead className="bg-gray-50 border-b border-border">
+                    <thead className="bg-accent text-left text-muted-foreground">
                       <tr>
-                        <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground">Package Name</th>
-                        <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground">Category</th>
-                        <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground">Price</th>
-                        <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground">Tests</th>
-                        <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground">Status</th>
-                        <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground">Action</th>
+                        <th className="px-4 py-3 text-xs font-semibold">Package Name</th>
+                        <th className="px-4 py-3 text-xs font-semibold">Category</th>
+                        <th className="px-4 py-3 text-xs font-semibold">Price (₹)</th>
+                        <th className="px-4 py-3 text-xs font-semibold">Tests</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -625,188 +577,71 @@ const Packages = ({ showAllPackages = false }) => {
               </div>
             )}
           </div>
-        ) : showAllPackages ? (
-          paginatedPackages.length === 0 ? (
+        ) : showAllPackages ? (<>
+          <div className="mt-6">
+          {sortedPackages.length === 0 ? (
             <div className="bg-white/50 border border-border rounded-xl p-8 text-center text-muted-foreground">
               <p className="text-sm">No health packages found matching your criteria.</p>
               <p className="text-xs mt-1 opacity-70">Try adjusting your search or filters.</p>
             </div>
           ) : viewMode === 'grid' ? (
-            <>
-              {/* Grid View */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {paginatedPackages.map((item, index) => (
-                  <PackageCard key={item._id || index} item={item} handleBookNow={handleBookNow} onViewDetails={setSelectedPackage} />
-                ))}
-              </div>
-
-              {/* Pagination - Always show when there are results */}
-              {!loading && filteredPackages.length > 0 && (
-                <div className="flex items-center justify-between mt-8">
-                  <p className="text-sm text-muted-foreground">
-                    Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredPackages.length)} of {filteredPackages.length} packages
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                      disabled={currentPage === 1}
-                      className="px-3 py-2 text-sm border border-border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                    >
-                      &lt;
-                    </button>
-                    {[...Array(Math.min(totalPages, 5))].map((_, index) => {
-                      let pageNumber
-                      if (totalPages <= 5) {
-                        pageNumber = index + 1
-                      } else if (currentPage <= 3) {
-                        pageNumber = index + 1
-                      } else if (currentPage >= totalPages - 2) {
-                        pageNumber = totalPages - 4 + index
-                      } else {
-                        pageNumber = currentPage - 2 + index
-                      }
-                      return (
-                        <button
-                          key={pageNumber}
-                          onClick={() => setCurrentPage(pageNumber)}
-                          className={`w-10 h-10 text-sm font-medium rounded-lg transition ${currentPage === pageNumber ? 'bg-primary text-white' : 'border border-border hover:bg-gray-50'}`}
-                        >
-                          {pageNumber}
-                        </button>
-                      )
-                    })}
-                    {totalPages > 5 && (
-                      <>
-                        <span className="text-muted-foreground">...</span>
-                        <button
-                          onClick={() => setCurrentPage(totalPages)}
-                          className={`w-10 h-10 text-sm font-medium rounded-lg transition ${currentPage === totalPages ? 'bg-primary text-white' : 'border border-border hover:bg-gray-50'}`}
-                        >
-                          {totalPages}
-                        </button>
-                      </>
-                    )}
-                    <button
-                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                      disabled={currentPage === totalPages}
-                      className="px-3 py-2 text-sm border border-border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                    >
-                      &gt;
-                    </button>
-                    <select
-                      value={itemsPerPage}
-                      onChange={(e) => {
-                        setItemsPerPage(Number(e.target.value))
-                        setCurrentPage(1)
-                      }}
-                      className="ml-4 px-3 py-2 text-sm border border-border rounded-lg bg-white cursor-pointer focus:border-primary focus:ring-1 focus:ring-primary"
-                    >
-                      <option value={8}>8 per page</option>
-                      <option value={12}>12 per page</option>
-                      <option value={24}>24 per page</option>
-                      <option value={48}>48 per page</option>
-                    </select>
-                  </div>
-                </div>
-              )}
-            </>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {currentItems.map((item, index) => (
+                <PackageCard key={item._id || index} item={item} handleBookNow={handleBookNow} onViewDetails={setSelectedPackage} />
+              ))}
+            </div>
           ) : (
-            <>
-              {/* Table View */}
-              <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[800px] text-sm">
-                    <thead className="bg-gray-50 border-b border-border">
-                      <tr>
-                        <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground">Package Name</th>
-                        <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground">Category</th>
-                        <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground">Price</th>
-                        <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground">Tests</th>
-                        <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground">View</th>
-                        <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {paginatedPackages.map((item, index) => (
-                        <PackageTableRow key={item._id || index} item={item} handleBookNow={handleBookNow} onViewDetails={setSelectedPackage} />
+            <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[800px] text-sm">
+                  <thead className="bg-accent text-left text-muted-foreground">
+                    <tr>
+                      {[
+                        { key: 'name', label: 'Package Name' },
+                        { key: 'category', label: 'Category' },
+                        { key: 'price', label: 'Price (₹)' },
+                        { key: 'tests', label: 'Tests' },
+                      ].map((col) => (
+                        <th key={col.key} className="px-4 py-3">
+                          <button
+                            type="button"
+                            onClick={() => handleSort(col.key)}
+                            className="flex items-center gap-1 text-xs font-semibold hover:text-foreground transition"
+                          >
+                            {col.label}
+                            {sortConfig.key === col.key ? (
+                              sortConfig.direction === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />
+                            ) : (
+                              <ChevronsUpDown size={14} className="text-muted-foreground" />
+                            )}
+                          </button>
+                        </th>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {currentItems.map((item, index) => (
+                      <PackageTableRow key={item._id || index} item={item} handleBookNow={handleBookNow} onViewDetails={setSelectedPackage} />
+                    ))}
+                  </tbody>
+                </table>
               </div>
-
-              {/* Pagination - Always show when there are results */}
-              {!loading && filteredPackages.length > 0 && (
-                <div className="flex items-center justify-between mt-8">
-                  <p className="text-sm text-muted-foreground">
-                    Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredPackages.length)} of {filteredPackages.length} packages
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                      disabled={currentPage === 1}
-                      className="px-3 py-2 text-sm border border-border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                    >
-                      &lt;
-                    </button>
-                    {[...Array(Math.min(totalPages, 5))].map((_, index) => {
-                      let pageNumber
-                      if (totalPages <= 5) {
-                        pageNumber = index + 1
-                      } else if (currentPage <= 3) {
-                        pageNumber = index + 1
-                      } else if (currentPage >= totalPages - 2) {
-                        pageNumber = totalPages - 4 + index
-                      } else {
-                        pageNumber = currentPage - 2 + index
-                      }
-                      return (
-                        <button
-                          key={pageNumber}
-                          onClick={() => setCurrentPage(pageNumber)}
-                          className={`w-10 h-10 text-sm font-medium rounded-lg transition ${currentPage === pageNumber ? 'bg-primary text-white' : 'border border-border hover:bg-gray-50'}`}
-                        >
-                          {pageNumber}
-                        </button>
-                      )
-                    })}
-                    {totalPages > 5 && (
-                      <>
-                        <span className="text-muted-foreground">...</span>
-                        <button
-                          onClick={() => setCurrentPage(totalPages)}
-                          className={`w-10 h-10 text-sm font-medium rounded-lg transition ${currentPage === totalPages ? 'bg-primary text-white' : 'border border-border hover:bg-gray-50'}`}
-                        >
-                          {totalPages}
-                        </button>
-                      </>
-                    )}
-                    <button
-                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                      disabled={currentPage === totalPages}
-                      className="px-3 py-2 text-sm border border-border rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                    >
-                      &gt;
-                    </button>
-                    <select
-                      value={itemsPerPage}
-                      onChange={(e) => {
-                        setItemsPerPage(Number(e.target.value))
-                        setCurrentPage(1)
-                      }}
-                      className="ml-4 px-3 py-2 text-sm border border-border rounded-lg bg-white cursor-pointer focus:border-primary focus:ring-1 focus:ring-primary"
-                    >
-                      <option value={8}>8 per page</option>
-                      <option value={12}>12 per page</option>
-                      <option value={24}>24 per page</option>
-                      <option value={48}>48 per page</option>
-                    </select>
-                  </div>
-                </div>
-              )}
-            </>
-          )
-        ) : validPackages.length === 0 ? (
+            </div>
+          )}
+          {!loading && sortedPackages.length > 0 && (
+            <div className="mt-8">
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                pageSize={pageSize}
+                totalItems={sortedPackages.length}
+                onPageChange={setPage}
+                onPageSizeChange={(size) => { setPageSize(size); setPage(1) }}
+              />
+            </div>
+          )}
+          </div>
+        </>) : validPackages.length === 0 ? (
           <div className="bg-white/50 border border-border rounded-xl p-8 text-center text-muted-foreground">
             <p className="text-sm">No health packages are currently available.</p>
             <p className="text-xs mt-1 opacity-70">Check back later or contact support to configure packages.</p>

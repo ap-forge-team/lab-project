@@ -3,7 +3,7 @@ import PublicLayout from '@/components/layout/PublicLayout'
 import Hero from '@/components/Hero'
 import TestCategories from '@/components/TestCategories'
 import Features from '@/components/Features'
-import PopularTests from '@/components/PopularTests'
+import HowItWorks from '@/components/HowItWorks'
 import PopularPackages from '@/components/PopularPackages'
 import WhyChoose from '@/components/WhyChoose'
 
@@ -12,8 +12,8 @@ const Home = () => {
     <PublicLayout>
       <Hero />
       <Features />
+      <HowItWorks />
       <TestCategories />
-      <PopularTests />
       <PopularPackages />
       <WhyChoose />
     </PublicLayout>

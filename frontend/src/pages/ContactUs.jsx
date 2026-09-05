@@ -102,7 +102,7 @@ export default function ContactUs() {
     <PublicLayout>
       <div className="bg-white min-h-screen">
         {/* HERO */}
-        <section className="bg-gray-50 pt-0 pb-10 lg:pb-16">
+        <section className="bg-gray-50 pt-6 lg:pt-10 pb-10 lg:pb-10">
           <div className="enterprise-container">
             <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
               <div className="w-full lg:w-1/2">

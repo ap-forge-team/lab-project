@@ -11,7 +11,7 @@ const Home = lazy(() => import('@/pages/Home'))
 const Login = lazy(() => import('@/pages/Login'))
 const Signup = lazy(() => import('@/pages/Signup'))
 const Dashboard = lazy(() => import('@/pages/Dashboard'))
-const Booking = lazy(() => import('@/pages/Booking'))
+
 const PackagesPage = lazy(() => import('@/pages/PackagesPage'))
 const TestsPage = lazy(() => import('@/pages/TestsPage'))
 const AdminDashboard = lazy(() => import('@/pages/AdminDashboard'))
@@ -84,14 +84,6 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute roles={[ROLES.ADMIN]}>
               <PageTransition><AdminSettings /></PageTransition>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path={ROUTES.BOOKING}
-          element={
-            <ProtectedRoute roles={[ROLES.PATIENT]}>
-              <PageTransition><Booking /></PageTransition>
             </ProtectedRoute>
           }
         />

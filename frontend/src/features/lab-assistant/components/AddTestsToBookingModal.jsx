@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { Search, FlaskConical, Package, Check } from 'lucide-react'
+import { FlaskConical, Package, Check } from 'lucide-react'
 import { toast } from 'react-toastify'
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
+import SearchInput from '@/components/ui/SearchInput'
 import { getAllTests } from '@/services/test.service'
 import { getAllPackages } from '@/services/package.service'
 import { addTestsToBooking } from '@/services/booking.service'
@@ -142,16 +143,7 @@ const AddTestsToBookingModal = ({ open, onClose, booking, onTestsAdded }) => {
   return (
     <Modal open={open} title="Add Tests / Packages" onClose={onClose} size="lg">
       <div className="space-y-4">
-        <div className="relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search tests or packages..."
-            className="w-full pl-9 pr-4 py-2.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-          />
-        </div>
+        <SearchInput value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search tests or packages..." width="w-full" />
 
         {/* Tabs */}
         <div className="flex gap-2 border-b border-border">

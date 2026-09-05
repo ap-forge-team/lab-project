@@ -46,7 +46,7 @@ const Dashboard = () => {
                 </p>
               </div>
               <button
-                onClick={() => navigate(ROUTES.BOOKING)}
+                onClick={() => navigate('/booking/tests?book=true')}
                 className="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-primary/90 transition shrink-0"
               >
                 Book a Test

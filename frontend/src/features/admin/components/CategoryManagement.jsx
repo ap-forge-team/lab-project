@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import {
-  Search,
   Plus,
   Edit2,
   Trash2,
@@ -36,6 +35,7 @@ import ConfirmModal from '@/components/ui/ConfirmModal'
 import Can from '@/components/Can'
 import { getIconById } from '@/components/icons/MedicalIcons'
 import { ROUTES } from '@/constants/routes'
+import SearchInput from '@/components/ui/SearchInput'
 
 const ITEMS_PER_PAGE = 6
 
@@ -296,16 +296,7 @@ const CategoryManagement = () => {
                   {categories.length} Total
                 </span>
               </div>
-              <div className="relative">
-                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder="Search categories..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                />
-              </div>
+              <SearchInput value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search categories..." width="w-full" />
             </div>
 
             <div className="max-h-[500px] overflow-y-auto">
@@ -531,15 +522,8 @@ const CategoryManagement = () => {
                         </span>
                       </div>
                       <div className="flex items-center gap-3">
-                        <div className="relative hidden sm:block">
-                          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                          <input
-                            type="text"
-                            placeholder="Search subcategories..."
-                            value={subSearchQuery}
-                            onChange={(e) => { setSubSearchQuery(e.target.value); setCurrentPage(1) }}
-                            className="pl-8 pr-3 py-1.5 border border-border rounded-lg text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary w-[200px]"
-                          />
+                        <div className="hidden sm:block">
+                          <SearchInput value={subSearchQuery} onChange={(e) => { setSubSearchQuery(e.target.value); setCurrentPage(1) }} placeholder="Search subcategories..." width="w-[200px]" />
                         </div>
                         <Can resource="subcategories" action="create">
                           <button

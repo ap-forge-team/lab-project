@@ -32,7 +32,7 @@ const PatientUpcomingBooking = ({ data }) => {
           <Calendar className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
           <p className="text-muted-foreground text-sm">No upcoming bookings</p>
           <button
-            onClick={() => navigate(ROUTES.BOOKING)}
+            onClick={() => navigate('/booking/tests')}
             className="mt-3 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-primary/90 transition"
           >
             Book a Test
