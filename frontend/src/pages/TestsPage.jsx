@@ -117,15 +117,6 @@ const TestsPage = () => {
       type: 'checkbox',
       options: sampleTypes.map((type) => ({ value: type, label: type })),
     },
-    {
-      key: 'status',
-      label: 'Status',
-      type: 'checkbox',
-      options: [
-        { value: 'active', label: 'Active' },
-        { value: 'inactive', label: 'Inactive' },
-      ],
-    },
   ], [categories, sampleTypes])
 
   const activeFilterCount = useMemo(() => {
@@ -164,14 +155,6 @@ const TestsPage = () => {
       filtered = filtered.filter((item) => {
         const itemSampleType = item.sampleType || 'Blood'
         return filters.sampleType.includes(itemSampleType)
-      })
-    }
-    
-    // Status filter
-    if (filters.status?.length) {
-      filtered = filtered.filter((item) => {
-        const itemStatus = item.isActive ? 'active' : 'inactive'
-        return filters.status.includes(itemStatus)
       })
     }
     
@@ -434,7 +417,6 @@ const TestsPage = () => {
                     <tr>
                       {[
                         { key: 'name', label: 'Test Name' },
-                        { key: 'code', label: 'Test Code' },
                         { key: 'category', label: 'Category' },
                         { key: 'sampleType', label: 'Sample Type' },
                         { key: 'price', label: 'Price (₹)' },
@@ -471,7 +453,6 @@ const TestsPage = () => {
                           onClick={() => handleBookNow(item, 'test')}
                         >
                           <td className="px-4 py-3 font-medium text-foreground">{item.title}</td>
-                          <td className="px-4 py-3 text-muted-foreground">{item.code || item.testCode || '—'}</td>
                           <td className="px-4 py-3">
                             <span className={`rounded-md px-2 py-1 text-xs font-medium ${catColor.bg} ${catColor.text}`}>
                               {category}

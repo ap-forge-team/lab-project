@@ -75,7 +75,7 @@ export default function AboutUs() {
     <PublicLayout>
       <div className="bg-white min-h-screen">
         {/* Hero Section */}
-        <section className="">
+        <section className="pt-10 lg:pt-0">
           <div className="grid lg:grid-cols-5 items-stretch">
             <div className="lg:col-span-2 px-4 sm:px-6 lg:px-8 flex flex-col justify-center">
               <span className="inline-block text-xs font-semibold tracking-wider uppercase text-blue-600 bg-blue-50 border border-blue-100 rounded-full px-4 py-1.5 mb-4 w-fit">
@@ -248,7 +248,7 @@ export default function AboutUs() {
           <div className={CONTAINER}>
             <div className="bg-gray-50 rounded-2xl overflow-hidden">
               <div className="grid lg:grid-cols-5 gap-0">
-                <div className="lg:col-span-2 relative max-h-[280px] overflow-hidden">
+                <div className="lg:col-span-2 relative max-h-[180px] lg:max-h-[280px] overflow-hidden">
                   <img
                     src={familyImg}
                     alt="Happy Family"

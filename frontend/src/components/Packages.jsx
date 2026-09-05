@@ -191,7 +191,13 @@ const PackageCard = ({ item, handleBookNow, onViewDetails }) => {
                 </li>
               ))}
               {testsList.length > 3 && (
-                <li className="text-sm text-primary font-medium flex items-center gap-2 pl-7">
+                <li
+                  className="text-sm text-primary font-medium flex items-center gap-2 pl-7 cursor-pointer hover:underline"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onViewDetails(item)
+                  }}
+                >
                   +{testsList.length - 3} more tests
                 </li>
               )}

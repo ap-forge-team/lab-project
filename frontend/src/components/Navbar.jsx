@@ -102,7 +102,7 @@ const Navbar = () => {
 
   return (
     <div 
-      className={`w-full md:sticky md:top-0 z-50 transition-all duration-300 ${
+      className={`w-full sticky top-0 z-50 transition-all duration-300 ${
         scrolled 
           ? 'bg-white border-b border-border shadow-sm' 
           : 'bg-white border-b border-border'

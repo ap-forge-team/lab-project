@@ -109,7 +109,7 @@ export default function TermsOfService() {
                 <img
                   src={termsImg}
                   alt="Checked Up terms of service"
-                  className="w-full h-[280px] md:h-[340px] object-contain"
+                  className="w-full h-[180px] sm:h-[280px] md:h-[340px] object-contain"
                 />
               </div>
             </div>
@@ -138,12 +138,12 @@ export default function TermsOfService() {
                       {section.content}
                     </p>
                     {section.contact && (
-                      <div className="flex items-center gap-4 mt-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mt-4">
                         <a href="mailto:support@checkedup.com" className="flex items-center gap-2 text-blue-600 hover:underline">
                           <Mail size={16} />
                           <span className="text-sm font-medium">support@checkedup.com</span>
                         </a>
-                        <div className="w-px h-4 bg-gray-300" />
+                        <div className="hidden sm:block w-px h-4 bg-gray-300" />
                         <a href="tel:18001234567" className="flex items-center gap-2 text-blue-600 hover:underline">
                           <Phone size={16} />
                           <span className="text-sm font-medium">1800-123-4567</span>

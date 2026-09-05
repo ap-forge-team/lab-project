@@ -85,7 +85,7 @@ export default function RefundPolicy() {
                 <img
                   src={refundImg}
                   alt="Checked Up refund policy"
-                  className="w-full h-[280px] md:h-[340px] object-contain"
+                  className="w-full h-[180px] sm:h-[280px] md:h-[340px] object-contain"
                 />
               </div>
             </div>
@@ -107,7 +107,7 @@ export default function RefundPolicy() {
                 return (
                   <div
                     key={index}
-                    className={`flex items-center gap-5 p-6 ${index < refundApplicable.length - 1 ? 'border-b border-gray-200' : ''}`}
+                    className={`flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5 p-6 ${index < refundApplicable.length - 1 ? 'border-b border-gray-200' : ''}`}
                   >
                     <div className="w-14 h-14 lg:w-18 lg:h-18 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
                       <Icon size={24} className="text-blue-600 lg:hidden" />
@@ -121,7 +121,7 @@ export default function RefundPolicy() {
                         {item.desc}
                       </p>
                     </div>
-                    <div className="flex-shrink-0">
+                    <div className="flex-shrink-0 sm:text-right">
                       <span className="inline-flex items-center gap-1.5 text-sm font-medium text-green-600">
                         <CheckCircle size={18} />
                         {item.badge}
@@ -176,12 +176,12 @@ export default function RefundPolicy() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-6 flex-shrink-0">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 flex-shrink-0">
               <a href="mailto:support@checkedup.com" className="flex items-center gap-2 text-blue-600 hover:underline">
                 <Mail size={16} />
                 <span className="text-sm font-medium">support@checkedup.com</span>
               </a>
-              <div className="w-px h-8 bg-gray-300" />
+              <div className="hidden sm:block w-px h-8 bg-gray-300" />
               <a href="tel:18001234567" className="flex items-center gap-2 text-blue-600 hover:underline">
                 <Phone size={16} />
                 <div>

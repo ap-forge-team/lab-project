@@ -137,7 +137,7 @@ const Select = ({
         />
 
         {isOpen && (
-          <div className="absolute z-50 mt-1 right-0 min-w-full bg-white border border-border rounded-lg shadow-lg max-h-60 overflow-auto animate-in fade-in-0 zoom-in-95">
+          <div className="absolute z-50 bottom-full mb-1 right-0 min-w-full bg-white border border-border rounded-lg shadow-lg max-h-60 overflow-auto animate-in fade-in-0 zoom-in-95">
             <ul role="listbox" className="py-1">
               {allOptions.length === 0 ? (
                 <li className="px-3 py-2 text-sm text-muted-foreground text-center">No options</li>
