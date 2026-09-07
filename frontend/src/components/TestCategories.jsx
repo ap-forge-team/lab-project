@@ -1,6 +1,6 @@
-import React from 'react'
+import React, { useRef, useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, ChevronLeft } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
 import { useCategories } from '@/hooks/useCategories'
 import { useTests } from '@/hooks/useTests'
@@ -44,6 +44,9 @@ const iconTextColors = {
 
 const TestCategories = () => {
   const navigate = useNavigate()
+  const scrollRef = useRef(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
 
   const { data: categoriesData, isLoading: categoriesLoading, isError: categoriesError } = useCategories()
   const { data: testsData } = useTests()
@@ -63,6 +66,44 @@ const TestCategories = () => {
       return { ...cat, testCount: count }
     })
 
+  const checkScroll = useCallback(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const children = Array.from(el.children)
+    if (children.length <= 1) {
+      setCanScrollLeft(false)
+      setCanScrollRight(false)
+      return
+    }
+    const containerRect = el.getBoundingClientRect()
+    const containerLeft = containerRect.left
+    const containerRight = containerRect.right
+    const firstChildRect = children[0].getBoundingClientRect()
+    const lastChildRect = children[children.length - 1].getBoundingClientRect()
+    setCanScrollLeft(firstChildRect.left < containerLeft - 2)
+    setCanScrollRight(lastChildRect.right > containerRight + 2)
+  }, [])
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const timer = setTimeout(checkScroll, 150)
+    el.addEventListener('scroll', checkScroll, { passive: true })
+    window.addEventListener('resize', checkScroll)
+    return () => {
+      clearTimeout(timer)
+      el.removeEventListener('scroll', checkScroll)
+      window.removeEventListener('resize', checkScroll)
+    }
+  }, [checkScroll, categoriesWithCount.length])
+
+  const scroll = (direction) => {
+    const el = scrollRef.current
+    if (!el) return
+    const amount = 140
+    el.scrollBy({ left: direction === 'left' ? -amount : amount, behavior: 'smooth' })
+  }
+
   const handleCategoryClick = (categoryName) => {
     navigate(`${ROUTES.TESTS}?category=${encodeURIComponent(categoryName)}`)
   }
@@ -74,7 +115,7 @@ const TestCategories = () => {
           <h2 className="font-heading font-bold text-xl lg:text-2xl text-foreground text-center mb-8">
             Popular Health Test Categories
           </h2>
-          <div className="flex gap-3 overflow-x-auto pb-4 lg:justify-center lg:flex-wrap lg:gap-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          <div className="-mx-4 px-4 flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide lg:mx-0 lg:px-0 lg:justify-center lg:flex-wrap lg:gap-4 lg:snap-none">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div key={i} className="flex-shrink-0 w-[120px] lg:w-[155px] bg-gray-50 border border-gray-100 rounded-2xl p-4 lg:p-5 animate-pulse">
                 <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-full bg-gray-200 mx-auto mb-3"></div>
@@ -99,40 +140,65 @@ const TestCategories = () => {
           Popular Health Test Categories
         </h2>
 
-        <div className="flex gap-3 overflow-x-auto pb-4 lg:justify-center lg:flex-wrap lg:gap-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-          {categoriesWithCount.map((cat) => {
-            const iconId = cat.icon || 'flask'
-            const IconComponent = getIconById(iconId)
-            const bgColor = iconBgColors[iconId] || 'bg-primary/10'
-            const textColor = iconTextColors[iconId] || 'text-primary'
-            return (
-              <div
-                key={cat._id}
-                onClick={() => handleCategoryClick(cat.name)}
-                className="flex-shrink-0 w-[120px] lg:w-[155px] bg-gray-50 hover:bg-primary/5 border border-gray-100 hover:border-primary/20 rounded-2xl p-4 lg:p-5 cursor-pointer transition group text-center"
-              >
+        <div className="relative">
+          {/* Left Arrow */}
+          {canScrollLeft && (
+            <button
+              onClick={() => scroll('left')}
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white/90 hover:bg-white shadow-md rounded-full flex items-center justify-center border border-gray-200 transition lg:hidden"
+            >
+              <ChevronLeft size={16} className="text-foreground" />
+            </button>
+          )}
+
+          {/* Right Arrow */}
+          {canScrollRight && (
+            <button
+              onClick={() => scroll('right')}
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white/90 hover:bg-white shadow-md rounded-full flex items-center justify-center border border-gray-200 transition lg:hidden"
+            >
+              <ChevronRight size={16} className="text-foreground" />
+            </button>
+          )}
+
+          <div
+            ref={scrollRef}
+            className="-mx-4 px-4 flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide lg:mx-0 lg:px-0 lg:justify-center lg:flex-wrap lg:gap-4 lg:snap-none"
+          >
+            {categoriesWithCount.map((cat) => {
+              const iconId = cat.icon || 'flask'
+              const IconComponent = getIconById(iconId)
+              const bgColor = iconBgColors[iconId] || 'bg-primary/10'
+              const textColor = iconTextColors[iconId] || 'text-primary'
+              return (
                 <div
-                  className={`w-12 h-12 lg:w-14 lg:h-14 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition overflow-hidden ${cat.customIcon ? 'bg-primary/10' : bgColor}`}
+                  key={cat._id}
+                  onClick={() => handleCategoryClick(cat.name)}
+                  className="flex-shrink-0 w-[120px] lg:w-[155px] bg-gray-50 hover:bg-primary/5 border border-gray-100 hover:border-primary/20 rounded-2xl p-4 lg:p-5 cursor-pointer transition group text-center snap-start"
                 >
-                  {cat.customIcon ? (
-                    <img src={cat.customIcon} alt={cat.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <>
-                      <IconComponent size={24} className={`${textColor} lg:hidden`} />
-                      <IconComponent size={28} className={`${textColor} hidden lg:block`} />
-                    </>
-                  )}
+                  <div
+                    className={`w-12 h-12 lg:w-14 lg:h-14 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition overflow-hidden ${cat.customIcon ? 'bg-primary/10' : bgColor}`}
+                  >
+                    {cat.customIcon ? (
+                      <img src={cat.customIcon} alt={cat.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <>
+                        <IconComponent size={24} className={`${textColor} lg:hidden`} />
+                        <IconComponent size={28} className={`${textColor} hidden lg:block`} />
+                      </>
+                    )}
+                  </div>
+                  <h3 className="font-semibold text-xs lg:text-sm text-foreground mb-1 truncate">
+                    {cat.name}
+                  </h3>
+                  <div className="flex items-center justify-center gap-1 text-[10px] lg:text-xs text-muted-foreground">
+                    <span>{cat.testCount}+ Tests</span>
+                    <ChevronRight size={10} className="lg:hidden text-muted-foreground group-hover:text-primary transition" />
+                  </div>
                 </div>
-                <h3 className="font-semibold text-xs lg:text-sm text-foreground mb-1 truncate">
-                  {cat.name}
-                </h3>
-                <div className="flex items-center justify-center gap-1 text-[10px] lg:text-xs text-muted-foreground">
-                  <span>{cat.testCount}+ Tests</span>
-                  <ChevronRight size={10} className="lg:hidden text-muted-foreground group-hover:text-primary transition" />
-                </div>
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
         </div>
       </div>
     </section>

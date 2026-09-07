@@ -212,5 +212,7 @@ body {
   }
   .preserve-3d { transform-style: preserve-3d; }
   .perspective-1000 { perspective: 1000px; }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { scrollbar-width: none; }
   .animate-rotateY { animation: rotateY 4s linear infinite; }
 }
