@@ -76,6 +76,8 @@ export default function Footer() {
             </div>
           </div>
 
+          {/* Company & Tests - 2-col grid on mobile */}
+          <div className="grid grid-cols-2 gap-8 lg:contents">
           {/* Company Links */}
           <div>
             <h4 className="text-sm font-bold text-foreground mb-4 pb-2 border-b-2 border-primary inline-block">
@@ -114,6 +116,7 @@ export default function Footer() {
                 </li>
               ))}
             </ul>
+          </div>
           </div>
 
           {/* Support Links */}

@@ -99,8 +99,8 @@ const TestCategories = () => {
 
   const scroll = (direction) => {
     const el = scrollRef.current
-    if (!el) return
-    const amount = 140
+    if (!el || !el.children[0]) return
+    const amount = el.children[0].offsetWidth
     el.scrollBy({ left: direction === 'left' ? -amount : amount, behavior: 'smooth' })
   }
 
