@@ -444,7 +444,7 @@ const AssistantsManagePage = ({ assistants, isLoading, isError, onRefresh }) => 
           actionLabel="+ Add Assistant"
           onAction={() => setShowAddModal(true)}
         />
-      ) : view === 'table' ? (
+      ) : view === 'list' ? (
         <>
           <div className="bg-white border border-border rounded-xl">
             <DataTable columns={columnsWithActions} data={filteredAssistants} enablePagination={true} enableSorting={true} pageSize={10} rowClassName="hover:bg-blue-50/50" />

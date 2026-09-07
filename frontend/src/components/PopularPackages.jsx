@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react'
+import React, { useRef, useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Package, ListChecks, ChevronLeft, ChevronRight } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
@@ -32,7 +32,7 @@ const HomePackageCard = ({ pkg, onClick }) => {
   return (
     <article
       onClick={onClick}
-      className="flex-shrink-0 w-[300px] flex flex-col rounded-xl border border-border bg-white shadow-sm transition hover:shadow-md cursor-pointer overflow-hidden"
+      className="flex-shrink-0 w-[300px] flex flex-col rounded-xl border border-border bg-white shadow-sm transition hover:shadow-md cursor-pointer overflow-hidden snap-start"
     >
       {/* Header */}
       <div className="relative h-44 bg-gradient-to-br from-blue-50 to-blue-100 overflow-hidden">
@@ -111,32 +111,52 @@ const PopularPackages = () => {
     navigate(`${ROUTES.PACKAGES}?pkg=${pkg._id}`)
   }
 
-  const checkScroll = () => {
-    if (scrollRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current
-      setCanScrollLeft(scrollLeft > 0)
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10)
+  const checkScroll = useCallback(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const children = Array.from(el.children)
+    if (children.length <= 1) {
+      setCanScrollLeft(false)
+      setCanScrollRight(false)
+      return
     }
-  }
+    const containerRect = el.getBoundingClientRect()
+    const containerLeft = containerRect.left
+    const containerRight = containerRect.right
+    const firstChildRect = children[0].getBoundingClientRect()
+    const lastChildRect = children[children.length - 1].getBoundingClientRect()
+    setCanScrollLeft(firstChildRect.left < containerLeft - 2)
+    setCanScrollRight(lastChildRect.right > containerRight + 2)
+  }, [])
 
   useEffect(() => {
-    const scrollElement = scrollRef.current
-    if (scrollElement) {
-      scrollElement.addEventListener('scroll', checkScroll)
-      checkScroll()
-      return () => scrollElement.removeEventListener('scroll', checkScroll)
+    const el = scrollRef.current
+    if (!el) return
+    const timer = setTimeout(checkScroll, 150)
+    el.addEventListener('scroll', checkScroll, { passive: true })
+    window.addEventListener('resize', checkScroll)
+    return () => {
+      clearTimeout(timer)
+      el.removeEventListener('scroll', checkScroll)
+      window.removeEventListener('resize', checkScroll)
     }
-  }, [activePackages])
+  }, [checkScroll, activePackages.length])
+
+  const getScrollAmount = () => {
+    const el = scrollRef.current
+    if (!el || !el.children[0]) return 320
+    return el.children[0].offsetWidth
+  }
 
   const scrollRight = () => {
     if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: 320, behavior: 'smooth' })
+      scrollRef.current.scrollBy({ left: getScrollAmount(), behavior: 'smooth' })
     }
   }
 
   const scrollLeft = () => {
     if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: -320, behavior: 'smooth' })
+      scrollRef.current.scrollBy({ left: -getScrollAmount(), behavior: 'smooth' })
     }
   }
 
@@ -178,7 +198,7 @@ const PopularPackages = () => {
         <div className="relative group/scroll">
           <div
             ref={scrollRef}
-            className="flex gap-6 overflow-x-auto pb-4 justify-center"
+            className="-mx-4 px-4 flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide lg:mx-0 lg:px-0 lg:justify-center lg:snap-none"
           >
             {activePackages.map((pkg) => (
               <HomePackageCard
@@ -192,7 +212,7 @@ const PopularPackages = () => {
           {canScrollLeft && (
             <button
               onClick={scrollLeft}
-              className="absolute left-0 top-1/2 -translate-y-1/2 w-10 h-10 bg-white border border-border rounded-full flex items-center justify-center shadow-md hover:bg-accent transition hidden md:flex opacity-0 group-hover/scroll:opacity-100"
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white/90 hover:bg-white shadow-md rounded-full flex items-center justify-center border border-gray-200 transition"
             >
               <ChevronLeft size={20} className="text-foreground" />
             </button>
@@ -201,7 +221,7 @@ const PopularPackages = () => {
           {canScrollRight && (
             <button
               onClick={scrollRight}
-              className="absolute right-0 top-1/2 -translate-y-1/2 w-10 h-10 bg-white border border-border rounded-full flex items-center justify-center shadow-md hover:bg-accent transition hidden md:flex"
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white/90 hover:bg-white shadow-md rounded-full flex items-center justify-center border border-gray-200 transition"
             >
               <ChevronRight size={20} className="text-foreground" />
             </button>

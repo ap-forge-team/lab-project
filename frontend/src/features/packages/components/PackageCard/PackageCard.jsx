@@ -10,6 +10,7 @@ const isActivePkg = (pkg) => pkg.isActive !== false && pkg.status?.toLowerCase()
 
 const PackageCard = ({
   pkg,
+  isPatient,
   onView,
   onEdit,
   onDuplicate,
@@ -37,7 +38,7 @@ const PackageCard = ({
         testsIncluded={pkg.testsIncluded}
       />
 
-      <PackageCardBadges isActive={active} />
+      {!isPatient && <PackageCardBadges isActive={active} />}
 
       <PackageCardFooter
         pkg={pkg}

@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import PublicLayout from '@/components/layout/PublicLayout';
 import contactImg from '@/assets/image/contact-us-hero.png';
+import Select from '@/components/ui/Select';
 
 const contactMethods = [
   {
@@ -195,27 +196,13 @@ export default function ContactUs() {
                     className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                   />
                 </div>
-                <div className="relative">
-                  <select
-                    name="subject"
-                    value={formData.subject}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-white text-sm text-gray-900 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
-                  >
-                    <option value="" disabled>
-                      Subject
-                    </option>
-                    {subjects.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown
-                    size={16}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-                  />
-                </div>
+                <Select
+                  name="subject"
+                  value={formData.subject}
+                  onChange={handleChange}
+                  placeholder="Subject"
+                  options={subjects.map((s) => ({ value: s, label: s }))}
+                />
                 <textarea
                   name="message"
                   placeholder="How can we help you?"

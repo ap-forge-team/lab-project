@@ -54,7 +54,7 @@ const AdminBookingsSection = ({
     <div ref={tableRef} className="bg-white border border-border rounded-xl shadow-card mt-8 p-5 md:p-6">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <DashboardSectionHeader title="Recent Bookings" subtitle="Latest patient booking activity" />
-        <ViewToggle view={view} onChange={setView} />
+        <ViewToggle value={view} onChange={setView} />
       </div>
       {loading ? (
         <Spinner />
@@ -69,7 +69,7 @@ const AdminBookingsSection = ({
         <EmptyState text="No Bookings Found" />
       ) : (
         <>
-          {view === 'table' ? (
+          {view === 'list' ? (
             <div className="mt-4 overflow-x-auto">
               <DataTable
                 columns={columns}

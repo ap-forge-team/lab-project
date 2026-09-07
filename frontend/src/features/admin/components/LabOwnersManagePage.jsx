@@ -572,7 +572,7 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
           actionLabel="+ Add Lab Owner"
           onAction={() => setShowAddModal(true)}
         />
-      ) : view === 'table' ? (
+      ) : view === 'list' ? (
         <div className="overflow-y-auto max-h-[calc(100vh-250px)] pb-2 pr-1">
           <div className="rounded-xl border border-border bg-white">
             <table className="w-full min-w-[900px] text-sm">

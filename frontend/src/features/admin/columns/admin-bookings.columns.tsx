@@ -2,6 +2,7 @@ import React from "react"
 import { type ColumnDef } from "@tanstack/react-table"
 import { Clock } from "lucide-react"
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header"
+import Select from "@/components/ui/Select"
 import { BOOKING_STATUS } from "@/constants/status"
 
 const statusStyles: Record<string, string> = {
@@ -156,6 +157,18 @@ export function createAdminBookingsColumns({
       enableSorting: false,
       cell: ({ row }) => {
         const booking = row.original
+        if (handleAssignAssistant && (booking.status === 'Assigned' || booking.status === 'Pending')) {
+          return (
+            <Select
+              value={booking.assignedLabAssistant?._id || ""}
+              onChange={(e) => { e.stopPropagation(); handleAssignAssistant(booking._id, e.target.value) }}
+              onClick={(e) => e.stopPropagation()}
+              placeholder={booking.assignedLabAssistant?.name || "Assign"}
+              options={assistants.map((assistant) => ({ value: assistant._id, label: assistant.name }))}
+              size="sm"
+            />
+          )
+        }
         if (booking.assignedLabAssistant) {
           return (
             <div>
@@ -166,22 +179,6 @@ export function createAdminBookingsColumns({
                 {booking.assignedLabAssistant.email}
               </p>
             </div>
-          )
-        }
-        if (handleAssignAssistant) {
-          return (
-            <select
-              onClick={(e) => e.stopPropagation()}
-              onChange={(e) => { e.stopPropagation(); handleAssignAssistant(booking._id, e.target.value) }}
-              className="text-xs py-1.5 h-8 min-w-[140px] border border-border rounded-lg px-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-foreground bg-card"
-            >
-              <option value="">Assign</option>
-              {assistants.map((assistant) => (
-                <option key={assistant._id} value={assistant._id}>
-                  {assistant.name}
-                </option>
-              ))}
-            </select>
           )
         }
         return <span className="text-xs text-muted-foreground">—</span>

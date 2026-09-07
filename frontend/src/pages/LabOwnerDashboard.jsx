@@ -333,7 +333,7 @@ const LabOwnerDashboard = () => {
             <LabOwnerRecentActivity data={recentActivity} />
             <div>
               <div className="flex items-center justify-end mb-3">
-                <ViewToggle view={view} onChange={setView} />
+                <ViewToggle value={view} onChange={setView} />
               </div>
               <LabOwnerAssistantsTable data={assistants} view={view} />
             </div>

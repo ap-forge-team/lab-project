@@ -47,7 +47,7 @@ const TestCard = ({
         reportTime={reportTime}
       />
 
-      <TestCardBadges isActive={active} />
+      {!isPatient && <TestCardBadges isActive={active} />}
 
       <TestCardFooter
         test={test}

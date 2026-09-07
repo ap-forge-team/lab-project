@@ -23,7 +23,7 @@ const LabOwnerAssistantsTable = ({ data, view = 'table' }) => {
         </button>
       </div>
 
-      {view === 'table' ? (
+      {view === 'list' ? (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>

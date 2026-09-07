@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Lock, Shield, FlaskConical, ChevronDown, ChevronUp } from 'lucide-react'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import Button from '@/components/ui/Button'
+import Select from '@/components/ui/Select'
 import { Spinner } from '@/components/ui/Loader'
 import { toast } from 'react-toastify'
 import useBookingForm from '@/features/booking/hooks/useBookingForm'
@@ -254,26 +255,13 @@ const Booking = () => {
                 {/* Time Slots Dropdown */}
                 <div>
                   <label className="text-xs font-semibold text-foreground mb-2 block">Select Time Slot *</label>
-                  <div className="relative">
-                    <select
-                      name="bookingTime"
-                      value={formData.bookingTime}
-                      onChange={handleChange}
-                      className="w-full border border-border rounded-xl px-4 py-3.5 pr-10 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 text-sm text-foreground bg-card transition appearance-none"
-                    >
-                      <option value="">Select time</option>
-                      {timeSlots.map((slot) => (
-                        <option key={slot} value={slot}>
-                          {slot}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-muted-foreground">
-                        <path d="M6 9l6 6 6-6" />
-                      </svg>
-                    </div>
-                  </div>
+                  <Select
+                    name="bookingTime"
+                    value={formData.bookingTime}
+                    onChange={handleChange}
+                    placeholder="Select time"
+                    options={timeSlots.map((slot) => ({ value: slot, label: slot }))}
+                  />
                 </div>
 
                 {/* Selected Date & Time Summary */}

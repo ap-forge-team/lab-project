@@ -1024,14 +1024,10 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
                         </td>
                         )}
                         <td className="px-4 py-3">
-                          {booking.assignedLabAssistant ? (
-                            <div>
-                              <p className="text-sm font-medium text-foreground">{booking.assignedLabAssistant.name}</p>
-                              <p className="text-[11px] text-muted-foreground mt-0.5">{booking.assignedLabAssistant.email}</p>
-                            </div>
-                          ) : (
+                          {(booking.status === 'Assigned' || booking.status === 'Pending') ? (
                             <select
                               onClick={(e) => e.stopPropagation()}
+                              value={booking.assignedLabAssistant?._id || ""}
                               onChange={(e) => { e.stopPropagation(); handleAssignAssistant(booking._id, e.target.value) }}
                               className="text-xs py-1.5 h-8 min-w-[140px] border border-border rounded-lg px-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-foreground bg-card"
                             >
@@ -1042,6 +1038,13 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
                                 </option>
                               ))}
                             </select>
+                          ) : booking.assignedLabAssistant ? (
+                            <div>
+                              <p className="text-sm font-medium text-foreground">{booking.assignedLabAssistant.name}</p>
+                              <p className="text-[11px] text-muted-foreground mt-0.5">{booking.assignedLabAssistant.email}</p>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
                           )}
                         </td>
                         {!hiddenColumns.status && (

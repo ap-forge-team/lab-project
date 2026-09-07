@@ -13,6 +13,7 @@ import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
 import Textarea from '@/components/ui/Textarea'
 import Button from '@/components/ui/Button'
+import Select from '@/components/ui/Select'
 import useFormErrors from '@/hooks/useFormErrors'
 
 const INITIAL_DATA = {
@@ -177,25 +178,16 @@ const AddPackageModal = ({ open, onClose, onCreated, initialData, packageId, mod
             />
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">
-                Category <span className="text-red-500">*</span>
-              </label>
-              <select
+              <Select
+                label="Category"
                 name="category"
                 value={packageData.category}
                 onChange={handleChange}
-                className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select category</option>
-                {categories.map((c) => (
-                  <option key={c._id} value={c._id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-              {errors.category && (
-                <span className="text-xs text-red-500">{errors.category}</span>
-              )}
+                required
+                placeholder="Select category"
+                options={categories.map((c) => ({ value: c._id, label: c.name }))}
+                error={errors.category}
+              />
             </div>
           </div>
         </section>
