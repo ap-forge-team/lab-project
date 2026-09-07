@@ -284,6 +284,14 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
   const [activeFilters, setActiveFilters] = useState({})
   const [filterPanelOpen, setFilterPanelOpen] = useState(null)
   const [menuOpen, setMenuOpen] = useState(null)
+  const menuRef = React.useRef(null)
+
+  React.useEffect(() => {
+    if (menuOpen && menuRef.current) {
+      const lastItem = menuRef.current.querySelector('button:last-child')
+      if (lastItem) lastItem.scrollIntoView({ block: 'nearest' })
+    }
+  }, [menuOpen])
   const [sampleImagesModal, setSampleImagesModal] = useState({ open: false, images: [], bookingId: null })
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null })
   const [hiddenColumns, setHiddenColumns] = useState({})
@@ -841,7 +849,13 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
                     setMenuOpen(null)
                   } else {
                     const rect = e.currentTarget.getBoundingClientRect()
-                    setMenuOpen({ id: cardId, booking: b, top: rect.bottom + 4, left: rect.right - 180 })
+                    const estimatedHeight = 200
+                    const spaceBelow = window.innerHeight - rect.bottom
+                    const spaceAbove = rect.top
+                    const top = spaceBelow < estimatedHeight && spaceAbove > spaceBelow
+                      ? rect.top - 4
+                      : rect.bottom + 4
+                    setMenuOpen({ id: cardId, booking: b, top, left: Math.min(rect.right - 160, window.innerWidth - 170), openUp: spaceBelow < estimatedHeight && spaceAbove > spaceBelow })
                   }
                 }}
                 menuOpen={menuOpen}
@@ -1080,7 +1094,7 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
                     )}
                     <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                       <div className="relative">
-                        <button type="button" onClick={(e) => { e.stopPropagation(); if (menuOpen?.id === id) { setMenuOpen(null) } else { const rect = e.currentTarget.getBoundingClientRect(); setMenuOpen({ id, booking, top: rect.bottom + 4, left: rect.right - 140 }) } }} className="p-1.5 text-muted-foreground hover:text-foreground rounded transition">
+                        <button type="button" onClick={(e) => { e.stopPropagation(); if (menuOpen?.id === id) { setMenuOpen(null) } else { const rect = e.currentTarget.getBoundingClientRect(); const estimatedHeight = 200; const spaceBelow = window.innerHeight - rect.bottom; const spaceAbove = rect.top; const openUp = spaceBelow < estimatedHeight && spaceAbove > spaceBelow; const top = openUp ? rect.top - 4 : rect.bottom + 4; setMenuOpen({ id, booking, top, left: Math.min(rect.right - 160, window.innerWidth - 170), openUp }) } }} className="p-1.5 text-muted-foreground hover:text-foreground rounded transition">
                           <MoreVertical size={16} />
                         </button>
                       </div>
@@ -1194,7 +1208,7 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
       {menuOpen && (
         <>
           <div className="fixed inset-0 z-[99]" onClick={() => setMenuOpen(null)} />
-          <div className="fixed bg-white border border-border rounded-lg shadow-lg py-1 z-[100] min-w-[160px]" style={{ top: menuOpen.top, left: menuOpen.left }}>
+          <div ref={menuRef} className="fixed bg-white border border-border rounded-lg shadow-lg py-1 z-[100] min-w-[160px] max-h-[80vh] overflow-y-auto" style={menuOpen.openUp ? { bottom: window.innerHeight - menuOpen.top, left: menuOpen.left } : { top: menuOpen.top, left: menuOpen.left }}>
             {isLabAssistant ? (
               <>
                 <button

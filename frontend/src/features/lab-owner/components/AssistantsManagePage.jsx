@@ -479,7 +479,7 @@ const AssistantsManagePage = ({ assistants, isLoading, isError, onRefresh }) => 
                   </div>
                 </div>
                 <div className="flex flex-col flex-1 p-4 pt-3">
-                  <dl className="space-y-1.5 text-xs">
+                  <dl className="mt-3 space-y-1.5 text-xs">
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Phone</span>
                       <span className="font-medium text-foreground">{assistant.phone || '—'}</span>
@@ -489,7 +489,7 @@ const AssistantsManagePage = ({ assistants, isLoading, isError, onRefresh }) => 
                       <span className="text-foreground">{formattedDate}</span>
                     </div>
                   </dl>
-                  <div className="mt-auto pt-3 border-t border-border flex items-center justify-between">
+                  <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
                     <span className="text-[11px] text-muted-foreground flex items-center gap-1">
                       <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/><path d="M5 8l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       NABL Accredited Labs
@@ -497,17 +497,17 @@ const AssistantsManagePage = ({ assistants, isLoading, isError, onRefresh }) => 
                     <div className="flex items-center gap-1">
                       <Can resource="lab_assistants" action="view">
                         <Tooltip title="View" arrow placement="top">
-                          <button type="button" onClick={() => { setSelectedAssistant(assistant); setShowViewModal(true) }} className="rounded p-1 text-muted-foreground hover:text-primary hover:bg-primary/5 transition"><Eye size={14} /></button>
+                          <button type="button" onClick={(e) => { e.stopPropagation(); setSelectedAssistant(assistant); setShowViewModal(true) }} className="rounded p-1 text-muted-foreground hover:text-primary hover:bg-primary/5 transition"><Eye size={14} /></button>
                         </Tooltip>
                       </Can>
                       <Can resource="lab_assistants" action="update">
                         <Tooltip title="Edit" arrow placement="top">
-                          <button type="button" onClick={() => handleEdit(assistant)} className="rounded p-1 text-muted-foreground hover:text-primary hover:bg-primary/5 transition"><Pencil size={14} /></button>
+                          <button type="button" onClick={(e) => { e.stopPropagation(); handleEdit(assistant) }} className="rounded p-1 text-muted-foreground hover:text-primary hover:bg-primary/5 transition"><Pencil size={14} /></button>
                         </Tooltip>
                       </Can>
                       <Can resource="lab_assistants" action="delete">
                         <Tooltip title="Delete" arrow placement="top">
-                          <button type="button" onClick={() => { setSelectedAssistant(assistant); setShowDeleteModal(true) }} className="rounded p-1 text-muted-foreground hover:text-red-500 hover:bg-red-50 transition"><Trash2 size={14} /></button>
+                          <button type="button" onClick={(e) => { e.stopPropagation(); setSelectedAssistant(assistant); setShowDeleteModal(true) }} className="rounded p-1 text-muted-foreground hover:text-red-500 hover:bg-red-50 transition"><Trash2 size={14} /></button>
                         </Tooltip>
                       </Can>
                     </div>
