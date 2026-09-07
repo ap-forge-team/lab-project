@@ -20,7 +20,9 @@ const BookingCard = ({
 }) => {
   const isLabAssistant = role === ROLES.LAB_ASSISTANT
   const isLabOwner = role === ROLES.LAB_OWNER
+  const isAdmin = role === ROLES.ADMIN
   const isPatient = role === ROLES.PATIENT
+  const canAssignAssistant = isLabOwner || isAdmin
   const testName = booking.test?.title || booking.package?.title || 'N/A'
   const testCity = booking.test?.city || booking.package?.city
   const amount = booking.totalAmount || booking.test?.price || booking.package?.price || 0
@@ -33,8 +35,8 @@ const BookingCard = ({
         : (booking.labOwner?.name || 'No Lab Assigned')
   const detailType = isPatient ? 'lab' : isLabAssistant ? 'address' : 'lab'
   const isDetailMissing = !isPatient && !isLabAssistant && !isLabOwner && !booking.labOwner?.name
-  const assistantName = isLabOwner ? (booking.assignedLabAssistant?.name || 'No Assistant Assigned') : null
-  const isAssistantMissing = isLabOwner && !booking.assignedLabAssistant?.name
+  const assistantName = canAssignAssistant ? (booking.assignedLabAssistant?.name || 'No Assistant Assigned') : null
+  const isAssistantMissing = canAssignAssistant && !booking.assignedLabAssistant?.name
 
   const threeDotButton = (isLabAssistant || isLabOwner) ? (
     <button
@@ -71,7 +73,7 @@ const BookingCard = ({
         isDetailMissing={isDetailMissing}
         assistantName={assistantName}
         isAssistantMissing={isAssistantMissing}
-        assistants={isLabOwner ? assistants : null}
+        assistants={canAssignAssistant ? assistants : null}
         onAssignAssistant={onAssignAssistant}
         bookingId={booking._id}
         bookingStatus={booking.status}

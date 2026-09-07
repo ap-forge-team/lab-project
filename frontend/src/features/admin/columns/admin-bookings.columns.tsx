@@ -157,6 +157,18 @@ export function createAdminBookingsColumns({
       enableSorting: false,
       cell: ({ row }) => {
         const booking = row.original
+        if (handleAssignAssistant && (booking.status === 'Assigned' || booking.status === 'Pending')) {
+          return (
+            <Select
+              value={booking.assignedLabAssistant?._id || ""}
+              onChange={(e) => { e.stopPropagation(); handleAssignAssistant(booking._id, e.target.value) }}
+              onClick={(e) => e.stopPropagation()}
+              placeholder={booking.assignedLabAssistant?.name || "Assign"}
+              options={assistants.map((assistant) => ({ value: assistant._id, label: assistant.name }))}
+              size="sm"
+            />
+          )
+        }
         if (booking.assignedLabAssistant) {
           return (
             <div>
@@ -167,18 +179,6 @@ export function createAdminBookingsColumns({
                 {booking.assignedLabAssistant.email}
               </p>
             </div>
-          )
-        }
-        if (handleAssignAssistant) {
-          return (
-            <Select
-              value=""
-              onChange={(e) => { e.stopPropagation(); handleAssignAssistant(booking._id, e.target.value) }}
-              onClick={(e) => e.stopPropagation()}
-              placeholder="Assign"
-              options={assistants.map((assistant) => ({ value: assistant._id, label: assistant.name }))}
-              size="sm"
-            />
           )
         }
         return <span className="text-xs text-muted-foreground">—</span>

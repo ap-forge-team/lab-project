@@ -429,6 +429,8 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
         <ViewToggle value={view} onChange={setView} onGridClick={() => setSelectedTestId(null)} />
       </div>
 
+      {!isPatient && (
+      <>
       <div className="overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div className="flex gap-4 min-w-max">
           <div className="snap-start min-w-[220px] shrink-0">
@@ -487,6 +489,8 @@ const TestsManagePage = ({ tests, isLoading, isError, onRefresh }) => {
         <span className="w-2 h-2 rounded-full bg-border"></span>
         <span className="w-2 h-2 rounded-full bg-border"></span>
       </div>
+      </>
+      )}
 
       {isLoading ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">Loading tests…</div> : isError ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-destructive">Unable to load tests. Please try again.</div> : visibleTests.length === 0 ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">No tests match the selected filters.</div> : view === 'grid' ? (
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
