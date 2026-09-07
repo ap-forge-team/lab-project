@@ -83,7 +83,7 @@ const SamplePickupsManagePage = ({ bookings, isLoading, isError }) => {
   const [activeFilters, setActiveFilters] = useState({})
   const [filterPanelOpen, setFilterPanelOpen] = useState(null)
   const [reportModal, setReportModal] = useState({ open: false, booking: null })
-  const [view, setView] = useState('table')
+  const [view, setView] = useState('grid')
 
   const list = useMemo(() => {
     if (!Array.isArray(bookings)) return []

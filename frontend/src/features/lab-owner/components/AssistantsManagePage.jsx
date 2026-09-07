@@ -438,7 +438,7 @@ const AssistantsManagePage = ({ assistants, isLoading, isError, onRefresh }) => 
         <div className="bg-white border border-border rounded-xl p-8 text-center text-sm text-destructive">Unable to load assistants. Please try again.</div>
       ) : filteredAssistants.length === 0 ? (
         <div className="bg-white border border-border rounded-xl p-12 text-center text-sm text-muted-foreground">No assistants found.</div>
-      ) : view === 'table' ? (
+      ) : view === 'list' ? (
         <>
           <div className="bg-white border border-border rounded-xl">
             <DataTable columns={columnsWithActions} data={filteredAssistants} enablePagination={true} enableSorting={true} pageSize={10} rowClassName="hover:bg-blue-50/50" />

@@ -9,7 +9,7 @@ const ViewToggle = ({ value, onChange, onGridClick, tooltips = true, className =
     <button
       type="button"
       aria-label="Grid view"
-      onClick={() => onGridClick ? onGridClick() : onChange('grid')}
+      onClick={() => { if (onGridClick) onGridClick(); onChange('grid') }}
       className={`rounded p-1.5 transition ${isActive('grid') ? 'bg-primary/10 text-primary' : 'text-muted-foreground'}`}
     >
       <Grid2X2 size={18} />

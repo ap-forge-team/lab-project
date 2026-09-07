@@ -570,7 +570,7 @@ const UsersManagePage = ({ users, isLoading, isError, onRefresh }) => {
         <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-destructive">Unable to load users. Please try again.</div>
       ) : filteredUsers.length === 0 ? (
         <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">No users found.</div>
-      ) : view === 'table' ? (
+      ) : view === 'list' ? (
         <div className="overflow-y-auto max-h-[calc(100vh-250px)] pb-2 pr-1">
           <div className="rounded-xl border border-border bg-white">
             <table className="w-full min-w-[900px] text-sm">
