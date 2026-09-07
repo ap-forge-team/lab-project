@@ -39,7 +39,6 @@ export const ALL_MENU_ITEMS = [
   {
     label: 'Tests',
     icon: TestTube,
-    permission: { resource: 'tests', action: 'read' },
     routes: {
       admin: '/admin/tests',
       lab_owner: '/lab-owner/tests',
@@ -50,7 +49,6 @@ export const ALL_MENU_ITEMS = [
   {
     label: 'Packages',
     icon: Package,
-    permission: { resource: 'packages', action: 'read' },
     routes: {
       admin: '/admin/packages',
       lab_owner: '/lab-owner/packages',
@@ -71,7 +69,6 @@ export const ALL_MENU_ITEMS = [
   {
     label: 'My Bookings',
     icon: Calendar,
-    permission: { resource: 'bookings', action: 'read' },
     routes: {
       patient: '/booking/bookings',
     },
@@ -116,7 +113,6 @@ export const ALL_MENU_ITEMS = [
   {
     label: 'Reports',
     icon: FileText,
-    permission: { resource: 'reports', action: 'read' },
     routes: {
       admin: '/admin/reports',
       lab_owner: '/lab-owner/reports',
@@ -161,7 +157,6 @@ export const ALL_MENU_ITEMS = [
   {
     label: 'Upload Prescription',
     icon: Upload,
-    permission: { resource: 'bookings', action: 'create' },
     routes: {
       patient: '/upload-prescription',
     },

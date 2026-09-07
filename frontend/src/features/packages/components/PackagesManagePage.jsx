@@ -255,6 +255,7 @@ const PackagesManagePage = ({ packages, isLoading, isError, onRefresh }) => {
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase()
     let result = packages.filter((pkg) => {
+      if (isPatient && !isActive(pkg)) return false
       const matchesSearch = !term || `${getTitle(pkg)} ${getCategory(pkg)}`.toLowerCase().includes(term)
       if (!matchesSearch) return false
       if (activeFilters.name?.length && !activeFilters.name.includes(getTitle(pkg))) return false
@@ -376,6 +377,8 @@ const PackagesManagePage = ({ packages, isLoading, isError, onRefresh }) => {
       </div>
 
       {/* Stat Cards */}
+      {!isPatient && (
+      <>
       <div className="overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div className="flex gap-4 min-w-max">
           <div className="snap-start min-w-[220px] shrink-0">
@@ -434,6 +437,8 @@ const PackagesManagePage = ({ packages, isLoading, isError, onRefresh }) => {
         <span className="w-2 h-2 rounded-full bg-border"></span>
         <span className="w-2 h-2 rounded-full bg-border"></span>
       </div>
+      </>
+      )}
 
       {isLoading ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">Loading packages…</div> : isError ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-destructive">Unable to load packages. Please try again.</div> : visiblePackages.length === 0 ? <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground">No packages match the selected filters.</div> : view === 'grid' ? (
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -443,6 +448,7 @@ const PackagesManagePage = ({ packages, isLoading, isError, onRefresh }) => {
               <PackageCard
                 key={id}
                 pkg={pkg}
+                isPatient={isPatient}
                 onView={() => setSelectedPackageId(id)}
                 onEdit={() => handleEdit(pkg)}
                 onDuplicate={() => handleDuplicate(pkg)}
