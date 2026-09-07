@@ -73,6 +73,7 @@ const BookingCard = ({
         isDetailMissing={isDetailMissing}
         assistantName={assistantName}
         isAssistantMissing={isAssistantMissing}
+        assignedAssistantId={booking.assignedLabAssistant?._id || ''}
         assistants={canAssignAssistant ? assistants : null}
         onAssignAssistant={onAssignAssistant}
         bookingId={booking._id}

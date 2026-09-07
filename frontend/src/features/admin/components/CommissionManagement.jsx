@@ -125,11 +125,11 @@ const CommissionManagement = () => {
 
       <section className="rounded-2xl border border-border bg-white p-6 shadow-sm sm:p-8">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
-          <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary"><BadgePercent size={42} strokeWidth={1.8} /></div>
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary sm:h-24 sm:w-24"><BadgePercent size={30} strokeWidth={1.8} className="sm:hidden" /><BadgePercent size={42} strokeWidth={1.8} className="hidden sm:block" /></div>
           <div className="flex-1">
             <h2 className="font-semibold text-foreground">Active Commission</h2>
             {loading ? <p className="mt-3 text-sm text-muted-foreground">Loading commission settings…</p> : commission ? (
-              <><p className="mt-1 text-4xl font-bold tracking-tight text-foreground">{formatCommission(commission.commissionType, commission.commissionValue)}</p><p className="mt-2 text-sm text-muted-foreground">This is the active commission applied across the platform.</p></>
+              <><p className="mt-1 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">{formatCommission(commission.commissionType, commission.commissionValue)}</p><p className="mt-2 text-sm text-muted-foreground">This is the active commission applied across the platform.</p></>
             ) : <><p className="mt-2 text-sm text-muted-foreground">No active commission has been configured.</p><Can resource="commissions" action="create"><Button className="mt-4" onClick={openCreate}><Plus size={16} className="mr-2" />Create Commission</Button></Can></>}
           </div>
           {commission && <Can resource="commissions" action="update"><Button variant="outline" onClick={openEdit}><Pencil size={16} className="mr-2" />Edit</Button></Can>}

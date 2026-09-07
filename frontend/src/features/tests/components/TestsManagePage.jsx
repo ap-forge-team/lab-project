@@ -135,7 +135,6 @@ const TestDetailsPanel = ({ test, style, catColor, onClose }) => {
             <p className="font-semibold text-foreground">{getTitle(test)}</p>
             <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${isActive(test) ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>{isActive(test) ? 'Active' : 'Inactive'}</span>
           </div>
-          <p className="mt-0.5 text-xs text-muted-foreground">Test Code: {test.code || test.testCode || '—'}</p>
           <span className={`mt-1.5 inline-block rounded-md px-2 py-0.5 text-xs font-medium ${catColor.bg} ${catColor.text}`}>{getCategory(test)}</span>
         </div>
       </div>
@@ -152,8 +151,8 @@ const TestDetailsPanel = ({ test, style, catColor, onClose }) => {
         </div>
       )}
       <div className="mt-3 divide-y divide-border border-t border-border">
-        <DetailRow label="Created On" value={getValue(test, ['createdAt', 'createdOn'])} />
-        <DetailRow label="Last Updated" value={getValue(test, ['updatedAt', 'lastUpdated'])} />
+        <DetailRow label="Created On" value={new Date(getValue(test, ['createdAt', 'createdOn'])).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} />
+        <DetailRow label="Last Updated" value={new Date(getValue(test, ['updatedAt', 'lastUpdated'])).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} />
       </div>
     </Modal>
   )

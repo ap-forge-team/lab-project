@@ -11,6 +11,7 @@ import { getCategories } from '@/services/category.service'
 import { getAllTests } from '@/services/test.service'
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
+import Select from '@/components/ui/Select'
 import useFormErrors from '@/hooks/useFormErrors'
 
 const INITIAL_DATA = {
@@ -206,21 +207,16 @@ const CreatePackageModal = ({ open, onClose, onCreated, initialData, packageId, 
                 <span className="text-xs text-muted-foreground">E.g. Basic Health Checkup</span>
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-semibold text-foreground">
-                  Category <span className="text-red-500">*</span>
-                </label>
-                <select
+                <Select
+                  label="Category"
                   name="category"
+                  required
                   value={packageData.category}
                   onChange={handleChange}
-                  className="border border-border rounded-lg px-3 py-2.5 text-sm text-foreground bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition"
-                >
-                  <option value="">Select category</option>
-                  {categories.map((c) => (
-                    <option key={c._id} value={c._id}>{c.name}</option>
-                  ))}
-                </select>
-                {errors.category && <span className="text-xs text-red-500">{errors.category}</span>}
+                  placeholder="Select category"
+                  error={errors.category}
+                  options={categories.map((c) => ({ value: c._id, label: c.name }))}
+                />
                 <span className="text-xs text-muted-foreground">Choose a category for this package</span>
               </div>
             </div>

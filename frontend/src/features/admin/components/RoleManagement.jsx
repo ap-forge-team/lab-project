@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import {
@@ -87,6 +87,18 @@ const RoleManagement = () => {
   const [editingRole, setEditingRole] = useState(null)
   const [form, setForm] = useState(emptyForm)
   const [menuOpen, setMenuOpen] = useState(null)
+  const menuRef = useRef(null)
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const handleClick = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(null)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [menuOpen])
   const [resources, setResources] = useState([])
   const [saving, setSaving] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
@@ -308,7 +320,7 @@ const RoleManagement = () => {
                     >
                       {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                     </button>
-                    <div className="relative">
+                    <div className="relative" ref={menuRef}>
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
@@ -449,8 +461,8 @@ const RoleManagement = () => {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-4 border-b border-border">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
               <div>
                 <h3 className="font-semibold text-foreground">
                   {editingRole ? 'Edit Role' : 'Add Role'}
@@ -464,7 +476,7 @@ const RoleManagement = () => {
               </button>
             </div>
 
-            <div className="p-4 space-y-5">
+            <div className="p-4 space-y-5 overflow-y-auto flex-1 min-h-0">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input
                   label="Name"
@@ -548,7 +560,7 @@ const RoleManagement = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 p-4 border-t border-border">
+            <div className="flex items-center justify-end gap-3 p-4 border-t border-border shrink-0">
               <button
                 onClick={handleCloseModal}
                 className="px-4 py-2 text-sm font-medium text-foreground hover:bg-accent rounded-lg transition"

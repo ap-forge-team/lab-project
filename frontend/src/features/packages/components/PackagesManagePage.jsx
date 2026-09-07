@@ -150,11 +150,14 @@ const PackageDetailsPanel = ({ pkg, onClose }) => {
       <div className="mt-4 divide-y divide-border border-t border-border">
         <DetailRow label="Price" value={formatPrice(pkg.price)} />
         <DetailRow label="Tests Included" value={pkg.testsIncluded?.length || 0} />
-        <DetailRow label="Description" value={pkg.description || '—'} />
+        <div className="py-2 text-sm">
+          <span className="text-muted-foreground">Description</span>
+          <p className="mt-1 text-foreground">{pkg.description || '—'}</p>
+        </div>
       </div>
       <div className="mt-3 divide-y divide-border border-t border-border">
-        <DetailRow label="Created On" value={getValue(pkg, ['createdAt', 'createdOn'])} />
-        <DetailRow label="Last Updated" value={getValue(pkg, ['updatedAt', 'lastUpdated'])} />
+        <DetailRow label="Created On" value={new Date(getValue(pkg, ['createdAt', 'createdOn'])).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} />
+        <DetailRow label="Last Updated" value={new Date(getValue(pkg, ['updatedAt', 'lastUpdated'])).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })} />
       </div>
     </Modal>
   )

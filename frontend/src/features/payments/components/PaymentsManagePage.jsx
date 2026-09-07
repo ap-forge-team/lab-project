@@ -488,7 +488,7 @@ const PaymentsManagePage = ({ payments, isLoading, isError, onRefresh }) => {
                     </span>
                   </div>
                 </div>
-                <div className="flex flex-col flex-1 p-4 pt-3">
+                <div className="flex flex-col p-4 pt-3">
                   <div className="flex items-center justify-between">
                     <span className="text-lg font-bold text-foreground">{formatCurrency(amount)}</span>
                     <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -512,7 +512,7 @@ const PaymentsManagePage = ({ payments, isLoading, isError, onRefresh }) => {
                       <span className="text-foreground">{formatDate(payment.paidAt || payment.createdAt)}</span>
                     </div>
                   </dl>
-                  <div className="mt-auto pt-3 border-t border-border flex items-center justify-between">
+                  <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
                     <span className="text-[11px] text-muted-foreground flex items-center gap-1">
                       <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5"/><path d="M5 8l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       NABL Accredited Labs

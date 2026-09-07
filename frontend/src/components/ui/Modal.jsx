@@ -119,7 +119,7 @@ const Modal = ({ open, onClose, title, subtitle, headerActions, children, size =
             </div>
           </div>
         )}
-        <div className="p-4 sm:p-5 overflow-y-auto overscroll-contain">
+        <div className="p-4 sm:p-5 overflow-y-auto flex-1 min-h-0">
           {children}
         </div>
       </div>

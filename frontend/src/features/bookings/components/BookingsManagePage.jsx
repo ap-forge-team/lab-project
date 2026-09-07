@@ -36,6 +36,7 @@ import Modal from '@/components/ui/Modal'
 import FilterPanel from '@/components/ui/FilterPanel'
 import FilterButton from '@/components/ui/FilterButton'
 import Pagination from '@/components/ui/Pagination'
+import Select from '@/components/ui/Select'
 import useAuth from '@/hooks/useAuth'
 import { ROLES } from '@/constants/roles'
 import { ROUTES } from '@/constants/routes'
@@ -1025,19 +1026,14 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
                         )}
                         <td className="px-4 py-3">
                           {(booking.status === 'Assigned' || booking.status === 'Pending') ? (
-                            <select
-                              onClick={(e) => e.stopPropagation()}
+                            <Select
                               value={booking.assignedLabAssistant?._id || ""}
                               onChange={(e) => { e.stopPropagation(); handleAssignAssistant(booking._id, e.target.value) }}
-                              className="text-xs py-1.5 h-8 min-w-[140px] border border-border rounded-lg px-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-foreground bg-card"
-                            >
-                              <option value="">Assign</option>
-                              {assistants.map((assistant) => (
-                                <option key={assistant._id} value={assistant._id}>
-                                  {assistant.name}
-                                </option>
-                              ))}
-                            </select>
+                              onClick={(e) => e.stopPropagation()}
+                              placeholder="Assign"
+                              options={assistants.map((assistant) => ({ value: assistant._id, label: assistant.name }))}
+                              size="sm"
+                            />
                           ) : booking.assignedLabAssistant ? (
                             <div>
                               <p className="text-sm font-medium text-foreground">{booking.assignedLabAssistant.name}</p>
@@ -1167,17 +1163,13 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
         <Modal open={showEditModal} onClose={() => { setShowEditModal(false); setSelectedBookingForEdit(null); setSelectedLab('') }} title="Edit Assigned Lab">
           <div className="space-y-4">
             <div>
-              <label className="block mb-2 text-sm font-medium text-foreground">Select Lab Owner</label>
-              <select
+              <Select
+                label="Select Lab Owner"
                 value={selectedLab}
                 onChange={(e) => setSelectedLab(e.target.value)}
-                className="w-full border border-border rounded-lg px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-              >
-                <option value="">Select a lab owner</option>
-                {labOwners.map((owner) => (
-                  <option key={owner._id} value={owner._id}>{owner.name}</option>
-                ))}
-              </select>
+                placeholder="Select a lab owner"
+                options={labOwners.map((owner) => ({ value: owner._id, label: owner.name }))}
+              />
             </div>
             <div className="flex gap-3 justify-end">
               <Button

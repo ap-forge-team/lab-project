@@ -9,16 +9,14 @@ export const getMyAssistants =
 
     try {
 
+      const query = { role: 'lab_assistant' }
+
+      if (req.user.role !== 'admin') {
+        query.labOwner = req.user._id
+      }
+
       const assistants =
-        await User.find({
-
-          role:
-            'lab_assistant',
-
-          labOwner:
-            req.user._id
-
-        }).select('-password')
+        await User.find(query).select('-password')
 
       res.status(200)
         .json(assistants)

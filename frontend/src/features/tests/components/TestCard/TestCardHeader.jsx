@@ -35,7 +35,6 @@ const TestCardHeader = ({ testName, testCode, iconName }) => {
           <h3 className="font-semibold text-foreground text-sm truncate" title={testName}>
             {testName}
           </h3>
-          <p className="text-xs text-muted-foreground">{testCode || '—'}</p>
         </div>
       </div>
     </div>
