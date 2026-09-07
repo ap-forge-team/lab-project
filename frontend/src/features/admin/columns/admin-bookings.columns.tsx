@@ -2,6 +2,7 @@ import React from "react"
 import { type ColumnDef } from "@tanstack/react-table"
 import { Clock } from "lucide-react"
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header"
+import Select from "@/components/ui/Select"
 import { BOOKING_STATUS } from "@/constants/status"
 
 const statusStyles: Record<string, string> = {
@@ -170,18 +171,14 @@ export function createAdminBookingsColumns({
         }
         if (handleAssignAssistant) {
           return (
-            <select
-              onClick={(e) => e.stopPropagation()}
+            <Select
+              value=""
               onChange={(e) => { e.stopPropagation(); handleAssignAssistant(booking._id, e.target.value) }}
-              className="text-xs py-1.5 h-8 min-w-[140px] border border-border rounded-lg px-3 outline-none focus:border-primary focus:ring-1 focus:ring-primary text-foreground bg-card"
-            >
-              <option value="">Assign</option>
-              {assistants.map((assistant) => (
-                <option key={assistant._id} value={assistant._id}>
-                  {assistant.name}
-                </option>
-              ))}
-            </select>
+              onClick={(e) => e.stopPropagation()}
+              placeholder="Assign"
+              options={assistants.map((assistant) => ({ value: assistant._id, label: assistant.name }))}
+              size="sm"
+            />
           )
         }
         return <span className="text-xs text-muted-foreground">—</span>

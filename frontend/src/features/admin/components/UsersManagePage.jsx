@@ -6,6 +6,7 @@ import { toast } from 'react-toastify'
 import Button from '@/components/ui/Button'
 import Pagination from '@/components/ui/Pagination'
 import Input from '@/components/ui/Input'
+import Select from '@/components/ui/Select'
 import ConfirmModal from '@/components/ui/ConfirmModal'
 import FilterPanel from '@/components/ui/FilterPanel'
 import FilterButton from '@/components/ui/FilterButton'
@@ -826,14 +827,17 @@ const UsersManagePage = ({ users, isLoading, isError, onRefresh }) => {
               <Input label="Email" name="email" type="email" value={form.email} onChange={(e) => handleChange('email', e.target.value)} placeholder="e.g. john@example.com" error={errors.email} required />
               <Input label="Phone" name="phone" value={form.phone} onChange={(e) => handleChange('phone', e.target.value)} placeholder="e.g. 9876543210" inputMode="numeric" maxLength={10} error={errors.phone} required />
               <Input label="Password" name="password" type="password" value={form.password} onChange={(e) => handleChange('password', e.target.value)} placeholder="Min 6 characters" error={errors.password} required />
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground mb-1.5">Role</label>
-                <select value={form.role} onChange={(e) => handleChange('role', e.target.value)} className="w-full border border-border rounded-lg px-4 py-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary bg-card">
-                  <option value="patient">Customer</option>
-                  <option value="lab_assistant">Lab Technician</option>
-                </select>
-                {errors.role && <p className="text-destructive text-xs mt-1.5 font-medium">{errors.role}</p>}
-              </div>
+              <Select
+                label="Role"
+                name="role"
+                value={form.role}
+                onChange={(e) => handleChange('role', e.target.value)}
+                options={[
+                  { value: 'patient', label: 'Customer' },
+                  { value: 'lab_assistant', label: 'Lab Technician' },
+                ]}
+                error={errors.role}
+              />
               {/* Document Uploads - Only for Lab Assistant */}
               {form.role === 'lab_assistant' && (
                 <div className="space-y-3">

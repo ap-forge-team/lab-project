@@ -1,4 +1,5 @@
 import React from 'react'
+import Select from '@/components/ui/Select'
 
 const formatCurrency = (amount) => `₹${Number(amount || 0).toLocaleString('en-IN')}`
 
@@ -82,11 +83,14 @@ const SettlementCharts = ({ history, isLoading }) => {
       <div className="rounded-xl border border-border bg-white p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-semibold text-foreground">Revenue Trend</h3>
-          <select className="text-xs border border-border rounded px-2 py-1 text-muted-foreground bg-white">
-            <option>This Week</option>
-            <option>This Month</option>
-            <option>This Year</option>
-          </select>
+          <Select
+            options={[
+              { value: 'week', label: 'This Week' },
+              { value: 'month', label: 'This Month' },
+              { value: 'year', label: 'This Year' },
+            ]}
+            size="sm"
+          />
         </div>
 
         <div className="space-y-3">
@@ -121,11 +125,14 @@ const SettlementCharts = ({ history, isLoading }) => {
       <div className="rounded-xl border border-border bg-white p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-semibold text-foreground">Top Lab Owners by Revenue</h3>
-          <select className="text-xs border border-border rounded px-2 py-1 text-muted-foreground bg-white">
-            <option>This Week</option>
-            <option>This Month</option>
-            <option>This Year</option>
-          </select>
+          <Select
+            options={[
+              { value: 'week', label: 'This Week' },
+              { value: 'month', label: 'This Month' },
+              { value: 'year', label: 'This Year' },
+            ]}
+            size="sm"
+          />
         </div>
 
         <div className="space-y-3">

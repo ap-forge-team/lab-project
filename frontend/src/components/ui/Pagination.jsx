@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import Select from './Select'
 
 const Pagination = ({
   page,
@@ -41,18 +42,13 @@ const Pagination = ({
   )
 
   const pageSizeSelect = (
-    <select
+    <Select
       aria-label="Items per page"
       value={pageSize}
       onChange={(e) => onPageSizeChange(Number(e.target.value))}
-      className="rounded-lg border border-border bg-white px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
-    >
-      {pageSizes.map((size) => (
-        <option key={size} value={size}>
-          {size} per page
-        </option>
-      ))}
-    </select>
+      options={pageSizes.map((s) => ({ value: s, label: `${s} per page` }))}
+      size="sm"
+    />
   )
 
   const paginationButtons = (

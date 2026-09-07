@@ -18,6 +18,7 @@ import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
 import Textarea from '@/components/ui/Textarea'
 import Button from '@/components/ui/Button'
+import Select from '@/components/ui/Select'
 import useFormErrors from '@/hooks/useFormErrors'
 
 const SAMPLE_TYPE_OPTIONS = [
@@ -302,46 +303,25 @@ const AddTestModal = ({ open, onClose, onCreated, initialData, testId, mode = 'c
                 hint="Short name for reports (e.g. CBC)"
               />
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-gray-700">
-                  Category <span className="text-red-500">*</span>
-                </label>
-                <select
-                  name="category"
-                  value={testData.category}
-                  onChange={handleChange}
-                  className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select category</option>
-                  {categories.map((c) => (
-                    <option key={c._id} value={c._id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-                {errors.category && (
-                  <span className="text-xs text-red-500">{errors.category}</span>
-                )}
-              </div>
+              <Select
+                label="Category"
+                name="category"
+                value={testData.category}
+                onChange={handleChange}
+                required
+                placeholder="Select category"
+                options={categories.map((c) => ({ value: c._id, label: c.name }))}
+                error={errors.category}
+              />
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-gray-700">
-                  Sub Category (Optional)
-                </label>
-                <select
-                  name="subCategory"
-                  value={testData.subCategory}
-                  onChange={handleChange}
-                  className="border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select sub category</option>
-                  {subcategories.map((s) => (
-                    <option key={s._id} value={s._id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Select
+                label="Sub Category (Optional)"
+                name="subCategory"
+                value={testData.subCategory}
+                onChange={handleChange}
+                placeholder="Select sub category"
+                options={subcategories.map((s) => ({ value: s._id, label: s.name }))}
+              />
             </div>
 
             {/* Assigned Icon panel */}
@@ -430,89 +410,41 @@ const AddTestModal = ({ open, onClose, onCreated, initialData, testId, mode = 'c
             <h3 className="font-semibold text-gray-900">Test Information</h3>
           </div>
           <div className="grid md:grid-cols-4 gap-5">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">
-                Sample Type <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <Droplet
-                  size={16}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400"
-                />
-                <select
-                  name="sampleType"
-                  value={testData.sampleType}
-                  onChange={handleChange}
-                  className="w-full border border-gray-200 rounded-lg pl-9 pr-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select sample type</option>
-                  {SAMPLE_TYPE_OPTIONS.map((s) => (
-                    <option key={s.value} value={s.value}>
-                      {s.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {errors.sampleType && (
-                <span className="text-xs text-red-500">{errors.sampleType}</span>
-              )}
-            </div>
+              <Select
+                label="Sample Type"
+                name="sampleType"
+                value={testData.sampleType}
+                onChange={handleChange}
+                required
+                placeholder="Select sample type"
+                icon={Droplet}
+                options={SAMPLE_TYPE_OPTIONS}
+                error={errors.sampleType}
+              />
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">
-                Collection Method <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <Truck
-                  size={16}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                />
-                <select
-                  name="collectionMethod"
-                  value={testData.collectionMethod}
-                  onChange={handleChange}
-                  className="w-full border border-gray-200 rounded-lg pl-9 pr-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select method</option>
-                  {COLLECTION_METHOD_OPTIONS.map((m) => (
-                    <option key={m.value} value={m.value}>
-                      {m.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {errors.collectionMethod && (
-                <span className="text-xs text-red-500">{errors.collectionMethod}</span>
-              )}
-            </div>
+              <Select
+                label="Collection Method"
+                name="collectionMethod"
+                value={testData.collectionMethod}
+                onChange={handleChange}
+                required
+                placeholder="Select method"
+                icon={Truck}
+                options={COLLECTION_METHOD_OPTIONS}
+                error={errors.collectionMethod}
+              />
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700">
-                Report Time (TAT) <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <Clock
-                  size={16}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-purple-400"
-                />
-                <select
-                  name="reportTime"
-                  value={testData.reportTime}
-                  onChange={handleChange}
-                  className="w-full border border-gray-200 rounded-lg pl-9 pr-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select TAT</option>
-                  {TAT_OPTIONS.map((t) => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {errors.reportTime && (
-                <span className="text-xs text-red-500">{errors.reportTime}</span>
-              )}
-            </div>
+              <Select
+                label="Report Time (TAT)"
+                name="reportTime"
+                value={testData.reportTime}
+                onChange={handleChange}
+                required
+                placeholder="Select TAT"
+                icon={Clock}
+                options={TAT_OPTIONS}
+                error={errors.reportTime}
+              />
 
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-gray-700">
