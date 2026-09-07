@@ -24,6 +24,8 @@ const FilterPanel = ({
 
   useEffect(() => {
     if (!isOpen) return
+    const isMobile = window.innerWidth < 640
+    if (isMobile) return
     const handleScroll = () => onClose()
     window.addEventListener('scroll', handleScroll, true)
     return () => window.removeEventListener('scroll', handleScroll, true)
