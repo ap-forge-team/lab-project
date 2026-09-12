@@ -51,6 +51,7 @@ const ROLE_DATA_SOURCE_OVERRIDES = {
     'sample-pickups': 'labOwnerBookings',
     'upload-reports': 'labOwnerBookings',
     reports: 'labOwnerBookings',
+    payments: 'labOwnerPaymentsList',
   },
   lab_assistant: {
     bookings: 'assignedBookings',

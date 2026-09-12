@@ -19,8 +19,9 @@ const useBookingFormModal = () => {
 
   const validate = useCallback((formData) => {
     const nextErrors = buildErrors(formData)
-    setErrors(nextErrors)
-    return Object.keys(nextErrors).length === 0
+    const hasErrors = Object.values(nextErrors).some((v) => v !== '')
+    setErrors(hasErrors ? nextErrors : {})
+    return !hasErrors
   }, [buildErrors])
 
   const onFieldChange = useCallback((fieldName, formData) => {

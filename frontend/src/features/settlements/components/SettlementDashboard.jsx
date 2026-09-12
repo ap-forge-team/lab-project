@@ -2,12 +2,15 @@ import React, { useState, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Download } from 'lucide-react'
+import Tooltip from '@mui/material/Tooltip'
 import useAuth from '@/hooks/useAuth'
 import { getSettlementStatistics, getSettlementList, getSettlementHistory, getLabSettlementStatistics, getLabSettlementPending, getLabSettlementHistory, exportSettlementHistory, exportLabSettlementHistory } from '@/services/settlement.service'
 import { getAllLabOwners } from '@/services/user.service'
 import SettlementStatsGrid from './SettlementStatsGrid'
 import SettlementPendingTable from './SettlementPendingTable'
+import SettlementPendingGrid from './SettlementPendingGrid'
 import SettlementHistoryTable from './SettlementHistoryTable'
+import SettlementHistoryGrid from './SettlementHistoryGrid'
 import SettlementDetailModal from './SettlementDetailModal'
 import SendSettlementModal from './SendSettlementModal'
 import VerifySettlementModal from './VerifySettlementModal'
@@ -19,6 +22,7 @@ import Button from '@/components/ui/Button'
 import SearchInput from '@/components/ui/SearchInput'
 import FilterButton from '@/components/ui/FilterButton'
 import FilterPanel from '@/components/ui/FilterPanel'
+import ViewToggle from '@/components/ui/ViewToggle'
 
 const SettlementDashboard = () => {
   const { user } = useAuth()
@@ -34,6 +38,7 @@ const SettlementDashboard = () => {
   const [verifyBooking, setVerifyBooking] = useState(null)
   const [bulkSettlementOpen, setBulkSettlementOpen] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [viewMode, setViewMode] = useState('list')
 
   const statusFilter = activeFilters.status?.[0] || ''
   const labOwnerFilter = activeFilters.labOwner?.[0] || ''
@@ -174,13 +179,14 @@ const SettlementDashboard = () => {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Settlement Dashboard</h1>
+          <h1 className="text-2xl font-bold text-foreground">Settlement</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {isAdmin ? 'Manage all payment settlements and their status' : 'View your payment settlements'}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <SearchInput value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search Lab / Batch ID / UTR Number..." width="w-72" />
+          <ViewToggle value={viewMode} onChange={setViewMode} />
           <FilterButton
             onClick={(e) => {
               const rect = e.currentTarget.getBoundingClientRect()
@@ -188,10 +194,15 @@ const SettlementDashboard = () => {
             }}
             activeCount={activeFilterCount}
           />
-          <Button onClick={handleExport} variant="success" size="sm" className="flex items-center gap-2" disabled={exporting}>
-            <Download size={16} />
-            {exporting ? 'Exporting...' : 'Export Excel'}
-          </Button>
+          <Tooltip title="Export Excel" arrow placement="top">
+            <button
+              onClick={handleExport}
+              disabled={exporting}
+              className="rounded p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/5 transition disabled:opacity-50"
+            >
+              <Download size={18} />
+            </button>
+          </Tooltip>
         </div>
       </div>
 
@@ -226,27 +237,52 @@ const SettlementDashboard = () => {
 
       {/* Content */}
       {activeTab === 'pending' ? (
-        <SettlementPendingTable
-          bookings={pendingBookings}
-          isLoading={pendingLoading}
-          search={search}
-          setSearch={setSearch}
-          onBulkSettlement={handleBulkSettlement}
-          onSendSettlement={handleSendSettlement}
-          onVerifySettlement={handleVerifySettlement}
-          onViewDetails={handleViewDetails}
-          isAdmin={isAdmin}
-          selectedBookings={selectedBookings}
-          setSelectedBookings={setSelectedBookings}
-        />
+        viewMode === 'grid' ? (
+          <SettlementPendingGrid
+            bookings={pendingBookings}
+            isLoading={pendingLoading}
+            search={search}
+            onBulkSettlement={handleBulkSettlement}
+            onSendSettlement={handleSendSettlement}
+            onVerifySettlement={handleVerifySettlement}
+            onViewDetails={handleViewDetails}
+            isAdmin={isAdmin}
+            selectedBookings={selectedBookings}
+            setSelectedBookings={setSelectedBookings}
+          />
+        ) : (
+          <SettlementPendingTable
+            bookings={pendingBookings}
+            isLoading={pendingLoading}
+            search={search}
+            setSearch={setSearch}
+            onBulkSettlement={handleBulkSettlement}
+            onSendSettlement={handleSendSettlement}
+            onVerifySettlement={handleVerifySettlement}
+            onViewDetails={handleViewDetails}
+            isAdmin={isAdmin}
+            selectedBookings={selectedBookings}
+            setSelectedBookings={setSelectedBookings}
+          />
+        )
       ) : (
-        <SettlementHistoryTable
-          history={history}
-          isLoading={historyLoading}
-          activeFilters={activeFilters}
-          onViewDetails={handleViewDetails}
-          onDownload={handleDownload}
-        />
+        viewMode === 'grid' ? (
+          <SettlementHistoryGrid
+            history={history}
+            isLoading={historyLoading}
+            activeFilters={activeFilters}
+            onViewDetails={handleViewDetails}
+            onDownload={handleDownload}
+          />
+        ) : (
+          <SettlementHistoryTable
+            history={history}
+            isLoading={historyLoading}
+            activeFilters={activeFilters}
+            onViewDetails={handleViewDetails}
+            onDownload={handleDownload}
+          />
+        )
       )}
 
       {/* Charts */}

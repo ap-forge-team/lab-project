@@ -3,6 +3,7 @@ import CommissionSetting from "../models/CommissionSetting.js";
 import User from "../models/User.js";
 import Test from "../models/Test.js";
 import Package from "../models/Package.js";
+import mongoose from "mongoose";
 import { getDistance } from "geolib";
 import crypto from "crypto";
 import logger from "../Utils/logger.js";
@@ -475,7 +476,7 @@ export const markPaymentDone = async (req, res) => {
       });
     }
 
-    const amount = booking.test?.price || booking.package?.price || 0;
+    const amount = booking.totalAmount || (booking.test?.price || booking.package?.price || 0);
 
     booking.paymentAmount = amount;
     booking.amountReceived = amount;
@@ -791,10 +792,10 @@ export const getAllLabOwners = async (req, res) => {
 
 export const addTestsToBooking = async (req, res) => {
   try {
-    const { testIds, packageIds } = req.body;
+    const { testIds = [], packageIds = [] } = req.body;
 
-    const hasTests = testIds && Array.isArray(testIds) && testIds.length > 0;
-    const hasPackages = packageIds && Array.isArray(packageIds) && packageIds.length > 0;
+    const hasTests = Array.isArray(testIds) && testIds.length > 0;
+    const hasPackages = Array.isArray(packageIds) && packageIds.length > 0;
 
     if (!hasTests && !hasPackages) {
       return res.status(400).json({
@@ -829,8 +830,9 @@ export const addTestsToBooking = async (req, res) => {
     let additionalTotal = 0;
 
     if (hasTests) {
-      const tests = await Test.find({ _id: { $in: testIds } });
-      if (tests.length !== testIds.length) {
+      const validTestIds = testIds.filter((id) => mongoose.Types.ObjectId.isValid(id));
+      const tests = await Test.find({ _id: { $in: validTestIds } });
+      if (tests.length !== validTestIds.length) {
         return res.status(400).json({
           success: false,
           message: "One or more test IDs are invalid",
@@ -845,8 +847,9 @@ export const addTestsToBooking = async (req, res) => {
     }
 
     if (hasPackages) {
-      const packages = await Package.find({ _id: { $in: packageIds } });
-      if (packages.length !== packageIds.length) {
+      const validPackageIds = packageIds.filter((id) => mongoose.Types.ObjectId.isValid(id));
+      const packages = await Package.find({ _id: { $in: validPackageIds } });
+      if (packages.length !== validPackageIds.length) {
         return res.status(400).json({
           success: false,
           message: "One or more package IDs are invalid",
@@ -864,9 +867,12 @@ export const addTestsToBooking = async (req, res) => {
 
     await booking.save();
 
-    const populated = await booking
+    const populated = await Booking.findById(booking._id)
+      .populate("test", "title price")
+      .populate("package", "title price")
       .populate("additionalTests.test", "title price")
-      .populate("additionalPackages.package", "title price");
+      .populate("additionalPackages.package", "title price")
+      .populate("labOwner", "name");
 
     res.status(200).json({
       success: true,
@@ -874,9 +880,10 @@ export const addTestsToBooking = async (req, res) => {
       booking: populated,
     });
   } catch (error) {
+    logger.error("addTestsToBooking error:", error);
     res.status(500).json({
       success: false,
-      message: "Server Error",
+      message: error.message || "Server Error",
     });
   }
 };

@@ -3,7 +3,7 @@ import express from "express";
 import protect from "../middleware/authMiddleware.js";
 import { authorizePermissions } from "../middleware/roleMiddleware.js";
 
-import { getLabOwnerPaymentStats, getAdminPaymentStats, getAdminPayments } from "../controllers/PaymentStatistic.js";
+import { getLabOwnerPaymentStats, getAdminPaymentStats, getAdminPayments, getLabOwnerPayments } from "../controllers/PaymentStatistic.js";
 
 const router = express.Router();
 
@@ -26,6 +26,13 @@ router.get(
   protect,
   authorizePermissions("payments", "read"),
   getAdminPayments
+);
+
+router.get(
+  "/lab-owner/payments",
+  protect,
+  authorizePermissions("payments", "read"),
+  getLabOwnerPayments
 );
 
 export default router;

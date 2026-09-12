@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { ChevronDown, Check } from 'lucide-react'
 
 const Select = ({
@@ -22,8 +23,10 @@ const Select = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false)
   const [selectedValue, setSelectedValue] = useState(value ?? defaultValue ?? '')
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 })
   const containerRef = useRef(null)
   const buttonRef = useRef(null)
+  const dropdownRef = useRef(null)
 
   const generatedId = React.useId()
   const selectId = idProp || (name ? `select-${name}` : generatedId)
@@ -66,9 +69,27 @@ const Select = ({
     [name, onChange]
   )
 
+  const updateDropdownPos = useCallback(() => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect()
+      const spaceBelow = window.innerHeight - rect.bottom
+      const dropdownHeight = Math.min(allOptions.length * 40 + 8, 240)
+      const openUp = spaceBelow < dropdownHeight + 8 && rect.top > dropdownHeight
+      setDropdownPos({
+        top: openUp ? rect.top + window.scrollY - dropdownHeight - 4 : rect.bottom + window.scrollY + 4,
+        left: rect.left,
+        width: rect.width,
+        openUp,
+      })
+    }
+  }, [allOptions.length])
+
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
+      if (
+        containerRef.current && !containerRef.current.contains(e.target) &&
+        dropdownRef.current && !dropdownRef.current.contains(e.target)
+      ) {
         setIsOpen(false)
       }
     }
@@ -78,7 +99,10 @@ const Select = ({
 
   useEffect(() => {
     if (!isOpen) return
-    const handleScroll = () => setIsOpen(false)
+    const handleScroll = (e) => {
+      if (dropdownRef.current && dropdownRef.current.contains(e.target)) return
+      setIsOpen(false)
+    }
     window.addEventListener('scroll', handleScroll, true)
     return () => window.removeEventListener('scroll', handleScroll, true)
   }, [isOpen])
@@ -113,7 +137,12 @@ const Select = ({
           id={selectId}
           type="button"
           disabled={disabled}
-          onClick={() => !disabled && setIsOpen(!isOpen)}
+          onClick={() => {
+            if (!disabled) {
+              if (!isOpen) updateDropdownPos()
+              setIsOpen(!isOpen)
+            }
+          }}
           className={`
             w-full flex items-center justify-between border rounded-lg bg-white text-left
             outline-none focus:border-primary focus:ring-1 focus:ring-primary
@@ -136,8 +165,12 @@ const Select = ({
           className={`absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none z-10 transition-transform ${isOpen ? 'rotate-180' : ''}`}
         />
 
-        {isOpen && (
-          <div className="absolute z-50 mt-1 right-0 min-w-full bg-white border border-border rounded-lg shadow-lg max-h-60 overflow-auto animate-in fade-in-0 zoom-in-95">
+        {isOpen && createPortal(
+          <div
+            ref={dropdownRef}
+            className="fixed z-[9999] bg-white border border-border rounded-lg shadow-lg max-h-60 overflow-auto"
+            style={{ top: dropdownPos.top, left: dropdownPos.left, width: dropdownPos.width }}
+          >
             <ul role="listbox" className="py-1">
               {allOptions.length === 0 ? (
                 <li className="px-3 py-2 text-sm text-muted-foreground text-center">No options</li>
@@ -162,7 +195,8 @@ const Select = ({
                 })
               )}
             </ul>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
       {error && <p className="text-destructive text-xs mt-1.5 font-medium">{error}</p>}

@@ -8,6 +8,9 @@ export const getSettlementStatistics = async (req, res) => {
   try {
     const bookings = await Booking.find({ paymentStatus: "Paid" });
 
+    const now = new Date();
+    const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
     const statistics = {
       totalRevenue: 0,
       systemCommission: 0,
@@ -16,23 +19,66 @@ export const getSettlementStatistics = async (req, res) => {
       sentSettlement: 0,
       verifiedSettlement: 0,
       totalTransactions: bookings.length,
+      pendingCount: 0,
+      sentCount: 0,
+      verifiedCount: 0,
+      pendingPayouts: 0,
+      thisMonthSettled: 0,
+      avgSettlementDays: 0,
     };
 
-    bookings.forEach((booking) => {
-      statistics.totalRevenue += booking.paymentAmount;
-      statistics.systemCommission += booking.systemCommission;
-      statistics.totalLabShare += booking.labShare;
+    let totalDays = 0;
+    let verifiedWithDates = 0;
 
-      if (booking.labPaymentStatus === "Pending") {
-        statistics.pendingSettlement += booking.labShare;
+    const statusCounts = { Pending: 0, Sent: 0, Verified: 0, Unknown: 0 };
+
+    bookings.forEach((booking) => {
+      statistics.totalRevenue += booking.paymentAmount || 0;
+      statistics.systemCommission += booking.systemCommission || 0;
+      statistics.totalLabShare += booking.labShare || 0;
+
+      const status = booking.labPaymentStatus;
+      if (status === "Pending") {
+        statusCounts.Pending++;
+        statistics.pendingSettlement += booking.labShare || 0;
+        statistics.pendingCount++;
+        statistics.pendingPayouts++;
+      } else if (status === "Sent") {
+        statusCounts.Sent++;
+        statistics.sentSettlement += booking.labShare || 0;
+        statistics.sentCount++;
+      } else if (status === "Verified") {
+        statusCounts.Verified++;
+        statistics.verifiedSettlement += booking.labShare || 0;
+        statistics.verifiedCount++;
+
+        if (booking.labPaidAt && booking.paidAt) {
+          const days = Math.ceil((new Date(booking.labPaidAt) - new Date(booking.paidAt)) / (1000 * 60 * 60 * 24));
+          totalDays += days;
+          verifiedWithDates++;
+        }
+      } else {
+        statusCounts.Unknown++;
       }
-      if (booking.labPaymentStatus === "Sent") {
-        statistics.sentSettlement += booking.labShare;
-      }
-      if (booking.labPaymentStatus === "Verified") {
-        statistics.verifiedSettlement += booking.labShare;
+
+      if (booking.labPaidAt && new Date(booking.labPaidAt) >= thisMonthStart) {
+        statistics.thisMonthSettled += booking.labShare || 0;
       }
     });
+
+    statistics.avgSettlementDays = verifiedWithDates > 0 ? Math.round(totalDays / verifiedWithDates) : 0;
+
+    console.log("[STATS] settlements stats:", JSON.stringify({
+      totalPaidBookings: bookings.length,
+      statusBreakdown: statusCounts,
+      totalTransactions: statistics.totalTransactions,
+      pendingCount: statistics.pendingCount,
+      sentCount: statistics.sentCount,
+      verifiedCount: statistics.verifiedCount,
+      pendingSettlement: statistics.pendingSettlement,
+      sentSettlement: statistics.sentSettlement,
+      verifiedSettlement: statistics.verifiedSettlement,
+    }));
 
     res.json({ success: true, statistics });
   } catch (error) {
@@ -380,7 +426,6 @@ export const getLabSettlementHistory = async (req, res) => {
         $match: {
           labOwner: req.user._id,
           paymentStatus: "Paid",
-          labPaymentStatus: "Verified",
           settlementBatchId: { $nin: [null, ""] },
         },
       },
@@ -454,24 +499,58 @@ export const getLabSettlementStatistics = async (req, res) => {
       paymentStatus: "Paid",
     });
 
+    const now = new Date();
+    const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
     const statistics = {
+      totalRevenue: 0,
+      systemCommission: 0,
       pendingSettlement: 0,
       verifiedSettlement: 0,
       totalSettlement: 0,
       totalTransactions: 0,
+      pendingCount: 0,
+      verifiedCount: 0,
+      pendingPayouts: 0,
+      thisMonthSettled: 0,
+      avgSettlementDays: 0,
     };
 
+    let totalDays = 0;
+    let verifiedWithDates = 0;
+
     bookings.forEach((booking) => {
-      statistics.totalTransactions++;
+      statistics.totalRevenue += booking.paymentAmount || 0;
+      statistics.systemCommission += booking.systemCommission || 0;
       statistics.totalSettlement += booking.labShare || 0;
 
+      if (booking.labPaymentStatus === "Pending") {
+        statistics.pendingPayouts++;
+      }
       if (booking.labPaymentStatus === "Sent") {
         statistics.pendingSettlement += booking.labShare || 0;
+        statistics.pendingCount++;
       }
       if (booking.labPaymentStatus === "Verified") {
         statistics.verifiedSettlement += booking.labShare || 0;
+        statistics.verifiedCount++;
+
+        if (booking.labPaidAt && booking.paidAt) {
+          const days = Math.ceil((new Date(booking.labPaidAt) - new Date(booking.paidAt)) / (1000 * 60 * 60 * 24));
+          totalDays += days;
+          verifiedWithDates++;
+        }
+      }
+
+      if (booking.labPaidAt && new Date(booking.labPaidAt) >= thisMonthStart) {
+        statistics.thisMonthSettled += booking.labShare || 0;
+      }
+      if (booking.settlementBatchId) {
+        statistics.totalTransactions++;
       }
     });
+
+    statistics.avgSettlementDays = verifiedWithDates > 0 ? Math.round(totalDays / verifiedWithDates) : 0;
 
     res.status(200).json({ success: true, statistics });
   } catch (error) {

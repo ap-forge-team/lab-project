@@ -51,6 +51,7 @@ export const API_ENDPOINTS = {
     LAB_OWNER: '/payment-statistic/lab-owner',
     ADMIN: '/payment-statistic/admin',
     ADMIN_PAYMENTS: '/payment-statistic/admin/payments',
+    LAB_OWNER_PAYMENTS: '/payment-statistic/lab-owner/payments',
   },
   BOOKINGS_PAYMENT_RECEIPT: (id) => `/bookings/payment/${id}`,
   CATEGORIES: {

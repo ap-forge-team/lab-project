@@ -225,7 +225,9 @@ const SettlementHistoryTable = ({ history, isLoading, activeFilters, onViewDetai
                       <td className="px-4 py-3">
                         <div>
                           <span className="font-medium text-foreground">{formatCurrency(item.commission)}</span>
-                          <span className="text-xs text-muted-foreground ml-1">(15%)</span>
+                          <span className="text-xs text-muted-foreground ml-1">
+                            ({item.totalAmount > 0 ? `${((item.commission / item.totalAmount) * 100).toFixed(1)}%` : '—'})
+                          </span>
                         </div>
                       </td>
                       <td className="px-4 py-3 font-medium text-foreground">{formatCurrency(item.netPayable || item.labShare)}</td>

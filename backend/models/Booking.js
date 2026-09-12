@@ -288,7 +288,6 @@ settlementBatchId: {
 
 settlementUTR: {
     type: String,
-    sparse: true,
     trim: true
 },
 labPaidBy: {

@@ -261,6 +261,14 @@ const BookingDetailsModal = ({ booking, onClose }) => {
               <span className="font-medium text-foreground text-right max-w-[200px]">{booking.address}, {booking.city} - {booking.pincode}</span>
             </div>
           )}
+          {(booking.patientLatitude || booking.location?.latitude) && (
+            <div className="flex justify-between py-2 text-sm">
+              <span className="text-muted-foreground">Coordinates</span>
+              <span className="font-medium text-foreground text-right font-mono text-xs">
+                {Number(booking.patientLatitude || booking.location?.latitude).toFixed(6)}, {Number(booking.patientLongitude || booking.location?.longitude).toFixed(6)}
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </Modal>
@@ -1209,8 +1217,15 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
                   onClick={(e) => {
                     e.stopPropagation()
                     const booking = menuOpen.booking
-                    const address = `${booking.address || ''}, ${booking.city || ''} - ${booking.pincode || ''}`
-                    const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`
+                    const lat = booking.patientLatitude || booking.location?.latitude
+                    const lng = booking.patientLongitude || booking.location?.longitude
+                    let url
+                    if (lat && lng) {
+                      url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
+                    } else {
+                      const address = `${booking.address || ''}, ${booking.city || ''} - ${booking.pincode || ''}`
+                      url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`
+                    }
                     window.open(url, '_blank')
                     setMenuOpen(null)
                   }}
@@ -1228,7 +1243,7 @@ const BookingsManagePage = ({ bookings, isLoading, isError, onRefresh, user: use
                     setShowAddTestsModal(true)
                     setMenuOpen(null)
                   }}
-                  disabled={menuOpen.booking?.status === BOOKING_STATUS.COMPLETED || menuOpen.booking?.status === BOOKING_STATUS.CANCELLED}
+                  disabled={menuOpen.booking?.status !== BOOKING_STATUS.REACHED}
                   className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent w-full text-left disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span className="inline-flex items-center justify-center size-6 rounded-md bg-purple-100 text-purple-600">
