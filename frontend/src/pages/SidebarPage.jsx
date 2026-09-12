@@ -10,7 +10,7 @@ import { getAllTests } from '@/services/test.service'
 import { getAllPackages } from '@/services/package.service'
 import { getAllBookings, getAssignedBookings, getLabOwnerBookings, getMyBookings } from '@/services/booking.service'
 import { getAllLabOwners, getAllUsers, getMyAssistants } from '@/services/user.service'
-import { getAdminPaymentStats, getLabOwnerPaymentStats, getAdminPayments } from '@/services/payment.service'
+import { getAdminPaymentStats, getLabOwnerPaymentStats, getAdminPayments, getLabOwnerPayments } from '@/services/payment.service'
 import { Spinner } from '@/components/ui/Loader'
 import SearchInput from '@/components/ui/SearchInput'
 import TestsManagePage from '@/features/tests/components/TestsManagePage'
@@ -38,6 +38,7 @@ const sources = {
   adminPayments: getAdminPaymentStats,
   paymentsList: getAdminPayments,
   labOwnerPayments: getLabOwnerPaymentStats,
+  labOwnerPaymentsList: getLabOwnerPayments,
   labProfile: async (user) => ({ data: user ? [user] : [] }),
   offers: async () => ({ data: [] }),
 }

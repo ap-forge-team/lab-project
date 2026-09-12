@@ -1,5 +1,7 @@
 import React from 'react'
 
+const formatCurrency = (amount) => `₹${Number(amount || 0).toLocaleString('en-IN')}`
+
 const SettlementSummary = ({ statistics, isLoading }) => {
   if (isLoading) {
     return (
@@ -17,7 +19,7 @@ const SettlementSummary = ({ statistics, isLoading }) => {
   }
 
   const completionRate = statistics?.totalTransactions > 0
-    ? ((statistics?.verifiedSettlement || 0) / (statistics?.totalRevenue || 1) * 100).toFixed(1)
+    ? ((statistics?.verifiedCount || 0) / statistics.totalTransactions * 100).toFixed(1)
     : 0
 
   return (
@@ -46,7 +48,7 @@ const SettlementSummary = ({ statistics, isLoading }) => {
 
         <div className="space-y-2">
           <p className="text-xs text-muted-foreground">This Month</p>
-          <p className="text-2xl font-bold text-foreground">{statistics?.thisMonthSettled || 0}</p>
+          <p className="text-2xl font-bold text-foreground">{formatCurrency(statistics?.thisMonthSettled)}</p>
           <p className="text-xs text-emerald-600">Settled this month</p>
         </div>
 

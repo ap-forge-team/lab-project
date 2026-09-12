@@ -233,13 +233,25 @@ const SettlementPendingTable = ({
                       <td className="px-4 py-3">
                         <div>
                           <span className="font-medium text-foreground">{formatCurrency(booking.labShare)}</span>
-                          <span className="text-xs text-muted-foreground ml-1">(85%)</span>
+                          <span className="text-xs text-muted-foreground ml-1">
+                            ({booking.commissionType === 'Percentage' 
+                              ? `${100 - (booking.commissionValue || 0)}%` 
+                              : booking.paymentAmount > 0 
+                                ? `${((booking.labShare / booking.paymentAmount) * 100).toFixed(1)}%` 
+                                : '—'})
+                          </span>
                         </div>
                       </td>
                       <td className="px-4 py-3">
                         <div>
                           <span className="font-medium text-foreground">{formatCurrency(booking.systemCommission)}</span>
-                          <span className="text-xs text-muted-foreground ml-1">(15%)</span>
+                          <span className="text-xs text-muted-foreground ml-1">
+                            ({booking.commissionType === 'Percentage' 
+                              ? `${booking.commissionValue || 0}%` 
+                              : booking.paymentAmount > 0 
+                                ? `${((booking.systemCommission / booking.paymentAmount) * 100).toFixed(1)}%` 
+                                : '—'})
+                          </span>
                         </div>
                       </td>
                       <td className="px-4 py-3">

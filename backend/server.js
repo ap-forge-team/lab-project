@@ -7,6 +7,7 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 
 import connectDB from "./config/db.js";
+import Booking from "./models/Booking.js";
 import { seedRoles } from "./seeder/roleSeeder.js";
 import { seedAdmin } from "./seeder/userSeeder.js";
 import logger from "./Utils/logger.js";
@@ -52,6 +53,18 @@ const app = express();
 await connectDB();
 await seedRoles();
 await seedAdmin();
+
+/* ---------- Drop stale unique index on settlementUTR ---------- */
+try {
+  const indexes = await Booking.collection.indexes();
+  const utrIndex = indexes.find((i) => i.key.settlementUTR === 1 && i.unique);
+  if (utrIndex) {
+    await Booking.collection.dropIndex(utrIndex.name);
+    logger.info(`Dropped stale unique index: ${utrIndex.name}`);
+  }
+} catch (e) {
+  logger.info("No stale settlementUTR index to drop");
+}
 
 /* ---------- Security Middleware ---------- */
 

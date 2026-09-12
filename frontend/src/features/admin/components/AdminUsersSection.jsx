@@ -10,7 +10,7 @@ import Button from '@/components/ui/Button'
 import Select from '@/components/ui/Select'
 import Modal from '@/components/ui/Modal'
 import LocationPicker from '@/components/LocationPicker'
-import { MapPin, Map } from 'lucide-react'
+import { MapPin, Map, Pencil } from 'lucide-react'
 import useFormErrors from '@/hooks/useFormErrors'
 import Can from '@/components/Can'
 
@@ -144,30 +144,81 @@ const AdminUsersSection = ({
           <Input required type="password" name="password" placeholder="Password" value={labOwnerData.password} onChange={handleChange} error={errors.password} />
           <Input required type="text" name="servicePincodes" placeholder="411033, 411044" value={labOwnerData.servicePincodes} onChange={handleChange} error={errors.servicePincodes} />
           <div>
-            {labOwnerData.labAddress && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-2">
-                <div className="text-xs font-medium text-green-700 flex items-center gap-1.5">
-                  <MapPin size={13} /> Lab Location Selected
+            <label className="text-sm font-semibold text-foreground mb-3 block">Lab Location *</label>
+            <fieldset className="border border-border rounded-xl p-5">
+              <legend className="text-sm font-semibold text-foreground px-2">Select Location</legend>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!navigator.geolocation) {
+                      toast.error('Geolocation is not supported by your browser')
+                      return
+                    }
+                    navigator.geolocation.getCurrentPosition(
+                      async (pos) => {
+                        const lat = pos.coords.latitude
+                        const lng = pos.coords.longitude
+                        try {
+                          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                          const data = await res.json()
+                          setLabOwnerData((prev) => ({ ...prev, labAddress: data.display_name, latitude: lat, longitude: lng }))
+                          toast.success('Location detected successfully')
+                        } catch {
+                          setLabOwnerData((prev) => ({ ...prev, latitude: lat, longitude: lng }))
+                        }
+                      },
+                      () => toast.error('Unable to retrieve your location')
+                    )
+                  }}
+                  className="flex flex-col items-center gap-2 p-5 border border-border rounded-xl hover:border-primary hover:bg-primary/5 transition cursor-pointer"
+                >
+                  <MapPin size={24} className="text-primary" />
+                  <div className="text-center">
+                    <p className="text-sm font-semibold text-foreground">Use Current Location</p>
+                    <p className="text-xs text-muted-foreground">Detect my location</p>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowLabMap(true)}
+                  className="flex flex-col items-center gap-2 p-5 border border-border rounded-xl hover:border-primary hover:bg-primary/5 transition cursor-pointer"
+                >
+                  <Map size={24} className="text-primary" />
+                  <div className="text-center">
+                    <p className="text-sm font-semibold text-foreground">Select on Map</p>
+                    <p className="text-xs text-muted-foreground">Pick lab location on map</p>
+                  </div>
+                </button>
+              </div>
+            </fieldset>
+            {labOwnerData.latitude && labOwnerData.longitude && (
+              <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 flex items-start gap-3 mt-3">
+                <MapPin size={20} className="text-primary mt-0.5 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-foreground mb-0.5">Selected Location</p>
+                  <p className="text-sm text-muted-foreground">{labOwnerData.labAddress || 'Location selected'}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Lat: {Number(labOwnerData.latitude).toFixed(4)}, Long: {Number(labOwnerData.longitude).toFixed(4)}
+                  </p>
                 </div>
-                <div className="text-[10px] text-muted-foreground mt-1">{labOwnerData.labAddress}</div>
+                <button
+                  type="button"
+                  onClick={() => setShowLabMap(true)}
+                  className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 shrink-0"
+                >
+                  <Pencil size={12} /> Change
+                </button>
               </div>
             )}
             {errors.labAddress && (
-              <p className="text-destructive text-xs mt-1.5 font-medium mb-2">{errors.labAddress}</p>
+              <p className="text-destructive text-xs mt-1.5 font-medium">{errors.labAddress}</p>
             )}
-            <button
-              type="button"
-              onClick={() => setShowLabMap(true)}
-              className="w-full bg-primary/10 text-primary py-3 rounded-lg text-xs font-semibold hover:bg-primary/20 transition"
-            >
-              <Map size={14} className="inline mr-2" />
-              Select Lab Location On Map
-            </button>
             <Modal
               open={showLabMap}
               onClose={() => setShowLabMap(false)}
               title="Select Lab Location"
-              size="lg"
+              size="full"
             >
               <LocationPicker
                 location={{
@@ -175,26 +226,30 @@ const AdminUsersSection = ({
                   lng: Number(labOwnerData.longitude) || 73.8567,
                 }}
                 setLocation={(loc) => {
-                  setLabOwnerData((prev) => ({
-                    ...prev,
-                    latitude: loc.lat,
-                    longitude: loc.lng,
-                  }))
+                  setLabOwnerData((prev) => ({ ...prev, latitude: loc.lat, longitude: loc.lng }))
                 }}
                 onLocationSelect={async (lat, lng) => {
-                  const response = await fetch(
-                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
-                  )
-                  const data = await response.json()
-                  setLabOwnerData((prev) => ({
-                    ...prev,
-                    labAddress: data.display_name,
-                    latitude: lat,
-                    longitude: lng,
-                  }))
+                  try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                    const data = await res.json()
+                    setLabOwnerData((prev) => ({ ...prev, labAddress: data.display_name, latitude: lat, longitude: lng }))
+                  } catch {
+                    setLabOwnerData((prev) => ({ ...prev, latitude: lat, longitude: lng }))
+                  }
                 }}
               />
-              <Button onClick={() => setShowLabMap(false)} fullWidth variant="success" className="mt-4">
+              <Button
+                onClick={() => {
+                  if (!labOwnerData.latitude) {
+                    toast.error('Please select a location')
+                    return
+                  }
+                  setShowLabMap(false)
+                }}
+                fullWidth
+                variant="success"
+                className="mt-4"
+              >
                 Confirm Location
               </Button>
             </Modal>

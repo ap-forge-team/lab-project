@@ -11,6 +11,13 @@ const formatDate = (dateStr) => {
   return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
+const STATUS_STYLES = {
+  Verified: { bg: 'bg-emerald-50', text: 'text-emerald-600', dot: 'bg-emerald-500' },
+  Sent: { bg: 'bg-blue-50', text: 'text-blue-600', dot: 'bg-blue-500' },
+  Pending: { bg: 'bg-amber-50', text: 'text-amber-600', dot: 'bg-amber-500' },
+  Rejected: { bg: 'bg-red-50', text: 'text-red-600', dot: 'bg-red-500' },
+}
+
 const SettlementDetailModal = ({ open, onClose, booking, isAdmin }) => {
   const batchId = booking?.settlementBatchId
 
@@ -51,10 +58,15 @@ const SettlementDetailModal = ({ open, onClose, booking, isAdmin }) => {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Status</p>
-              <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium bg-amber-50 text-amber-600">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                {displaySummary.status || '—'}
-              </span>
+              {(() => {
+                const statusStyle = STATUS_STYLES[displaySummary.status] || STATUS_STYLES.Pending
+                return (
+                  <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium ${statusStyle.bg} ${statusStyle.text}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${statusStyle.dot}`}></span>
+                    {displaySummary.status || '—'}
+                  </span>
+                )
+              })()}
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Date</p>

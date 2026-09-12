@@ -167,8 +167,8 @@ export default function useBookingForm() {
     }
     navigator.geolocation.getCurrentPosition(
       async (position) => {
-        const lat = position.coords.latitude
-        const lng = position.coords.longitude
+        const lat = Number(position.coords.latitude.toFixed(6))
+        const lng = Number(position.coords.longitude.toFixed(6))
         setMapLocation({ lat, lng })
         await reverseGeocode(lat, lng)
       },
@@ -183,8 +183,8 @@ export default function useBookingForm() {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setMapLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
+            lat: Number(position.coords.latitude.toFixed(6)),
+            lng: Number(position.coords.longitude.toFixed(6)),
           })
           setShowMap(true)
         },

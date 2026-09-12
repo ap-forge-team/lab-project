@@ -781,34 +781,110 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
               <Input label="Password" name="password" type="password" value={form.password} onChange={(e) => handleChange('password', e.target.value)} placeholder="Min 6 characters" error={errors.password} required />
               <Input label="Service Pincodes (comma separated)" name="servicePincodes" value={form.servicePincodes} onChange={(e) => handleChange('servicePincodes', e.target.value)} placeholder="e.g. 411033, 411044" />
               <div>
-                {form.labAddress && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-2">
-                    <div className="text-xs font-medium text-green-700 flex items-center gap-1.5"><MapPin size={13} /> Lab Location Selected</div>
-                    <div className="text-[10px] text-muted-foreground mt-1">{form.labAddress}</div>
+                <label className="text-sm font-semibold text-foreground mb-3 block">Lab Location *</label>
+                <fieldset className="border border-border rounded-xl p-5">
+                  <legend className="text-sm font-semibold text-foreground px-2">Select Location</legend>
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!navigator.geolocation) {
+                          toast.error('Geolocation is not supported by your browser')
+                          return
+                        }
+                        navigator.geolocation.getCurrentPosition(
+                          async (pos) => {
+                            const lat = pos.coords.latitude
+                            const lng = pos.coords.longitude
+                            try {
+                              const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                              const data = await res.json()
+                              setForm((prev) => ({ ...prev, labAddress: data.display_name, latitude: lat, longitude: lng }))
+                              toast.success('Location detected successfully')
+                            } catch {
+                              setForm((prev) => ({ ...prev, latitude: lat, longitude: lng }))
+                            }
+                          },
+                          () => toast.error('Unable to retrieve your location')
+                        )
+                      }}
+                      className="flex flex-col items-center gap-2 p-5 border border-border rounded-xl hover:border-primary hover:bg-primary/5 transition cursor-pointer"
+                    >
+                      <MapPin size={24} className="text-primary" />
+                      <div className="text-center">
+                        <p className="text-sm font-semibold text-foreground">Use Current Location</p>
+                        <p className="text-xs text-muted-foreground">Detect my location</p>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowLabMap(true)}
+                      className="flex flex-col items-center gap-2 p-5 border border-border rounded-xl hover:border-primary hover:bg-primary/5 transition cursor-pointer"
+                    >
+                      <MapPinned size={24} className="text-primary" />
+                      <div className="text-center">
+                        <p className="text-sm font-semibold text-foreground">Select on Map</p>
+                        <p className="text-xs text-muted-foreground">Pick lab location on map</p>
+                      </div>
+                    </button>
+                  </div>
+                </fieldset>
+                {form.latitude && form.longitude && (
+                  <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 flex items-start gap-3 mt-3">
+                    <MapPin size={20} className="text-primary mt-0.5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-foreground mb-0.5">Selected Location</p>
+                      <p className="text-sm text-muted-foreground">{form.labAddress || 'Location selected'}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Lat: {Number(form.latitude).toFixed(4)}, Long: {Number(form.longitude).toFixed(4)}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowLabMap(true)}
+                      className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 shrink-0"
+                    >
+                      <Pencil size={12} /> Change
+                    </button>
                   </div>
                 )}
-                {errors.labAddress && <p className="text-destructive text-xs mt-1.5 font-medium mb-2">{errors.labAddress}</p>}
-                <button type="button" onClick={() => setShowLabMap(true)} className="w-full bg-primary/10 text-primary py-3 rounded-lg text-xs font-semibold hover:bg-primary/20 transition">
-                  <MapPin size={14} className="inline mr-2" /> Select Lab Location On Map
-                </button>
+                {errors.labAddress && <p className="text-destructive text-xs mt-1.5 font-medium">{errors.labAddress}</p>}
                 {showLabMap && (
                   <div className="fixed inset-0 bg-black/50 z-[110] flex items-center justify-center p-4">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
-                      <div className="flex items-center justify-between p-4 border-b border-border">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl h-[80vh] flex flex-col">
+                      <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
                         <h3 className="font-semibold text-foreground">Select Lab Location</h3>
                         <button onClick={() => setShowLabMap(false)} className="p-1 text-muted-foreground hover:text-foreground"><X size={20} /></button>
                       </div>
-                      <div className="p-4">
+                      <div className="flex-1 overflow-hidden p-4">
                         <LocationPicker
                           location={{ lat: Number(form.latitude) || 18.5204, lng: Number(form.longitude) || 73.8567 }}
                           setLocation={(loc) => setForm((prev) => ({ ...prev, latitude: loc.lat, longitude: loc.lng }))}
                           onLocationSelect={async (lat, lng) => {
-                            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
-                            const data = await res.json()
-                            setForm((prev) => ({ ...prev, labAddress: data.display_name, latitude: lat, longitude: lng }))
+                            try {
+                              const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                              const data = await res.json()
+                              setForm((prev) => ({ ...prev, labAddress: data.display_name, latitude: lat, longitude: lng }))
+                            } catch {
+                              setForm((prev) => ({ ...prev, latitude: lat, longitude: lng }))
+                            }
                           }}
                         />
-                        <Button onClick={() => setShowLabMap(false)} fullWidth variant="success" className="mt-4">Confirm Location</Button>
+                      </div>
+                      <div className="p-4 border-t border-border shrink-0">
+                        <Button
+                          onClick={() => {
+                            if (!form.latitude) {
+                              toast.error('Please select a location')
+                              return
+                            }
+                            setShowLabMap(false)
+                          }}
+                          fullWidth
+                          variant="success"
+                        >
+                          Confirm Location
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -1033,33 +1109,109 @@ const LabOwnersManagePage = ({ labOwners, isLoading, isError, onRefresh }) => {
               <Input label="Phone" name="phone" value={form.phone} onChange={(e) => handleChange('phone', e.target.value)} placeholder="e.g. 9876543210" inputMode="numeric" maxLength={10} error={errors.phone} required />
               <Input label="Service Pincodes (comma separated)" name="servicePincodes" value={form.servicePincodes} onChange={(e) => handleChange('servicePincodes', e.target.value)} placeholder="e.g. 411033, 411044" />
               <div>
-                {form.labAddress && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-2">
-                    <div className="text-xs font-medium text-green-700 flex items-center gap-1.5"><MapPin size={13} /> Lab Location Selected</div>
-                    <div className="text-[10px] text-muted-foreground mt-1">{form.labAddress}</div>
+                <label className="text-sm font-semibold text-foreground mb-3 block">Lab Location *</label>
+                <fieldset className="border border-border rounded-xl p-5">
+                  <legend className="text-sm font-semibold text-foreground px-2">Select Location</legend>
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!navigator.geolocation) {
+                          toast.error('Geolocation is not supported by your browser')
+                          return
+                        }
+                        navigator.geolocation.getCurrentPosition(
+                          async (pos) => {
+                            const lat = pos.coords.latitude
+                            const lng = pos.coords.longitude
+                            try {
+                              const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                              const data = await res.json()
+                              setForm((prev) => ({ ...prev, labAddress: data.display_name, latitude: lat, longitude: lng }))
+                              toast.success('Location detected successfully')
+                            } catch {
+                              setForm((prev) => ({ ...prev, latitude: lat, longitude: lng }))
+                            }
+                          },
+                          () => toast.error('Unable to retrieve your location')
+                        )
+                      }}
+                      className="flex flex-col items-center gap-2 p-5 border border-border rounded-xl hover:border-primary hover:bg-primary/5 transition cursor-pointer"
+                    >
+                      <MapPin size={24} className="text-primary" />
+                      <div className="text-center">
+                        <p className="text-sm font-semibold text-foreground">Use Current Location</p>
+                        <p className="text-xs text-muted-foreground">Detect my location</p>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowEditMap(true)}
+                      className="flex flex-col items-center gap-2 p-5 border border-border rounded-xl hover:border-primary hover:bg-primary/5 transition cursor-pointer"
+                    >
+                      <MapPinned size={24} className="text-primary" />
+                      <div className="text-center">
+                        <p className="text-sm font-semibold text-foreground">Select on Map</p>
+                        <p className="text-xs text-muted-foreground">Pick lab location on map</p>
+                      </div>
+                    </button>
+                  </div>
+                </fieldset>
+                {form.latitude && form.longitude && (
+                  <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 flex items-start gap-3 mt-3">
+                    <MapPin size={20} className="text-primary mt-0.5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-foreground mb-0.5">Selected Location</p>
+                      <p className="text-sm text-muted-foreground">{form.labAddress || 'Location selected'}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Lat: {Number(form.latitude).toFixed(4)}, Long: {Number(form.longitude).toFixed(4)}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowEditMap(true)}
+                      className="flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 shrink-0"
+                    >
+                      <Pencil size={12} /> Change
+                    </button>
                   </div>
                 )}
-                <button type="button" onClick={() => setShowEditMap(true)} className="w-full bg-primary/10 text-primary py-3 rounded-lg text-xs font-semibold hover:bg-primary/20 transition">
-                  <MapPin size={14} className="inline mr-2" /> Select Lab Location On Map
-                </button>
                 {showEditMap && (
                   <div className="fixed inset-0 bg-black/50 z-[110] flex items-center justify-center p-4">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
-                      <div className="flex items-center justify-between p-4 border-b border-border">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl h-[80vh] flex flex-col">
+                      <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
                         <h3 className="font-semibold text-foreground">Select Lab Location</h3>
                         <button onClick={() => setShowEditMap(false)} className="p-1 text-muted-foreground hover:text-foreground"><X size={20} /></button>
                       </div>
-                      <div className="p-4">
+                      <div className="flex-1 overflow-hidden p-4">
                         <LocationPicker
                           location={{ lat: Number(form.latitude) || 18.5204, lng: Number(form.longitude) || 73.8567 }}
                           setLocation={(loc) => setForm((prev) => ({ ...prev, latitude: loc.lat, longitude: loc.lng }))}
                           onLocationSelect={async (lat, lng) => {
-                            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
-                            const data = await res.json()
-                            setForm((prev) => ({ ...prev, labAddress: data.display_name, latitude: lat, longitude: lng }))
+                            try {
+                              const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+                              const data = await res.json()
+                              setForm((prev) => ({ ...prev, labAddress: data.display_name, latitude: lat, longitude: lng }))
+                            } catch {
+                              setForm((prev) => ({ ...prev, latitude: lat, longitude: lng }))
+                            }
                           }}
                         />
-                        <Button onClick={() => setShowEditMap(false)} fullWidth variant="success" className="mt-4">Confirm Location</Button>
+                      </div>
+                      <div className="p-4 border-t border-border shrink-0">
+                        <Button
+                          onClick={() => {
+                            if (!form.latitude) {
+                              toast.error('Please select a location')
+                              return
+                            }
+                            setShowEditMap(false)
+                          }}
+                          fullWidth
+                          variant="success"
+                        >
+                          Confirm Location
+                        </Button>
                       </div>
                     </div>
                   </div>
